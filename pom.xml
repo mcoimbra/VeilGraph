@@ -1,0 +1,1050 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>pt.ulisboa.tecnico.graph</groupId>
+	<artifactId>GraphBolt</artifactId>
+	<version>0.0.4-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>GraphBolt</name>
+	<url>http://maven.apache.org</url>
+
+	<description>pt.ulisboa.tecnico.graph - An approximate graph computing approach.</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<flink.version>1.6.0</flink.version>
+
+		<!--<flink.version>1.4.2</flink.version>-->
+
+		<slf4j.version>1.7.7</slf4j.version>
+		<log4j.version>1.2.17</log4j.version>
+		<scala.version>2.11.12</scala.version>
+		<scala.binary.version>2.11</scala.binary.version>
+		<akka.version>2.4.20</akka.version>
+		<junit.version>4.12</junit.version>
+		<junit.jupiter.version>5.0.0</junit.jupiter.version>
+		<junit.vintage.version>${junit.version}.1</junit.vintage.version>
+		<junit.platform.version>1.0.1</junit.platform.version>
+		<aspectj.version>1.9.1</aspectj.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>apache.snapshots</id>
+			<name>Apache Development Snapshot Repository</name>
+			<url>https://repository.apache.org/content/repositories/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-java</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-core</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-clients_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-gelly_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-gelly-examples_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.flink/flink-runtime-web -->
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.3</version>
+		</dependency>
+
+
+		<!-- explicitly add a standard logging framework, as Flink does not have a hard dependency on one specific framework by default -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>${log4j.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.objenesis</groupId>
+			<artifactId>objenesis</artifactId>
+			<!-- <version>LATEST</version> -->
+			<version>2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-actor_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+		</dependency>
+
+		<!--
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-remote_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.aeron</groupId>
+					<artifactId>aeron-driver</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.aeron</groupId>
+					<artifactId>aeron-client</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		-->
+
+		<!-- Transitive dependency of akka-remote that we explicitly define to keep it
+            visible after the shading (without relocation!) of akka-remote -->
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-stream_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+		</dependency>
+
+		<!-- Transitive dependency of akka-remote that we explicitly define to keep it
+            visible after the shading (without relocation!) of akka-remote -->
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-protobuf_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-slf4j_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-camel_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-testkit_${scala.binary.version}</artifactId>
+			<version>${akka.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.2</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Only required to run tests in an IDE that bundles an older version -->
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>${junit.platform.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Only required to run tests in an IDE that bundles an older version -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.jupiter.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Only required to run tests in an IDE that bundles an older version -->
+		<dependency>
+			<groupId>org.junit.vintage</groupId>
+			<artifactId>junit-vintage-engine</artifactId>
+			<version>${junit.vintage.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- To avoid compiler warnings about @API annotations in JUnit code -->
+		<dependency>
+			<groupId>org.apiguardian</groupId>
+			<artifactId>apiguardian-api</artifactId>
+			<version>1.0.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.aspectj/aspectjweaver -->
+		<!--
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>${aspectj.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjtools</artifactId>
+			<version>${aspectj.version}</version>
+		</dependency>
+
+
+
+		-->
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjrt</artifactId>
+			<version>${aspectj.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20180813</version>
+		</dependency>
+
+
+	</dependencies>
+
+
+
+
+    <profiles>
+		<profile>
+			<!-- Profile for packaging correct JAR files -->
+			<id>build-jar</id>
+
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-java</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-core</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-clients_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-gelly_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.apache.flink/flink-runtime-web -->
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                </dependency>
+
+				<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+				<dependency>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+					<version>4.5.3</version>
+				</dependency>
+
+
+				<!-- explicitly add a standard logging framework, as Flink does not have
+                        a hard dependency on one specific framework by default -->
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+					<version>${slf4j.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+					<version>${log4j.version}</version>
+				</dependency>
+
+
+				<dependency>
+					<groupId>org.objenesis</groupId>
+					<artifactId>objenesis</artifactId>
+					<!-- <version>LATEST</version> -->
+					<version>2.6</version>
+				</dependency>
+
+				<dependency>
+					<groupId>com.typesafe.akka</groupId>
+					<artifactId>akka-actor_${scala.binary.version}</artifactId>
+					<version>${akka.version}</version>
+				</dependency>
+
+				<!--
+				<dependency>
+					<groupId>com.typesafe.akka</groupId>
+					<artifactId>akka-remote_${scala.binary.version}</artifactId>
+					<version>${akka.version}</version>
+					<exclusions>
+						<exclusion>
+							<groupId>io.aeron</groupId>
+							<artifactId>aeron-driver</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>io.aeron</groupId>
+							<artifactId>aeron-client</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				-->
+
+
+				<dependency>
+					<groupId>org.junit.jupiter</groupId>
+					<artifactId>junit-jupiter-api</artifactId>
+					<version>${junit.jupiter.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<dependency>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+					<version>${junit.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.platform</groupId>
+					<artifactId>junit-platform-launcher</artifactId>
+					<version>${junit.platform.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.jupiter</groupId>
+					<artifactId>junit-jupiter-engine</artifactId>
+					<version>${junit.jupiter.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+					<version>${junit.vintage.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- To avoid compiler warnings about @API annotations in JUnit code -->
+				<dependency>
+					<groupId>org.apiguardian</groupId>
+					<artifactId>apiguardian-api</artifactId>
+					<version>1.0.0</version>
+					<scope>test</scope>
+				</dependency>
+								<!--
+				<dependency>
+					<groupId>org.aspectj</groupId>
+					<artifactId>aspectjweaver</artifactId>
+					<version>${aspectj.version}</version>
+				</dependency>
+
+
+				<dependency>
+					<groupId>org.aspectj</groupId>
+					<artifactId>aspectjtools</artifactId>
+					<version>${aspectj.version}</version>
+				</dependency>
+
+
+				-->
+				<dependency>
+					<groupId>org.aspectj</groupId>
+					<artifactId>aspectjrt</artifactId>
+					<version>${aspectj.version}</version>
+				</dependency>
+
+				<dependency>
+					<groupId>org.json</groupId>
+					<artifactId>json</artifactId>
+					<version>20180813</version>
+				</dependency>
+
+			</dependencies>
+
+			<build>
+
+				<plugins>
+					<!-- disable the exclusion rules -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>3.1.0</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<artifactSet>
+										<excludes combine.self="override"></excludes>
+									</artifactSet>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>2.19.1</version>
+
+						<configuration>
+							<includes>
+								<include>**/Test*.java</include>
+								<include>**/*Test.java</include>
+								<include>**/*Tests.java</include>
+								<include>**/*TestCase.java</include>
+							</includes>
+							<properties>
+								<excludeTags>slow</excludeTags>
+							</properties>
+						</configuration>
+						<dependencies>
+							<dependency>
+								<groupId>org.junit.platform</groupId>
+								<artifactId>junit-platform-surefire-provider</artifactId>
+								<version>1.0.1</version>
+							</dependency>
+							<dependency>
+								<groupId>org.junit.jupiter</groupId>
+								<artifactId>junit-jupiter-engine</artifactId>
+								<version>5.0.0</version>
+							</dependency>
+							<dependency>
+								<groupId>org.junit.vintage</groupId>
+								<artifactId>junit-vintage-engine</artifactId>
+								<version>4.12.1</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>aspectj-maven-plugin</artifactId>
+						<version>1.11</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>compile</goal>
+									<!-- <goal>test-compile</goal> -->
+								</goals>
+							</execution>
+						</executions>
+						<dependencies>
+							<dependency>
+								<groupId>org.aspectj</groupId>
+								<artifactId>aspectjrt</artifactId>
+								<version>${aspectj.version}</version>
+							</dependency>
+							<dependency>
+								<groupId>org.aspectj</groupId>
+								<artifactId>aspectjtools</artifactId>
+								<version>${aspectj.version}</version>
+							</dependency>
+						</dependencies>
+						<configuration>
+							<showWeaveInfo>true</showWeaveInfo>
+							<encoding>UTF-8</encoding>
+							<verbose>false</verbose>
+							<source>1.8</source>
+							<target>1.8</target>
+							<complianceLevel>1.8</complianceLevel>
+							<forceAjcCompile>true</forceAjcCompile>
+						</configuration>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>only-eclipse</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-java</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-core</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-clients_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-gelly_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+				<!-- https://mvnrepository.com/artifact/org.apache.flink/flink-runtime-web -->
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                </dependency>
+
+				<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+				<dependency>
+					<groupId>org.apache.httpcomponents</groupId>
+					<artifactId>httpclient</artifactId>
+					<version>4.5.3</version>
+				</dependency>
+				<!-- explicitly add a standard logging framework, as Flink does not have a hard dependency on one specific framework by default -->
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+					<version>${slf4j.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+					<version>${log4j.version}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.objenesis</groupId>
+					<artifactId>objenesis</artifactId>
+					<!-- <version>LATEST</version> -->
+					<version>2.6</version>
+				</dependency>
+				<dependency>
+					<groupId>com.typesafe.akka</groupId>
+					<artifactId>akka-actor_${scala.binary.version}</artifactId>
+					<version>${akka.version}</version>
+				</dependency>
+				<!--
+				<dependency>
+					<groupId>com.typesafe.akka</groupId>
+					<artifactId>akka-remote_${scala.binary.version}</artifactId>
+					<version>${akka.version}</version>
+					<exclusions>
+						<exclusion>
+							<groupId>io.aeron</groupId>
+							<artifactId>aeron-driver</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>io.aeron</groupId>
+							<artifactId>aeron-client</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				-->
+				<dependency>
+					<groupId>org.junit.jupiter</groupId>
+					<artifactId>junit-jupiter-api</artifactId>
+					<version>${junit.jupiter.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<dependency>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+					<version>${junit.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.platform</groupId>
+					<artifactId>junit-platform-launcher</artifactId>
+					<version>${junit.platform.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.jupiter</groupId>
+					<artifactId>junit-jupiter-engine</artifactId>
+					<version>${junit.jupiter.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- Only required to run tests in an IDE that bundles an older version -->
+				<dependency>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+					<version>${junit.vintage.version}</version>
+					<scope>test</scope>
+				</dependency>
+				<!-- To avoid compiler warnings about @API annotations in JUnit code -->
+				<dependency>
+					<groupId>org.apiguardian</groupId>
+					<artifactId>apiguardian-api</artifactId>
+					<version>1.0.0</version>
+					<scope>test</scope>
+				</dependency>
+				<!--
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjweaver</artifactId>
+    <version>${aspectj.version}</version>
+</dependency>
+<dependency>
+	<groupId>org.aspectj</groupId>
+	<artifactId>aspectjtools</artifactId>
+	<version>${aspectj.version}</version>
+</dependency>
+-->
+				<dependency>
+					<groupId>org.aspectj</groupId>
+					<artifactId>aspectjrt</artifactId>
+					<version>${aspectj.version}</version>
+				</dependency>
+
+				<dependency>
+					<groupId>org.json</groupId>
+					<artifactId>json</artifactId>
+					<version>20180813</version>
+				</dependency>
+
+
+
+			</dependencies>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.m2e</groupId>
+						<artifactId>lifecycle-mapping</artifactId>
+						<version>1.0.0</version>
+						<configuration>
+							<lifecycleMappingMetadata>
+								<pluginExecutions>
+									<pluginExecution>
+										<pluginExecutionFilter>
+											<groupId>org.codehaus.mojo</groupId>
+											<artifactId>aspectj-maven-plugin</artifactId>
+											<versionRange>[1.0,)</versionRange>
+											<goals>
+												<!--<goal>test-compile</goal>-->
+												<goal>compile</goal>
+											</goals>
+										</pluginExecutionFilter>
+										<action>
+											<execute />
+										</action>
+									</pluginExecution>
+								</pluginExecutions>
+							</lifecycleMappingMetadata>
+						</configuration>
+					</plugin>
+					<!-- disable the exclusion rules -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>3.1.0</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<artifactSet>
+										<excludes combine.self="override"></excludes>
+									</artifactSet>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<version>2.19.1</version>
+						<configuration>
+							<includes>
+								<include>**/Test*.java</include>
+								<include>**/*Test.java</include>
+								<include>**/*Tests.java</include>
+								<include>**/*TestCase.java</include>
+							</includes>
+							<properties>
+								<!-- <includeTags>fast</includeTags> -->
+								<excludeTags>slow</excludeTags>
+
+							</properties>
+						</configuration>
+						<dependencies>
+							<dependency>
+								<groupId>org.junit.platform</groupId>
+								<artifactId>junit-platform-surefire-provider</artifactId>
+								<version>1.0.1</version>
+							</dependency>
+							<dependency>
+								<groupId>org.junit.jupiter</groupId>
+								<artifactId>junit-jupiter-engine</artifactId>
+								<version>5.0.0</version>
+							</dependency>
+							<dependency>
+								<groupId>org.junit.vintage</groupId>
+								<artifactId>junit-vintage-engine</artifactId>
+								<version>4.12.1</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>aspectj-maven-plugin</artifactId>
+						<version>1.11</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>compile</goal>
+									<!-- <goal>test-compile</goal> -->
+								</goals>
+							</execution>
+						</executions>
+						<dependencies>
+							<dependency>
+								<groupId>org.aspectj</groupId>
+								<artifactId>aspectjrt</artifactId>
+								<version>${aspectj.version}</version>
+							</dependency>
+							<dependency>
+								<groupId>org.aspectj</groupId>
+								<artifactId>aspectjtools</artifactId>
+								<version>${aspectj.version}</version>
+							</dependency>
+						</dependencies>
+						<configuration>
+							<showWeaveInfo>true</showWeaveInfo>
+							<encoding>UTF-8</encoding>
+							<verbose>false</verbose>
+							<source>1.8</source>
+							<target>1.8</target>
+							<complianceLevel>1.8</complianceLevel>
+							<forceAjcCompile>true</forceAjcCompile>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.19.1</version>
+				<configuration>
+					<includes>
+						<include>**/Test*.java</include>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*TestCase.java</include>
+					</includes>
+					<properties>
+						<excludeTags>slow</excludeTags>
+					</properties>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.junit.platform</groupId>
+						<artifactId>junit-platform-surefire-provider</artifactId>
+						<version>1.0.1</version>
+					</dependency>
+					<dependency>
+						<groupId>org.junit.jupiter</groupId>
+						<artifactId>junit-jupiter-engine</artifactId>
+						<version>5.0.0</version>
+					</dependency>
+					<dependency>
+						<groupId>org.junit.vintage</groupId>
+						<artifactId>junit-vintage-engine</artifactId>
+						<version>4.12.1</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>aspectj-maven-plugin</artifactId>
+				<version>1.11</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compile</goal>
+							<!-- <goal>test-compile</goal> -->
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>org.aspectj</groupId>
+						<artifactId>aspectjrt</artifactId>
+						<version>${aspectj.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>org.aspectj</groupId>
+						<artifactId>aspectjtools</artifactId>
+						<version>${aspectj.version}</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<showWeaveInfo>true</showWeaveInfo>
+					<encoding>UTF-8</encoding>
+					<verbose>false</verbose>
+					<source>1.8</source>
+					<target>1.8</target>
+					<complianceLevel>1.8</complianceLevel>
+					<forceAjcCompile>true</forceAjcCompile>
+				</configuration>
+			</plugin>
+
+
+			<!-- We use the maven-shade plugin to create a fat jar that contains all dependencies
+                  except flink and its transitive dependencies. The resulting fat-jar can be executed
+                  on a cluster. Change the value of Program-Class if your program entry point changes. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<!-- Run shade goal on package phase -->
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<artifactSet>
+								<excludes>
+									<!-- This list contains all dependencies of flink-dist
+									Everything else will be packaged into the fat-jar
+									-->
+									<exclude>org.apache.flink:flink-annotations</exclude>
+									<exclude>org.apache.flink:flink-shaded-hadoop2</exclude>
+									<exclude>org.apache.flink:flink-shaded-curator-recipes</exclude>
+									<exclude>org.apache.flink:flink-core</exclude>
+									<exclude>org.apache.flink:flink-java</exclude>
+									<exclude>org.apache.flink:flink-scala_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-runtime_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-optimizer_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-clients_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-avro_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-examples-batch_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-examples-streaming_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-streaming-java_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-streaming-scala_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-scala-shell_${scala.binary.version}</exclude>
+									<exclude>org.apache.flink:flink-python</exclude>
+									<exclude>org.apache.flink:flink-metrics-core</exclude>
+									<exclude>org.apache.flink:flink-metrics-jmx</exclude>
+									<exclude>org.apache.flink:flink-statebackend-rocksdb_${scala.binary.version}</exclude>
+
+									<!-- Also exclude very big transitive dependencies of Flink
+
+									WARNING: You have to remove these excludes if your code relies on other
+									versions of these dependencies.
+
+									-->
+
+									<exclude>log4j:log4j</exclude>
+									<exclude>org.scala-lang:scala-library</exclude>
+									<exclude>org.scala-lang:scala-compiler</exclude>
+									<exclude>org.scala-lang:scala-reflect</exclude>
+									<exclude>com.data-artisans:flakka-actor_*</exclude>
+									<exclude>com.data-artisans:flakka-remote_*</exclude>
+									<exclude>com.data-artisans:flakka-slf4j_*</exclude>
+									<exclude>io.netty:netty-all</exclude>
+									<exclude>io.netty:netty</exclude>
+									<exclude>commons-fileupload:commons-fileupload</exclude>
+									<exclude>org.apache.avro:avro</exclude>
+									<exclude>commons-collections:commons-collections</exclude>
+									<exclude>org.codehaus.jackson:jackson-core-asl</exclude>
+									<exclude>org.codehaus.jackson:jackson-mapper-asl</exclude>
+									<exclude>com.thoughtworks.paranamer:paranamer</exclude>
+									<exclude>org.xerial.snappy:snappy-java</exclude>
+									<exclude>org.apache.commons:commons-compress</exclude>
+									<exclude>org.tukaani:xz</exclude>
+									<exclude>com.esotericsoftware.kryo:kryo</exclude>
+									<exclude>com.esotericsoftware.minlog:minlog</exclude>
+									<exclude>org.objenesis:objenesis</exclude>
+									<exclude>com.twitter:chill_*</exclude>
+									<exclude>com.twitter:chill-java</exclude>
+									<exclude>commons-lang:commons-lang</exclude>
+									<exclude>junit:junit</exclude>
+									<exclude>org.apache.commons:commons-lang3</exclude>
+									<exclude>org.slf4j:slf4j-api</exclude>
+									<exclude>org.slf4j:slf4j-log4j12</exclude>
+									<exclude>log4j:log4j</exclude>
+									<exclude>org.apache.commons:commons-math</exclude>
+									<exclude>org.apache.sling:org.apache.sling.commons.json</exclude>
+									<exclude>commons-logging:commons-logging</exclude>
+									<exclude>commons-codec:commons-codec</exclude>
+									<exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+									<exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
+									<exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
+									<exclude>stax:stax-api</exclude>
+									<exclude>com.typesafe:config</exclude>
+									<exclude>org.uncommons.maths:uncommons-maths</exclude>
+									<exclude>com.github.scopt:scopt_*</exclude>
+									<exclude>commons-io:commons-io</exclude>
+									<exclude>commons-cli:commons-cli</exclude>
+								</excludes>
+							</artifactSet>
+							<filters>
+								<filter>
+									<artifact>org.apache.flink:*</artifact>
+									<excludes>
+										<!-- exclude shaded google but include shaded curator -->
+										<exclude>org/apache/flink/shaded/com/**</exclude>
+										<exclude>web-docs/**</exclude>
+									</excludes>
+								</filter>
+								<filter>
+									<!-- Do not copy the signatures in the META-INF folder.
+									Otherwise, this might cause SecurityExceptions when using the JAR. -->
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<!-- If you want to use ./bin/flink run <quickstart jar> uncomment the following lines.
+							This will add a Main-Class entry to the manifest file -->
+							<!--
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>pt.ulisboa.tecnico.flink-snapshot.test.StreamingJob</mainClass>
+								</transformer>
+							</transformers>
+						    -->
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
+				<configuration>
+					<source>1.8</source> <!-- If you want to use Java 8, change this to "1.8" -->
+					<target>1.8</target> <!-- If you want to use Java 8, change this to "1.8" -->
+					<compilerId>jdt</compilerId>
+				</configuration>
+				<dependencies>
+					<!-- This dependency provides the implementation of compiler "jdt": -->
+					<dependency>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-compiler-jdt</artifactId>
+						<version>0.21.0</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
+</project>

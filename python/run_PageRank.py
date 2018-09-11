@@ -1,0 +1,580 @@
+#!/usr/bin/env python3
+__copyright__ = """ Copyright 2018 Miguel E. Coimbra
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. """
+__license__ = "Apache 2.0"
+
+# Used to launch combinations of parameters for different GraphBolt 
+# PageRank executions.
+
+###########################################################################
+################################# IMPORTS #################################
+###########################################################################
+
+# PEP 8 Style Guide for imports: https://www.python.org/dev/peps/pep-0008/#imports
+# 1. standard library imports
+import argparse
+from collections import OrderedDict
+import datetime
+import getpass
+from io import TextIOWrapper
+import os
+import pathlib # https://docs.python.org/3.6/library/pathlib.html#pathlib.Path.mkdir
+import shlex # https://docs.python.org/3/library/shlex.html#shlex.quote
+import signal
+import socket
+import string
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from typing import Dict, List
+
+# 2. related third party imports
+import psutil
+import pytz
+
+# 3. custom local imports
+import batch_rank_evaluator
+import law_stream
+import util
+
+###########################################################################
+##################### CHILD PROCESS CLEANUP ROUTINES ######################
+###########################################################################
+
+streamer_server = None
+
+def kill_proc_tree(pid: int, including_parent: bool = True) -> None:
+    # See https://stackoverflow.com/questions/1230669/subprocess-deleting-child-processes-in-windows/4229404?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    # http://psutil.readthedocs.io/en/latest/
+    print("> Checking tree of child PID {}.".format(pid))
+    parent = psutil.Process(pid)
+    children = parent.children(recursive=True)
+    for child in children:
+        print("> Killing grandchild process {}.".format(child.pid))
+        child.kill()
+    #gone, still_alive = psutil.wait_procs(children, timeout=5)
+    #_, _ = psutil.wait_procs(children, timeout=5)
+    psutil.wait_procs(children, timeout=5)
+    if including_parent:
+        print("> Killing parent process {}.".format(pid))
+        parent.kill()
+        parent.wait(5)
+
+def register_grandchildren(pid: int, processes: List) -> None:
+    parent = psutil.Process(pid)
+    children = parent.children(recursive=True)
+    for child in children:
+        print("> Adding grandchild {}.".format(child.pid))
+        processes.append(child.pid)
+
+def cleanup(processes: List) -> None:
+    for pid in process_list:
+        if psutil.pid_exists(pid): #https://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid-in-python
+            #term(pid)
+            kill_proc_tree(pid)
+        else:
+            print("> Process {} was already closed.".format(pid))
+
+    if not streamer_server is None:
+        streamer_server.shutdown()
+        streamer_server.out.flush()
+        streamer_server.out.close()
+   
+# Prepare the handler for SIGINT (Ctrl+C).
+def signal_handler(signal, frame) -> None:
+    print("\n\n> SIGINT received. Stopping processes' execution...\n")
+    cleanup(process_list)
+    print("> Done. Exiting.")
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
+def start_process(command: str, stdout: TextIOWrapper = None, stderr: TextIOWrapper = None) -> subprocess.Popen:
+    
+    # Subprocess standard output will be the calling script's standard output if none is provided.
+    if stdout is None:
+        stdout = sys.stdout
+
+    # Subprocess standard error will be set to its standard output if none is provided.
+    if stderr is None:
+        stderr = stdout
+
+    # Need to use startupinfo if running on Windows.
+    if os.name == "nt":
+        si = subprocess.STARTUPINFO()
+        si.dwFlags = subprocess.CREATE_NEW_PROCESS_GROUP
+        process = subprocess.Popen(shlex.split(command), stdout=stdout, stderr=stderr, startupinfo = si)
+    else:
+        process = subprocess.Popen(shlex.split(command), stdout=stdout, stderr=stderr)
+    return process
+
+###########################################################################
+############################# READ ARGUMENTS ##############################
+###########################################################################
+
+# The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
+DESCRIPTION_TEXT = "GraphBolt approximate processing of graphs over streams"
+parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument("-rbo-only", help="skip GraphBolt execution but try to generate RBO results.", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-keep-logs", help="keep Apache Flink logs?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-keep-cache", help="keep GraphBolt cache directory?", required=False, action="store_true") # if ommited, default value is false
+
+# GraphBolt/PageRank-specific parameters.
+parser.add_argument("-i", "--input-file", help="dataset name.", required=True, type=str)
+parser.add_argument("-cache-dir", help="cache directory name.", required=False, type=str, default="")
+parser.add_argument("-temp-dir", help="temporary directory name.", required=False, type=str, default="")
+parser.add_argument("-flink-address", help="Flink cluster's JobManager address.", required=False, type=str, default="")
+parser.add_argument("-flink-port", help="Flink cluster's JobManager port.", required=False, type=int, default=6123)
+parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
+parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
+parser.add_argument("-chunks", "--chunk-count", help="set desired number of chunks to be sent by the streamer.", required=True, type=int, default=50)
+parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", required=True, type=int, default=1000)
+parser.add_argument("-p", "--parallelism", help="set desired GraphBolt parallelism.", required=False, type=int, default=1)
+parser.add_argument("-concurrent-jobs", help="set desired GraphBolt instances to run at the same time. The more, the faster a batch of tests will run.", required=False, type=int, default=1)
+parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
+parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
+parser.add_argument("-max-mem", help="ammount of memory made available to Maven.", required=False, type=int, default=2048)
+parser.add_argument("-dump-summary", help="should intermediate summary graphs be saved to disk?", required=False, action="store_true") # if ommited, default value is false
+
+args = parser.parse_args()
+
+# Sanitize arguments and exit on invalid values.
+if args.flink_port <= 0 or not isinstance(args.flink_port, int):
+    print("> '-flink_port' must be a positive integer. Exiting.")
+    exit(1)
+if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
+    print("> '-chunks' must be a positive integer. Exiting.")
+    exit(1)
+if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
+    print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
+    exit(1)
+if args.iterations <= 0 or not isinstance(args.iterations, int):
+    print("> '-iterations' must be a positive integer. Exiting.")
+    exit(1)
+if args.dampening <= 0 or not isinstance(args.dampening, float):
+    print("> '-dampening' must be a positive float in ]0; 1[. Exiting.")
+    exit(1)
+if args.parallelism <= 0 or not isinstance(args.parallelism, int):
+    print("> '-parallelism' must be a positive integer. Exiting.")
+    exit(1)
+if args.concurrent_jobs <= 0 or not isinstance(args.concurrent_jobs, int):
+    print("> '-concurrent_jobs' must be a positive integer. Exiting.")
+    exit(1)
+if args.size <= 0 or not isinstance(args.size, int):
+    print("> '-size' must be a positive integer. Exiting.")
+    exit(1)
+if args.max_mem <= 0 or not isinstance(args.max_mem, int):
+    print("> '-max-mem' must be a positive integer. Exiting.")
+    exit(1)
+if len(args.out_dir) == 0:
+    print("> '-out-dir' must be a non-empty string. Exiting")
+    exit(1)
+if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
+    print("> '-data-dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
+    exit(1)
+
+print("> Arguments: {}".format(args))
+
+
+
+# Each summarized execution has two process steps: 1 - execute GraphBolt; 2 - execute python RBO evaluation.
+# If the sequence "Step 1 -> Step 2" for summarized GraphBolt execution 'i' is self-contained in a single process 'Si', then we are free to start as many 'Si' concurrently as the hardware allows...
+
+###########################################################################
+########################### CONSTANTS AND SETUP ###########################
+###########################################################################
+
+# Child process list, used to kill everything when this script receives Ctrl+C
+process_list = []
+
+# Define some execution constants depending on the machine we're running.
+current_user = getpass.getuser()
+
+print("> Running as user '{}' on operating system '{}'\n".format(current_user, os.name))
+
+if os.name == "posix":
+    PYTHON_PATH = "/home/{}/bin/python3/bin/python".format(current_user)
+    SHELL_DIR = args.out_dir + "/bash/pagerank"
+    SHELL_FILETYPE=".sh"
+    SHELL_COMMENT="#"
+elif os.name == "nt":
+    PYTHON_PATH = "C:/Users/{}/AppData/Local/Programs/Python/Python36/python.exe".format(current_user)
+    SHELL_DIR = args.out_dir + "/cmd/pagerank"
+    SHELL_FILETYPE = ".bat"
+    SHELL_COMMENT = "::"
+else:
+    print("> Sorry {}, your operating system '{}' is not supported. Exiting.".format(current_user, os.name))
+    exit(1)
+
+###########################################################################
+########################### CREATE DIRECTORIES ############################
+###########################################################################
+
+# Did the user specify a cache directory?
+if len(args.cache_dir) == 0:
+    CACHE_BASE = os.path.join(args.out_dir, "/cache")
+else:
+    CACHE_BASE = args.cache_dir
+
+if len(args.temp_dir) > 0:
+    if not (os.path.exists(args.temp_dir) and os.path.isdir(args.temp_dir)):
+        print("> Provided temporary directory does not exist: {}. Exiting".format(args.temp_dir))
+        exit(1)
+    TEMP_DIR = args.temp_dir
+else:
+    TEMP_DIR = tempfile.gettempdir()
+
+
+print("> Will tell GraphBolt to use cache directory:\t\t{}".format(CACHE_BASE))
+
+EVAL_DIR, STATISTICS_DIR, _, RESULTS_DIR, OUT_DIR, STREAMER_LOG_DIR = util.get_pagerank_data_paths(args.out_dir)
+GRAPHBOLT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+# Make necessary GraphBolt directories if they don't exist.
+print("> Checking GraphBolt directories...\n")
+
+if not os.path.exists(EVAL_DIR):
+    print("Creating evaluation directory:\t\t'{}'".format(EVAL_DIR))
+    pathlib.Path(EVAL_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Evaluation directory found:\t\t'{}'".format(EVAL_DIR))
+
+if not os.path.exists(STATISTICS_DIR):
+    print("Creating statistics directory:\t\t'{}'".format(STATISTICS_DIR))
+    pathlib.Path(STATISTICS_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Statistics directory found:\t\t'{}'".format(STATISTICS_DIR))
+
+if not os.path.exists(RESULTS_DIR):
+    print("Creating result directory:\t\t'{}'".format(RESULTS_DIR))
+    pathlib.Path(RESULTS_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Results directory found:\t\t'{}'".format(RESULTS_DIR))
+
+if not os.path.exists(OUT_DIR):
+    print("Creating output directory:\t\t'{}'".format(OUT_DIR))
+    pathlib.Path(OUT_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Output directory found:\t\t\t'{}'".format(OUT_DIR))
+
+if not os.path.exists(STREAMER_LOG_DIR):
+    print("Creating streamer log directory:\t'{}'\n".format(STREAMER_LOG_DIR))
+    pathlib.Path(STREAMER_LOG_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Streamer log directory found:\t\t'{}'\n".format(STREAMER_LOG_DIR))
+
+if not os.path.exists(SHELL_DIR):
+    print("Creating shell command directory:\t'{}'".format(SHELL_DIR))
+    pathlib.Path(SHELL_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Shell command directory found:\t\t'{}'".format(SHELL_DIR))
+
+if not os.path.exists(TEMP_DIR):
+    print("Creating temporary directory:\t\t'{}'".format(TEMP_DIR))
+    pathlib.Path(TEMP_DIR).mkdir(parents=True, exist_ok=True)
+else:
+    print("Temporary directory found:\t\t'{}'".format(TEMP_DIR))
+
+###########################################################################
+########################### CONFIGURE STREAMER ############################
+###########################################################################
+
+# Find out a free listening socket to choose a port for the stream server.
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((socket.gethostname(), 0))
+STREAM_PORT = s.getsockname()[1]
+s.close()
+
+# Build the path to the file to use as a stream of updates.
+stream_file_path = "{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-stream.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file)
+
+# Build the python stream program call.
+streamer_run_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/law_stream.py" -i "{KW_FILE_STREAM_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
+
+if not args.rbo_only:
+    # Format current moment as a UTC timestamp.
+    now = datetime.datetime.utcnow()
+    utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
+    timestamp = "Y{}-M{}-D{}-H{}-M{}-S{}-MCRS{}_UTC.log".format(utc_dt.year, utc_dt.month, utc_dt.day, utc_dt.hour, utc_dt.minute, utc_dt.second, utc_dt.microsecond)
+    streamer_output_file = "{}/{}_{}".format(STREAMER_LOG_DIR, args.input_file, timestamp)
+    print("{}\n".format(streamer_output_file))
+
+    print("> Starting streamer...")
+
+    # Configure the stream properties.
+    chunk_size, chunk_sizes, edge_lines, edge_count = law_stream.prepare_stream(stream_file_path, args.chunk_count)
+    out_file = open(streamer_output_file, "w")
+
+    # Create a server object.
+    streamer_server = law_stream.make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.chunk_count, listening_host="localhost", listening_port=STREAM_PORT, out=out_file)
+
+    # Get the server ready to process requests.
+    t = threading.Thread(target=streamer_server.serve_forever)
+    t.start()
+       
+    print("> Streamer started")
+
+# Save streamer launch command to shell file. Useful for debugging purposes.
+with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "w") as shell_file:
+    # Format current moment as a UTC timestamp.
+    now = datetime.datetime.utcnow()
+    utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
+    timestamp = str(utc_dt) + " (UTC)"
+    
+    # Add a sequence of the shell-specific comment character for readibility.
+    shell_file.write("{} {}  streamer start\n\n".format(SHELL_COMMENT * 5, timestamp))
+    
+    # Write the command itself for debugging purposes if we wanted to launch it on its own later.
+    shell_file.write('{}\n\n'.format(streamer_run_command))
+
+###########################################################################
+######################### CHECK COMPLETE RESULTS ##########################
+###########################################################################
+
+# Check if the complete computation results are present, run the complete computation version in case they aren't.
+complete_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_complete".format(
+    KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
+    KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening)
+
+need_to_run_complete_pagerank = False
+# Was a results directory found?
+if not os.path.exists(complete_pagerank_result_path):
+    print("> Complete PageRank results not found:\t{}".format(complete_pagerank_result_path))
+    print("> Need to run complete PageRank")
+    need_to_run_complete_pagerank = True
+else:
+    names = os.listdir(complete_pagerank_result_path)
+    paths = [os.path.join(complete_pagerank_result_path, name) for name in names]
+    sizes = [(path, os.stat(path).st_size) for path in paths]
+
+    # Does the result directory have the expected number of files?
+    if len(names) != int(args.chunk_count) + 1:
+        print("> Expected {} but got {} complete PageRank results at {}.".format(int(args.chunk_count) + 1, len(names), complete_pagerank_result_path))
+        print("> Need to run complete PageRank")
+        need_to_run_complete_pagerank = True
+    else:
+        found_zeros = False
+        # Do they all have data?
+        for [path, sz] in sizes:
+            if sz == 0:
+                found_zeros = True
+                break
+        if found_zeros:
+            print("> Found complete PageRank results with value of zero at {}.".format(path))
+            print("> Need to run complete PageRank")
+            need_to_run_complete_pagerank = True
+
+
+if args.keep_cache:
+    KEEP_CACHE_TEXT = '-keep_cache'
+else:
+    KEEP_CACHE_TEXT = ""
+
+if args.keep_logs:
+    KEEP_LOGS_TEXT = '-keep_logs'
+else:
+    KEEP_LOGS_TEXT = ""
+
+JOB_MANAGER_WEB_PARAM = "-web"
+
+if len(args.flink_address) > 0:
+    FLINK_REMOTE_ADDRESS = "-address " + args.flink_address
+    FLINK_REMOTE_PORT = "-port " + args.flink_port
+else:
+    FLINK_REMOTE_ADDRESS = ""
+    FLINK_REMOTE_PORT = ""
+
+
+
+# Build complete PageRank command.
+### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
+### Article - on running exec:exec - https://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
+graphbolt_run_command = '''mvn exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} -temp '{KW_TEMP_DIR}'"'''.format(KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism, KW_TEMP_DIR = TEMP_DIR).replace('\\', '/')
+
+print("{}\n".format(graphbolt_run_command))
+
+# Build path to output directory file.
+graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}_complete.txt'.format(
+    KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations)
+print("{}\n".format(graphbolt_output_file))
+
+# Save current iteration commands to shell file.
+with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
+    # Format current moment as a UTC timestamp.
+    now = datetime.datetime.utcnow()
+    utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
+    timestamp = str(utc_dt) + " (UTC)"
+
+    # Add a sequence of the shell-specific comment character for readibility.
+    shell_file.write("{} {}  complete execution\n\n".format(SHELL_COMMENT * 5, timestamp))
+    
+    # Write the command itself.
+    shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
+
+# If we are not skipping results and they were invalid/missing, execute.
+if need_to_run_complete_pagerank and not args.rbo_only:
+    print("> Executing complete version...")
+    with open(graphbolt_output_file, 'w') as out_file:
+        process = start_process(graphbolt_run_command, out_file)
+        process_list.append(process.pid)
+
+        print("> Registering children of process {}...".format(process.pid))
+        register_grandchildren(process.pid, process_list)
+        print("> Finished registering children of process {}.".format(process.pid))
+        process.wait()
+    print("> Complete PageRank finished.\n")
+else:
+    print("> Complete PageRank skipped.\n")
+
+
+###########################################################################
+######################### RUN APPROXIMATE VERSION #########################
+###########################################################################
+
+print("Iterating summarized PageRank parameters...")
+
+# Execute the summarized version of PageRank for different parameters.
+r_values, n_values, delta_values = util.get_big_vertex_params()
+
+for r in r_values:
+    for n in n_values:
+        for delta in delta_values:
+
+            print("{}\tGraphBolt parameters - r={}\tn={}\tdelta={}\n".format(SHELL_COMMENT * 5, r, n, delta))
+
+            # This is used as a flag to tell GraphBolt to flush intermediate summary graphs to disk.
+            if args.dump_summary:
+                SUMMARY_TEXT = "--summ"
+            else:
+                SUMMARY_TEXT = ""
+
+            # Build command to execute. pt.ulisboa.tecnico.graph.Main
+            ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
+            graphbolt_run_command = '''mvn exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}'"'''.format(
+                KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, 
+                KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,
+                KW_r = r, KW_n = n, KW_delta = delta, KW_DATA_DIR = args.data_dir, 
+                KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism,
+                KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR).replace('\\', '/')
+            
+            print("{}\n".format(graphbolt_run_command))
+
+            # Build path to output directory file.
+            graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}-{KW_r:.2f}-{KW_n}-{KW_delta:.2f}.txt'.format(
+                KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_DAMPENING_FACTOR = args.dampening,
+                KW_NUM_ITERATIONS = args.iterations, KW_r = r, KW_n = n, KW_delta = delta)
+            print("{}\n".format(graphbolt_output_file))
+
+            summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
+    KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
+    KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+
+            # Build summarized PageRank evaluation command (RBO evaluation code).
+            graphbolt_eval_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/batch_rank_evaluator.py" "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
+                KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
+
+            # Build path to RBO evaluation file.
+            graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
+                KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+
+            # Save current iteration commands to shell file.
+            with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
+                # Format current moment as a UTC timestamp.
+                now = datetime.datetime.utcnow()
+                utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
+                timestamp = str(utc_dt) + " (UTC)"
+
+                shell_file.write("{} {} r = {}\tn = {}\tdelta = {}\n\n".format(SHELL_COMMENT * 5, timestamp, r, n, delta))
+                shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
+                shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_eval_command, graphbolt_output_eval_path))
+
+            
+            # Skip summarized PageRank version if the directory for a given parameter combination is found.
+            need_to_run_this_approx = False
+            # Was a results directory found?
+            if not os.path.exists(summarized_pagerank_result_path):
+                print("> Approximate PageRank results not found:\t{}".format(summarized_pagerank_result_path))
+                print("> Need to run summarized PageRank")
+                need_to_run_this_approx = True
+            else:
+                names = os.listdir(summarized_pagerank_result_path)
+                paths = [os.path.join(summarized_pagerank_result_path, name) for name in names]
+                sizes = [(path, os.stat(path).st_size) for path in paths]
+
+                # Does the result directory have the expected number of files?
+                if len(names) != int(args.chunk_count) + 1:
+                    print("> Expected {} but got {} summarized PageRank results at {}.".format(int(args.chunk_count) + 1, len(names), summarized_pagerank_result_path))
+                    print("> Need to run summarized PageRank")
+                    need_to_run_this_approx = True
+                else:
+                    found_zeros = False
+
+                    # Do they all have data?
+                    for [path, sz] in sizes:
+                        if sz == 0:
+                            found_zeros = True
+                            break
+                    if found_zeros:
+                        print("> Found summarized PageRank results with value of zero at {}.".format(summarized_pagerank_result_path))
+                        print("> Need to run summarized PageRank")
+                        need_to_run_this_approx = True
+
+
+            # If were invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
+            if need_to_run_this_approx and (not args.rbo_only):
+                with open(graphbolt_output_file, 'w') as out_file:
+                    print("> Executing summarized version...")
+
+                    print("> Results directory:\t{}".format(summarized_pagerank_result_path))
+
+                    approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
+            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+
+                    print("> Statistics directory:\t{}".format(approx_stats_path))
+                    print("> Eval file:\t{}".format(graphbolt_output_eval_path))
+
+                    process = start_process(graphbolt_run_command, out_file)
+                    process_list.append(process.pid)
+
+                    print("\n> Registering children of process {}...".format(process.pid))
+                    register_grandchildren(process.pid, process_list)
+                    print("> Finished registering children of process {}.".format(process.pid))
+                    process.wait()
+                    print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
+            elif args.rbo_only:
+                print("> Skipping summarized execution, attempting to generate RBO directly.")
+            else:
+                print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
+
+            # Execute RBO evaluation code.
+            print("{}".format(graphbolt_eval_command))
+            print("{}".format(graphbolt_output_eval_path))
+
+            # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
+            if os.path.isdir(summarized_pagerank_result_path):
+                with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
+                    print("> Calculating RBO of summarized version...\n")
+
+
+                    batch_rank_evaluator.compute_rbo(summarized_pagerank_result_path, complete_pagerank_result_path, out = rbo_out_file)
+            
+###########################################################################
+############################# CLEANUP ON EXIT #############################
+###########################################################################
+
+# Stop all children and grandchildren processes.
+#if not args.skip_results:
+print("> Stopping execution...")
+cleanup(process_list)
