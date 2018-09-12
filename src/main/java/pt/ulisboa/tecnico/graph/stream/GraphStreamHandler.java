@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 /**
  * Abstract class to handle updates to a graph coming as a stream.
- * TODO: improve documentation of this abstract class.
  *
  * @param <R>
  * @author Miguel E. Coimbra

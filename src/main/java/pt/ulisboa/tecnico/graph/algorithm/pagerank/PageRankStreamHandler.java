@@ -310,36 +310,10 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         this.rankOutputFormat.setOutputFilePath(new Path(super.cacheDirectory + "/ranks" + (super.iteration % super.storedIterations)));
         fixedRanks.output(this.rankOutputFormat).name("Summary PageRank - execution and results");
 
-
-
-/*
-        JobExecutionResult res = super.env.execute("PageRankStreamHandler - executeApproximate");
-
-        final Long internal_edge_count = (Long) res.getAccumulatorResult(this.concreteModel.internalEdgeCount);
-
-
-        final Long external_edge_count = (Long) res.getAccumulatorResult(this.concreteModel.externalEdgeCount);
-
-
-        Long values_to_send = (Long) res.getAccumulatorResult(this.concreteModel.ranksToSendCount);
-
-
-        Long edges_to_inside_count = (Long) res.getAccumulatorResult(this.concreteModel.edgesToInsideCount);
-
-        System.out.println(internal_edge_count);
-        System.out.println(external_edge_count);
-        System.out.println(values_to_send);
-        System.out.println(edges_to_inside_count);
-*/
-
-
         super.statisticsMap.get(BigVertexGraph.RandomWalkStatisticKeys.ITERATION_COUNT.toString()).add(this.pageRankIterations.longValue());
-
 
         // This is the time taken by a single Flink job to build the summary graph and then run PageRank.
         final JobExecutionResult jer = super.env.getLastJobExecutionResult();
-
-
 
         final long approxComputationTime = jer.getNetRuntime(TimeUnit.MILLISECONDS);
 

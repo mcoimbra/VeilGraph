@@ -27,9 +27,6 @@ def file_len(fname: str) -> int:
     return i + 1
 
 def get_big_vertex_params() -> [List, List, List]:
-    #r_values = [0.10, 0.20, 0.30]
-    #delta_values = [0.01, 0.1, 0.9]
-
     r_values = [0.05, 0.20]
     n_values = [0, 1]
     delta_values = [0.1, 1]
