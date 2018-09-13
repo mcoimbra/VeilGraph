@@ -27,9 +27,13 @@ def file_len(fname: str) -> int:
     return i + 1
 
 def get_big_vertex_params() -> [List, List, List]:
-    r_values = [0.05, 0.20]
-    n_values = [0, 1]
-    delta_values = [0.1, 1]
+    ##r_values = [0.05, 0.20]
+    ##n_values = [0, 1]
+    ##delta_values = [0.1, 1]
+
+    r_values = [0.05]
+    n_values = [0]
+    delta_values = [0.1]
     return r_values, n_values, delta_values
 
 def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:

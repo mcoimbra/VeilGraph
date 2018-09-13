@@ -1,0 +1,4 @@
+{
+    //"python.autoComplete.extraPaths": ["${workspaceFolder}/python/graphbolt"]
+    "python.autoComplete.extraPaths": ["python/graphbolt"]
+}

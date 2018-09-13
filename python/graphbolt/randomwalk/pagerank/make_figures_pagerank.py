@@ -48,7 +48,18 @@ from matplotlib import rcParams
 import numpy as np
 
 # 3. custom imports
-import util
+# https://stackoverflow.com/questions/48324056/in-python-how-can-i-import-from-a-grandparent-folder-with-a-relative-path?noredirect=1&lq=1
+##from graphbolt import util
+#FILE_ABSOLUTE_PATH = os.path.abspath(__file__)  # get absolute filepath
+#CURRENT_DIR = os.path.dirname(FILE_ABSOLUTE_PATH)  # get directory path of file
+#PARENT_DIR = os.path.dirname(CURRENT_DIR)  # get parent directory path
+#BASE_DIR = os.path.dirname(PARENT_DIR)  # get grand parent directory path
+# or you can directly get grandparent directory path as below
+#GRAPHBOLT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(GRAPHBOLT_ROOT_DIR)  # append the path to system
+#from graphbolt import util
+from graphbolt import localutil
+
 
 ###########################################################################
 ############################### FUNCTIONS #################################
@@ -76,7 +87,7 @@ def read_statistics_into_dic(statistics_file_path: List, query_count: int) -> Di
             stat_lines = statistics.readlines()
             
             # Get the column names from the statistics file.
-            print(stat_lines)
+            #print(stat_lines)
             stat_names = stat_lines[0].strip().split(';')
             
             for ind in range(len(stat_names)):
@@ -178,7 +189,7 @@ if args.pdf:
 ###########################################################################
 
 
-EVAL_DIR, STATISTICS_DIR, FIGURES_DIR, _, _, _ = util.get_pagerank_data_paths(args.out_dir)
+EVAL_DIR, STATISTICS_DIR, FIGURES_DIR, _, _, _ = localutil.get_pagerank_data_paths(args.out_dir)
 
 
 # Make necessary GraphBolt directories if they don't exist.
@@ -267,7 +278,7 @@ for m in Line2D.markers:
 ###########################################################################
 
 # Execute figure generation for different parameters.
-r_values, n_values, delta_values = util.get_big_vertex_params()
+r_values, n_values, delta_values = localutil.get_big_vertex_params()
 
 # Dictionary to store GraphBolt PageRank statistics for each parameter combination that was found.
 result_statistic_matrices = {}
@@ -300,7 +311,7 @@ for r in r_values:
             ##### Make RBO figure.
             print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path))
             if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
-                file_sz = util.file_len(graphbolt_output_eval_path)
+                file_sz = localutil.file_len(graphbolt_output_eval_path)
             else:
                 file_sz = -1
             print("> File has {} lines.".format(file_sz))
@@ -354,9 +365,9 @@ for r in r_values:
             KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
 
-            pagerank_file_ok = os.path.isfile(summary_pagerank_stats_path) and os.stat(summary_pagerank_stats_path).st_size > 0 and util.file_len(summary_pagerank_stats_path) == args.chunk_count + 1
+            pagerank_file_ok = os.path.isfile(summary_pagerank_stats_path) and os.stat(summary_pagerank_stats_path).st_size > 0 and localutil.file_len(summary_pagerank_stats_path) == args.chunk_count + 1
 
-            big_vertex_file_ok = os.path.isfile(big_vertex_stats_path) and os.stat(big_vertex_stats_path).st_size > 0 and util.file_len(big_vertex_stats_path) == args.chunk_count + 1
+            big_vertex_file_ok = os.path.isfile(big_vertex_stats_path) and os.stat(big_vertex_stats_path).st_size > 0 and localutil.file_len(big_vertex_stats_path) == args.chunk_count + 1
 
             if not pagerank_file_ok:
                 print("PageRank results file had a problem: " + summary_pagerank_stats_path)
@@ -839,7 +850,7 @@ plt.close(fig)
 ##################### Plot Flink job operator stats #######################
 ###########################################################################
 
-if not args.skip.flink.job.stats:
+if not args.skip_flink_job_stats:
     #TODO: parse jsons with id > 0, group them into arrays and them plot a heatmap or normal curve graphs
     pass
 
@@ -934,3 +945,7 @@ with open(latex_code_path, 'w') as latex_file:
 \\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_3_bottom_3_rbo, KW_TOP_EDGE_SAVINGS = top_3_bottom_3_edge_savings, KW_TOP_VERTEX_SAVINGS = top_3_bottom3_vertex_savings, KW_TOP_SPEEDUPS = top_3_bottom_3_speedups, KW_STREAM_SIZE = stream_size, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
 
     latex_file.write(tex_code_str)
+
+
+#print(__path__)
+#print(sys.path)

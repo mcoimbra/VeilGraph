@@ -24,7 +24,7 @@ import sys
 
 # 2. related third party imports
 # 3. custom local imports
-import RBO
+from .RBO import score
 
 def evaluate(file1: str, file2: str, p_value: float = 0.98) -> float:
     try:
@@ -45,7 +45,7 @@ def evaluate(file1: str, file2: str, p_value: float = 0.98) -> float:
                         node_id = l[0:l.rfind(";")]
                         gold_list_sans_rank.append(node_id)
 
-                    return RBO.score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
+                    return score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
 
             except FileNotFoundError:
                 print("File not found:", file2, file=sys.stderr)

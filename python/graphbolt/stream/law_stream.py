@@ -33,7 +33,7 @@ from typing import Tuple, List
 
 # 2. related third party imports
 # 3. custom local imports
-import util
+from graphbolt import localutil
 
 ###########################################################################
 ############################## SERVER CLASS ###############################
@@ -94,7 +94,7 @@ def prepare_stream(stream_file_path: str, query_count: int) -> Tuple[int, List, 
     with open(stream_file_path, 'r') as edge_file:
         edge_lines = edge_file.readlines()
         
-    edge_count = util.file_len(stream_file_path)
+    edge_count = localutil.file_len(stream_file_path)
     chunk_size = int(edge_count / query_count)
     chunk_sizes = (query_count - 1) * [chunk_size]
     chunk_sizes.append(edge_count - sum(chunk_sizes))

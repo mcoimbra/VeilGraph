@@ -31,7 +31,7 @@ import sys
 
 # 2. related third party imports
 # 3. custom local imports
-from rank_evaluator import evaluate
+from .rank_evaluator import evaluate
 
 ###########################################################################
 ############################### FUNCTIONS #################################
