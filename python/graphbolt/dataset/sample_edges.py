@@ -35,22 +35,7 @@ import sys
 
 # 2. related third party imports
 # 3. custom local imports
-
-###########################################################################
-################################ FUNCTIONS ################################
-###########################################################################
-
-def file_stats(fname: str) -> List:
-    acc = 0
-    bad_indexes = []
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            # If the line is empty or is a comment (begins with '#')
-            if len(l) == 0 or l.startswith("#"):
-                acc = acc - 1
-                bad_indexes.append(i)
-    acc = acc + i + 1
-    return acc, bad_indexes
+from graphbolt import localutil
 
 ###########################################################################
 ############################# READ ARGUMENTS ##############################
@@ -65,6 +50,8 @@ parser.add_argument('-p', '--sample-probability', help='set desired sampling pro
 parser.add_argument('-c', '--sample-count', help='number of samples to include in the generated stream.', required=False, type=int, nargs='?', const=-1)
 parser.add_argument('-r', '--randomize', help='randomize the sampled edges.', required=False, action="store_true")
 parser.add_argument('-d', '--debug', help='debug mode outputs helpful information.', required=False, action="store_true")
+parser.add_argument("-q", "--query-count", help="stream query count.", required=True, type=int)
+parser.add_argument("-deletion-ratio", help="number of edges to be deleted, as a fraction of stream chunk size.", required=False, type=float, default=0.20)
 
 args = parser.parse_args()
 
@@ -76,14 +63,22 @@ if (not args.out_dir is None):
     if not (os.path.exists(args.out_dir) and os.path.isdir(args.out_dir)):
         print("> Provided output directory does not exist: {}. Exiting".format(args.out_dir))
         sys.exit(1)
+
+# This condition checks if either are both true or both false.
 if args.sample_probability == args.sample_count:
     print("> Must supply exactly one of '-sample-count' or '-sample-probability'. Exiting.")
     sys.exit(1)
 if args.sample_count != None and args.sample_count <= 0:
-    print("> -sample-count value must be a positive integer. Exiting.")
+    print("> '-sample-count' value must be a positive integer. Exiting.")
     sys.exit(1)
 if args.sample_probability != None and (args.sample_probability <= 0 or args.sample_probability > 1):
-    print("> -sample_probability value must be a positive float in ]0; 1]. Exiting.")
+    print("> '-sample_probability' value must be a positive float in ]0; 1]. Exiting.")
+    sys.exit(1)
+if args.query_count < 0:
+    print("> '-query-count' must be positive. Exiting.")
+    sys.exit(1)
+if args.deletion_ratio < 0.0:
+    print("> '-deletion-ratio' must be positive. Exiting.")
     sys.exit(1)
 
 ###########################################################################
@@ -92,9 +87,14 @@ if args.sample_probability != None and (args.sample_probability <= 0 or args.sam
 
 
 # Count the number of valid edge lines and note indexes of invalid input lines.
-input_line_count, bad_indexes = file_stats(args.input_file)
+input_line_count, bad_indexes = localutil.file_stats(args.input_file)
+
+
 
 bad_index_count = len(bad_indexes)
+
+print("input_line_count: {}\tbad_indexes: {}".format(input_line_count, bad_index_count))
+#sys.exit(0)
 
 # Calculate the sampling probability and stream size.
 if args.sample_count != None:
@@ -137,12 +137,15 @@ else:
 
 out_graph_path = os.path.join(out_dir, "{}-start.tsv".format(out_file_name))
 out_stream_path = os.path.join(out_dir, "{}-stream.tsv".format(out_file_name))
+out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_name))
 
 if args.debug:
     print("> Out file name base:\t{}".format(out_file_name))
     print("> Output directory:\t{}".format(out_dir))
     print("> Base graph file:\t{}".format(out_graph_path))
     print("> Edge stream file:\t{}".format(out_stream_path))
+    print("> Edge deletions file:\t{}".format(out_deletions_path))
+    print("> Probability:\t{}".format(p))
 
 # Sample and write resulting base graph and edge stream files.
 with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_graph_file, open(out_stream_path, 'w') as out_stream_file:
@@ -152,11 +155,23 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
     sample_count = 0
     valid_line_count = input_line_count - bad_index_count
 
+    if args.debug:
+        print("> valid_line_count: " + str(valid_line_count))
+        print("> bad_index_count: " + str(bad_index_count))
+        print("> Probability:\t{}".format(p))
+        #print("> len(dataset):\t{}".format(len(dataset)))
+
+    valid_ctr = 0
+
     for i, l in enumerate(dataset):
 
         ### If the line is not empty and is not a comment (begins with '#')
         if not i in bad_indexes:
-            p = (stream_size - sample_count) / (valid_line_count - i)
+
+            p = (stream_size - sample_count) / (valid_line_count - valid_ctr)
+
+            valid_ctr = valid_ctr + 1
+
             if sample_count != stream_size and random.random() < p:
                 sample_count = sample_count + 1
                 stream_indexes.append(l.strip())
@@ -166,12 +181,42 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
                 if len(base_lines) == io.DEFAULT_BUFFER_SIZE:
                     out_graph_file.write('\n'.join(base_lines) + "\n")
                     base_lines = []
+
+            if valid_ctr == valid_line_count:
+                break
         
-    if len(base_lines) > 0:
-        out_graph_file.write('\n'.join(base_lines) + "\n")
+    
 
     # Is stream order randomization required?
     if args.randomize:
         random.shuffle(stream_indexes)
 
     out_stream_file.write('\n'.join(stream_indexes) + "\n")
+
+    if len(base_lines) > 0:
+        out_graph_file.write('\n'.join(base_lines) + "\n")
+
+        # Get the chunk properties for the generated stream.
+        chunk_size, chunk_sizes, _, edge_count = localutil.prepare_stream(out_stream_path, args.query_count)
+
+        deletion_size = int(args.deletion_ratio * chunk_size)
+
+        prev_chunk = []
+        curr_index = 0
+        already_deleted = []
+        for i in range(len(chunk_sizes)):
+            # On the first iteration (i == 0) we use an empty prev_chunk. On the first time updates are integrated, it doesn't make sense to sample deletions from the first stream update.
+            if i == 1:
+                prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
+
+            # Add the current chunk to the base graph.            
+            base_lines = base_lines + prev_chunk
+
+            new_population = [edge for edge in base_lines if not edge in already_deleted]
+
+            deletion_sample = random.sample(new_population, deletion_size)
+
+            already_deleted = already_deleted + deletion_sample
+
+        with open(out_deletions_path, 'w') as out_deletions_file:
+            out_deletions_file.write('\n'.join(already_deleted) + "\n")

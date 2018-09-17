@@ -57,7 +57,6 @@ import numpy as np
 # or you can directly get grandparent directory path as below
 #GRAPHBOLT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #sys.path.append(GRAPHBOLT_ROOT_DIR)  # append the path to system
-#from graphbolt import util
 from graphbolt import localutil
 
 
@@ -66,6 +65,7 @@ from graphbolt import localutil
 ###########################################################################
 
 #TODO: write this in standard function documentation for Python 3
+#TODO: perhaps this function could be moved into localutil.py
 
 # This function is used to read the values of a .tsv file into 
 # a dictionary.
@@ -218,6 +218,8 @@ else:
 ###########################################################################
 ########################### MATPLOTLIB CONFIGS ############################
 ###########################################################################
+
+#TODO: move matplotlib configs to a common functions file. Perhaps localutil.py
 
 # http://sbillaudelle.de/2015/02/20/matplotlib-with-style.html
 # http://sbillaudelle.de/2015/02/23/seamlessly-embedding-matplotlib-output-into-latex.html

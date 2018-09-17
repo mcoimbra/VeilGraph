@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License. """
 __license__ = "Apache 2.0"
 
-from typing import List
+from typing import Tuple, List
 
 # Utility functions used in GraphBolt's code.
 
@@ -47,7 +47,37 @@ def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:
 
     return evaluation_dir, statistics_dir, figure_dir, results_dir, output_dir, streamer_log_dir
 
+def rreplace(s: str, old: str, new: str, occurrence: str) -> str:
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
 
 
+def file_stats(fname: str) -> List:
+    acc = 0
+    bad_indexes = []
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            # If the line is empty or is a comment (begins with '#')
+            if len(l) == 0 or l.startswith("#"):
+                acc = acc - 1
+                bad_indexes.append(i)
+    acc = acc + i + 1
+    return acc, bad_indexes
 
-    
+def prepare_stream(stream_file_path: str, query_count: int, deletions_file_path: str = '') -> Tuple[int, List, List, int]:
+
+    with open(stream_file_path, 'r') as edge_file:
+        edge_lines = edge_file.readlines()
+
+    if len(deletions_file_path > 0):
+        with open(deletions_file_path, 'r') as deletions_file:
+            deletion_lines = deletions_file.readlines()
+    else:
+        deletion_lines = []
+        
+    edge_count = file_len(stream_file_path)
+    chunk_size = int(edge_count / query_count)
+    chunk_sizes = (query_count - 1) * [chunk_size]
+    chunk_sizes.append(edge_count - sum(chunk_sizes))
+
+    return chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines

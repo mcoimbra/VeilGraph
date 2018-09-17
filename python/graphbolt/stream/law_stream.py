@@ -39,7 +39,7 @@ from graphbolt import localutil
 ############################## SERVER CLASS ###############################
 ###########################################################################
 
-#TODO: catch exception "BrokenPipeError: [Errno 32] Broken pipe" and print appropriate message about the GraphBolt client having crashed.
+#TODO: catch exception "BrokenPipeError: [Errno 32] Broken pipe" and print appropriate message about the GraphBolt client having crashed or closed with Ctrl+C.
 
 class DatasetStreamHandler(socketserver.BaseRequestHandler):
     queries = 0
@@ -47,8 +47,12 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
     def handle(self):
         print("[CLIENT - {0}]\t\t{1}\n".format(str(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"), str(self.client_address)), file=self.server.out)
 
+        deletions_size = int(self.server.chunk_sizes[0] * 0.2)
+
         i = 0
         
+        deletion_index = 0
+
         for line in self.server.edge_lines:
 
             i = i + 1
@@ -62,6 +66,21 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
             if i == self.server.chunk_sizes[self.queries]:
                 i = 0
                 print("[QUERY\t- {0}]\t\t{1} - #{2}/{3} ({4})".format(str(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"), str(self.client_address), str(self.queries + 1), str(self.server.query_count), str(self.server.chunk_sizes[self.queries])), file=self.server.out)
+
+                # Get current server.deletion_lines block.
+                deletion_base = deletion_index * deletions_size
+                target_deletion_lines = self.server.deletion_lines[deletion_base: deletion_base + deletions_size]
+                deletion_index = deletion_index + 1
+
+                # Send block's line with self.request.send
+                delete_msg = ''
+                for tmp in target_deletion_lines:
+                    delete_edge = tmp.strip().split('\t')
+                    delete_msg = delete_msg + "D {0} {1}\n".format(delete_edge[0], delete_edge[1])
+                    
+                self.request.send(delete_msg.encode())
+                time.sleep(0.017)
+                
                 self.query()
 
                 if not self.queries == self.server.query_count:
@@ -80,26 +99,18 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
 
 
 
-def make_server(edge_lines, chunk_sizes, query_count, listening_host: str = "localhost", listening_port: int = 2345, out: io.TextIOWrapper = sys.stdout) -> socketserver.ThreadingTCPServer:
+def make_server(edge_lines: List, chunk_sizes: List, query_count: int, deletion_lines: List = [], listening_host: str = "localhost", listening_port: int = 2345, out: io.TextIOWrapper = sys.stdout) -> socketserver.ThreadingTCPServer:
 
     server = socketserver.ThreadingTCPServer((listening_host, listening_port), DatasetStreamHandler)
     server.edge_lines = edge_lines
     server.chunk_sizes = chunk_sizes
     server.query_count = query_count
     server.out = out
+    server.deletion_lines = deletion_lines
 
     return server
 
-def prepare_stream(stream_file_path: str, query_count: int) -> Tuple[int, List, List, int]:
-    with open(stream_file_path, 'r') as edge_file:
-        edge_lines = edge_file.readlines()
-        
-    edge_count = localutil.file_len(stream_file_path)
-    chunk_size = int(edge_count / query_count)
-    chunk_sizes = (query_count - 1) * [chunk_size]
-    chunk_sizes.append(edge_count - sum(chunk_sizes))
 
-    return chunk_size, chunk_sizes, edge_lines, edge_count
 
 
 
@@ -113,6 +124,7 @@ if __name__ == "__main__":
     DESCRIPTION_TEXT = "GraphBolt streamer script."
     parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-i", "--input-file", help="dataset stream path.", required=True, type=str)
+    parser.add_argument("-d", "--deletions-file", help="dataset deletions profile.", required=False, type=str, default='')
     parser.add_argument("-q", "--query-count", help="stream query count.", required=True, type=int)
     parser.add_argument("-p", "--port", help="desired listening stream port.", required=False, type=int, default=2345)
     parser.add_argument("--host", help="desired listening stream host.", required=False, type=str, default="localhost")
@@ -122,6 +134,11 @@ if __name__ == "__main__":
     if not os.path.exists(args.input_file):
         print("> Provided input file '--input-file' '{}' does not exist. Exiting.".format(args.input_file))
         sys.exit(1)
+    
+    if len(args.deletions_file) > 0 and not os.path.exists(args.deletions_file):
+        print("> Provided deletions file '--deletions-file' '{}' does not exist. Exiting.".format(args.deletions_file))
+        sys.exit(1)
+    
     if args.query_count < 0:
         print("> Query count '--query-count' must be positive. Exiting.")
         sys.exit(1)
@@ -129,7 +146,7 @@ if __name__ == "__main__":
         print("> Stream port '--port' must be positive. Exiting.")
         sys.exit(1)
 
-    chunk_size, chunk_sizes, edge_lines, edge_count = prepare_stream(args.input_file, args.query_count)
+    chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines = localutil.prepare_stream(args.input_file, args.query_count, args.deletions_file)
 
     print('[INFO]')
     print('> Input file has {0} lines'.format(edge_count))
@@ -139,7 +156,7 @@ if __name__ == "__main__":
     print('last_chunk_size:\t{}'.format(chunk_sizes[-1]))
     print('sum_count:\t{}'.format(sum(chunk_sizes)))
 
-    server = make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.query_count, listening_host=args.host, listening_port=args.port)
+    server = make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.query_count, deletion_lines=deletion_lines, listening_host=args.host, listening_port=args.port)
     
 
 

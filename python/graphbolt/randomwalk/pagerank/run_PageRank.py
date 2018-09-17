@@ -315,11 +315,11 @@ if not args.rbo_only:
     print("> Starting streamer...")
 
     # Configure the stream properties.
-    chunk_size, chunk_sizes, edge_lines, edge_count = law_stream.prepare_stream(stream_file_path, args.chunk_count)
+    chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines = localutil.prepare_stream(stream_file_path, args.chunk_count)
     out_file = open(streamer_output_file, "w")
 
     # Create a server object.
-    streamer_server = law_stream.make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.chunk_count, listening_host="localhost", listening_port=STREAM_PORT, out=out_file)
+    streamer_server = law_stream.make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.chunk_count, deletion_lines=deletion_lines, listening_host="localhost", listening_port=STREAM_PORT, out=out_file)
 
     # Get the server ready to process requests.
     t = threading.Thread(target=streamer_server.serve_forever)
