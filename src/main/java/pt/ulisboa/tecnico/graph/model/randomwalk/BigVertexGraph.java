@@ -346,7 +346,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                     @Override
                     public Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> join(Tuple3<Long, Double, Long> longDoubleTuple2, Tuple2<Long, Double> longDoubleTuple22) {
                         if(longDoubleTuple22 == null) {
-                            // If the vertex coming from kHotVertices had no match for the leftOuterJoin with previousRanks, set the second tuple here as null.
+                            // If the vertex coming from kHotVertices had no match for the leftOuterJoin with previousRanks (had no previous known rank), set the second tuple here as null.
                             return Tuple2.of(longDoubleTuple2, null);
                         }
                         else {
@@ -543,8 +543,10 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
         // Add model-specific statistics.
 
-        super.statisticsMap.put(GraphStreamHandler.StatisticKeys.EXECUTION_COUNTER.toString(), new ArrayList<>());
+        //super.statisticsMap.put(GraphStreamHandler.StatisticKeys.EXECUTION_COUNTER.toString(), new ArrayList<>());
         //super.statisticsMap.put(RandomWalkStatisticKeys.ITERATION_COUNT.toString(), new ArrayList<>());
+
+        super.statisticsMap.put(RandomWalkStatisticKeys.EXECUTION_COUNTER.toString(), new ArrayList<>());
         super.statisticsMap.put(RandomWalkStatisticKeys.SUMMARY_VERTEX_COUNT.toString(), new ArrayList<>());
         super.statisticsMap.put(RandomWalkStatisticKeys.SUMMARY_EDGE_COUNT.toString(), new ArrayList<>());
         super.statisticsMap.put(RandomWalkStatisticKeys.INTERNAL_EDGE_COUNT.toString(), new ArrayList<>());
@@ -607,8 +609,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         return nameJoiner.toString();
     }
 
-
+    // TODO: think about centralizing all model enums in a single structure in AbstractGraphModel.java - this could avoid mismatches between enum key values
     public enum RandomWalkStatisticKeys {
+        EXECUTION_COUNTER("execution_count"),
         SUMMARY_VERTEX_COUNT("summary_vertex_num"),
         SUMMARY_EDGE_COUNT("summary_edge_num"),
         INTERNAL_EDGE_COUNT("internal_edge_count"),
@@ -820,7 +823,8 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
             Tuple3<Long, Double, Long> first = tuple3Tuple2Tuple2.f0;
             Tuple2<Long, Double> second = tuple3Tuple2Tuple2.f1;
 
-            if(first.f1.isInfinite()) {
+//            if(first.f1.isInfinite()) {
+            if(first.f1.isInfinite() || first.f2 == 0) {
                 return Tuple2.of(first.f0, n.longValue());
             }
             else if(second == null) {

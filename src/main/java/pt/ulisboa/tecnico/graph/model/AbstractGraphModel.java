@@ -53,8 +53,10 @@ public abstract class AbstractGraphModel<K, VV, EV, R> implements GraphModel<K, 
 
             // Initialize model statistic names.
             final StringJoiner statJoiner = new StringJoiner(";");
+            statJoiner.add("execution_count");
             for(final String statName: this.statisticsMap.keySet()) {
-                statJoiner.add(statName);
+                if( ! statName.equals("execution_count"))
+                    statJoiner.add(statName);
             }
             final String statLine = statJoiner.toString();
             this.printStream.println(statLine);

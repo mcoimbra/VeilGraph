@@ -48,7 +48,7 @@ import pytz
 # 3. custom local imports
 #from graphbolt.evaluation.rbo import batch_rank_evaluator
 from graphbolt.evaluation.rbo import batch_rank_evaluator
-from graphbolt.stream import law_stream
+from graphbolt.stream import streamer
 from graphbolt import localutil
 
 ###########################################################################
@@ -148,6 +148,7 @@ parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 parser.add_argument("-max-mem", help="ammount of memory made available to Maven.", required=False, type=int, default=2048)
 parser.add_argument("-dump-summary", help="should intermediate summary graphs be saved to disk?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
 
 args = parser.parse_args()
 
@@ -158,6 +159,8 @@ if args.flink_port <= 0 or not isinstance(args.flink_port, int):
 if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     exit(1)
+if args.data_dir.startswith('~'):
+    args.data_dir = os.path.expanduser(args.data_dir)
 if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
     exit(1)
@@ -179,9 +182,12 @@ if args.size <= 0 or not isinstance(args.size, int):
 if args.max_mem <= 0 or not isinstance(args.max_mem, int):
     print("> '-max-mem' must be a positive integer. Exiting.")
     exit(1)
+if args.out_dir.startswith('~'):
+    args.out_dir = os.path.expanduser(args.out_dir)
 if len(args.out_dir) == 0:
     print("> '-out-dir' must be a non-empty string. Exiting")
     exit(1)
+
 if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> '-data-dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
     exit(1)
@@ -205,6 +211,7 @@ current_user = getpass.getuser()
 
 print("> Running as user '{}' on operating system '{}'\n".format(current_user, os.name))
 
+# Maybe remove the PYTHON_PATH variable.
 if os.name == "posix":
     PYTHON_PATH = "/home/{}/bin/python3/bin/python".format(current_user)
     SHELL_DIR = args.out_dir + "/bash/pagerank"
@@ -229,13 +236,19 @@ if len(args.cache_dir) == 0:
 else:
     CACHE_BASE = args.cache_dir
 
+if CACHE_BASE.startswith('~'):
+    CACHE_BASE = os.path.expanduser(CACHE_BASE)
+
 if len(args.temp_dir) > 0:
+    if args.temp_dir.startswith('~'):
+        args.temp_dir = os.path.expanduser(args.temp_dir)
     if not (os.path.exists(args.temp_dir) and os.path.isdir(args.temp_dir)):
         print("> Provided temporary directory does not exist: {}. Exiting".format(args.temp_dir))
         exit(1)
     TEMP_DIR = args.temp_dir
 else:
     TEMP_DIR = tempfile.gettempdir()
+
 
 
 print("> Will tell GraphBolt to use cache directory:\t\t{}".format(CACHE_BASE))
@@ -302,7 +315,16 @@ s.close()
 stream_file_path = "{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-stream.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file)
 
 # Build the python stream program call.
-streamer_run_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/law_stream.py" -i "{KW_FILE_STREAM_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
+#streamer_run_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/streamer.py" -i "{KW_FILE_STREAM_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
+
+
+deletion_file_path = ''
+optional_deletion_file_path = ''
+if args.delete_edges:
+    deletion_file_path = "{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-deletions.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file)
+    optional_deletion_file_path = "-d {KW_DELETION_OPTIONAL_ARG}".format(KW_DELETION_OPTIONAL_ARG = deletion_file_path)
+
+streamer_run_command = '{KW_PYTHON_PATH} -m "graphbolt.stream.streamer" -i "{KW_FILE_STREAM_PATH}" "{KW_DELETIONS_OPTIONAL_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_DELETIONS_OPTIONAL_PATH = optional_deletion_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
 
 if not args.rbo_only:
     # Format current moment as a UTC timestamp.
@@ -315,11 +337,11 @@ if not args.rbo_only:
     print("> Starting streamer...")
 
     # Configure the stream properties.
-    chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines = localutil.prepare_stream(stream_file_path, args.chunk_count)
+    chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines = localutil.prepare_stream(stream_file_path, args.chunk_count, deletion_file_path)
     out_file = open(streamer_output_file, "w")
 
     # Create a server object.
-    streamer_server = law_stream.make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.chunk_count, deletion_lines=deletion_lines, listening_host="localhost", listening_port=STREAM_PORT, out=out_file)
+    streamer_server = streamer.make_server(edge_lines=edge_lines, chunk_sizes=chunk_sizes, query_count=args.chunk_count, deletion_lines=deletion_lines, listening_host="localhost", listening_port=STREAM_PORT, out=out_file)
 
     # Get the server ready to process requests.
     t = threading.Thread(target=streamer_server.serve_forever)
@@ -400,6 +422,8 @@ else:
     FLINK_JOB_STATS_FLAG = ""
 
 
+#TODO: "mvn -f ../pom.xml " requires that a graphbolt.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
+
 
 # Build complete PageRank command.
 ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
@@ -459,7 +483,7 @@ for r in r_values:
 
             # This is used as a flag to tell GraphBolt to flush intermediate summary graphs to disk.
             if args.dump_summary:
-                SUMMARY_TEXT = "--summ"
+                SUMMARY_TEXT = "-dump"
             else:
                 SUMMARY_TEXT = ""
 

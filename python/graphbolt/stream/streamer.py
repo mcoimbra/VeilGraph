@@ -47,7 +47,7 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
     def handle(self):
         print("[CLIENT - {0}]\t\t{1}\n".format(str(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"), str(self.client_address)), file=self.server.out)
 
-        deletions_size = int(self.server.chunk_sizes[0] * 0.2)
+        deletions_size = int(self.server.chunk_sizes[0] * localutil.STREAM_DELETION_RATIO)
 
         i = 0
         
@@ -67,19 +67,22 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
                 i = 0
                 print("[QUERY\t- {0}]\t\t{1} - #{2}/{3} ({4})".format(str(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"), str(self.client_address), str(self.queries + 1), str(self.server.query_count), str(self.server.chunk_sizes[self.queries])), file=self.server.out)
 
-                # Get current server.deletion_lines block.
-                deletion_base = deletion_index * deletions_size
-                target_deletion_lines = self.server.deletion_lines[deletion_base: deletion_base + deletions_size]
-                deletion_index = deletion_index + 1
+                if len(self.server.deletion_lines) > 0:
+                    # Get current server.deletion_lines block.
+                    deletion_base = deletion_index * deletions_size
+                    target_deletion_lines = self.server.deletion_lines[deletion_base: deletion_base + deletions_size]
+                    deletion_index = deletion_index + 1
 
-                # Send block's line with self.request.send
-                delete_msg = ''
-                for tmp in target_deletion_lines:
-                    delete_edge = tmp.strip().split('\t')
-                    delete_msg = delete_msg + "D {0} {1}\n".format(delete_edge[0], delete_edge[1])
-                    
-                self.request.send(delete_msg.encode())
-                time.sleep(0.017)
+                    # Send block's line with self.request.send
+                    delete_msg = ''
+                    for tmp in target_deletion_lines:
+                        delete_edge = tmp.strip().split('\t')
+                        delete_msg = delete_msg + "D {0} {1}\n".format(delete_edge[0], delete_edge[1])
+                        
+                    self.request.send(delete_msg.encode())
+                    print("[INFO]\t\t\t{0} - Sending deletions: {1}".format(str(self.client_address), delete_msg), file=self.server.out)
+
+                    time.sleep(0.017)
                 
                 self.query()
 
@@ -98,7 +101,7 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
         self.request.send(msg.encode())
 
 
-
+# If deletion_lines is an empty list, it means we are only testing with edge additions.
 def make_server(edge_lines: List, chunk_sizes: List, query_count: int, deletion_lines: List = [], listening_host: str = "localhost", listening_port: int = 2345, out: io.TextIOWrapper = sys.stdout) -> socketserver.ThreadingTCPServer:
 
     server = socketserver.ThreadingTCPServer((listening_host, listening_port), DatasetStreamHandler)

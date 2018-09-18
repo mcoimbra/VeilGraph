@@ -87,6 +87,8 @@ if args.deletion_ratio < 0.0:
 
 
 # Count the number of valid edge lines and note indexes of invalid input lines.
+if args.input_file.startswith('~'):
+    args.input_file = os.path.expanduser(args.input_file)
 input_line_count, bad_indexes = localutil.file_stats(args.input_file)
 
 
@@ -197,7 +199,7 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
         out_graph_file.write('\n'.join(base_lines) + "\n")
 
         # Get the chunk properties for the generated stream.
-        chunk_size, chunk_sizes, _, edge_count = localutil.prepare_stream(out_stream_path, args.query_count)
+        chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
 
         deletion_size = int(args.deletion_ratio * chunk_size)
 

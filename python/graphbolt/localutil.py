@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License. """
 __license__ = "Apache 2.0"
 
+import os
 from typing import Tuple, List
+
+# Global variables.
+# Delete STREAM_DELETION_RATIO * stream chunk size edges on each query application.
+STREAM_DELETION_RATIO = 0.2
 
 # Utility functions used in GraphBolt's code.
 
@@ -32,11 +37,16 @@ def get_big_vertex_params() -> [List, List, List]:
     ##delta_values = [0.1, 1]
 
     r_values = [0.05]
-    n_values = [0]
+    n_values = [0, 3]
     delta_values = [0.1]
     return r_values, n_values, delta_values
 
 def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:
+
+
+    if out_dir.startswith('~'):
+        out_dir = os.path.expanduser(out_dir)
+
     evaluation_dir = out_dir + "/Eval/pagerank"
     statistics_dir = out_dir + "/Statistics/pagerank"
     figure_dir = out_dir + "/Figures/pagerank"
@@ -69,7 +79,7 @@ def prepare_stream(stream_file_path: str, query_count: int, deletions_file_path:
     with open(stream_file_path, 'r') as edge_file:
         edge_lines = edge_file.readlines()
 
-    if len(deletions_file_path > 0):
+    if len(deletions_file_path) > 0:
         with open(deletions_file_path, 'r') as deletions_file:
             deletion_lines = deletions_file.readlines()
     else:

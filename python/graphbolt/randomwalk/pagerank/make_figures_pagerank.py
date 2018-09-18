@@ -135,7 +135,7 @@ def save_figure(path: str, extension_list: List) -> None:
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
 DESCRIPTION_TEXT = "GraphBolt PageRank figure generator"
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("-skip-single-figures", help="skip parameter-specific figure generation. Only plot groups of combinations of parameters", required=False, action="store_true") # if ommited default value is false
+parser.add_argument("-plot-single-figures", help="skip parameter-specific figure generation. Only plot groups of combinations of parameters", required=False, action="store_true") # if ommited default value is false
 parser.add_argument("-png", help="output .png files too", required=False, action="store_true") # if ommited default value is false
 parser.add_argument("-pdf", help="output .pdf files too", required=False, action="store_true") # if ommited default value is false
 
@@ -157,6 +157,8 @@ args = parser.parse_args()
 if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     sys.exit(1)
+if args.data_dir.startswith('~'):
+        args.data_dir = os.path.expanduser(args.data_dir)
 if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> 'data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
     sys.exit(1)
@@ -169,6 +171,8 @@ if args.dampening <= 0 or not isinstance(args.dampening, float):
 if args.size <= 0 or not isinstance(args.size, int):
     print("> '-size' must be a positive integer. Exiting.")
     sys.exit(1)
+if args.out_dir.startswith('~'):
+        args.out_dir = os.path.expanduser(args.out_dir)
 if not (os.path.exists(args.out_dir) and os.path.isdir(args.out_dir)):
     print("> '-out-dir' must be a non-empty string. Exiting")
     sys.exit(1)
@@ -187,6 +191,7 @@ if args.pdf:
 ###########################################################################
 ############################ CHECK DIRECTORIES ############################
 ###########################################################################
+
 
 
 EVAL_DIR, STATISTICS_DIR, FIGURES_DIR, _, _, _ = localutil.get_pagerank_data_paths(args.out_dir)
@@ -339,9 +344,13 @@ for r in r_values:
                 # Set the figure base name for the GraphBolt vertex K set parameters.
                 figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
                 
+                
                 result_rbo_matrices[key_label] = rbos
 
-                if(not args.skip_single_figures):
+                print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+                print(result_rbo_matrices)
+
+                if(args.plot_single_figures):
                     print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
                     fig, ax = plt.subplots()
                     plt.xlabel("Number of PageRank executions")
@@ -373,16 +382,17 @@ for r in r_values:
 
             if not pagerank_file_ok:
                 print("PageRank results file had a problem: " + summary_pagerank_stats_path)
-                sys.exit(-1)
+                sys.exit(1)
             elif not big_vertex_file_ok:
                 print("Big vertex file had a problem: " + summary_pagerank_stats_path)
-                sys.exit(-1)
+                sys.exit(1)
             else:
 
                 stat_files = [summary_pagerank_stats_path, big_vertex_stats_path]
                 summary_pagerank_stats_matrix = read_statistics_into_dic(stat_files, args.chunk_count)
 
-                
+                print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+                print(summary_pagerank_stats_matrix)
 
                 # Programmatically store the speedup values.
                 summary_pagerank_stats_matrix['speedup'] = [exact_time / summarized_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
@@ -392,7 +402,7 @@ for r in r_values:
                 result_statistic_matrices[key_label] = summary_pagerank_stats_matrix
 
                 ##### Make statistics figures specific to each individual parameter combination.
-                if(not args.skip_single_figures):
+                if(args.plot_single_figures):
                     ###### PLOT summary graph vertex and edge count as fraction of complete graph.
                     # Custom ticker: https://matplotlib.org/examples/pylab_examples/custom_ticker1.html
                     fig, ax = plt.subplots()
