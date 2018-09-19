@@ -71,6 +71,9 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
                     # Get current server.deletion_lines block.
                     deletion_base = deletion_index * deletions_size
                     target_deletion_lines = self.server.deletion_lines[deletion_base: deletion_base + deletions_size]
+
+                    print("[DELETIONS\t- {0}]\t\t{1} - #{2}/{3} ({4})".format(str(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S}"), str(self.client_address), str(self.queries + 1), str(self.server.query_count), str(deletions_size)), file=self.server.out)
+
                     deletion_index = deletion_index + 1
 
                     # Send block's line with self.request.send
@@ -80,7 +83,7 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
                         delete_msg = delete_msg + "D {0} {1}\n".format(delete_edge[0], delete_edge[1])
                         
                     self.request.send(delete_msg.encode())
-                    print("[INFO]\t\t\t{0} - Sending deletions: {1}".format(str(self.client_address), delete_msg), file=self.server.out)
+                    print("[INFO]\t\t\t{0} - Sending deletions:\n{1}".format(str(self.client_address), delete_msg), file=self.server.out)
 
                     time.sleep(0.017)
                 
