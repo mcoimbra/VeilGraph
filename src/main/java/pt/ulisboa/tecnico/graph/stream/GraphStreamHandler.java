@@ -857,8 +857,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     }
 
     protected void registerEdgeDelete(final String[] split) {
-        System.out.println("Register edge delete:\t" + split[1] + "----" + split[1]);
         final Edge<Long, NullValue> edge = parseEdge(split);
+        System.out.println("Deleting edge: " + edge.toString());
     	this.graphUpdateTracker.removeEdge(edge);
     }
 
@@ -917,6 +917,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         break;
                     }
                     case "A": {
+                        System.out.println(updateString);
                         this.registerEdgeAdd(split);
                         break;
                     }
