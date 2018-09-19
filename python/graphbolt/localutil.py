@@ -51,7 +51,7 @@ def get_big_vertex_params() -> [List, List, List]:
     ##delta_values = [0.1, 1]
 
     r_values = [0.05]
-    n_values = [3]
+    n_values = [0, 2, 3]
     delta_values = [0.1]
     return r_values, n_values, delta_values
 
