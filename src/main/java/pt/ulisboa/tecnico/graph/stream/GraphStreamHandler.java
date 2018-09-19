@@ -824,6 +824,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         // Check edges to delete.
         if (!updates.edgesToRemove.isEmpty()) {
+            System.out.println("EDGES TO REMOVE");
         	this.graph = this.graph.removeEdges(new ArrayList<>(updates.edgesToRemove));
         }
 

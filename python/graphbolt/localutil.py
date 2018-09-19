@@ -16,7 +16,10 @@ __license__ = "Apache 2.0"
 
 from argparse import ArgumentParser
 import os
+import sys
+import time
 from typing import Tuple, List
+
 
 # Global variables.
 # Delete STREAM_DELETION_RATIO * stream chunk size edges on each query application.
@@ -40,10 +43,10 @@ STREAM_DELETION_RATIO = 0.2
 # Get the number of lines in a file.
 # Used on edge .tsv files.
 def file_len(fname: str) -> int:
-    with open(fname) as f:
+    with open(fname, 'r') as f:
         for i, _ in enumerate(f):
             pass
-    return i + 1
+        return i + 1
 
 def get_big_vertex_params() -> [List, List, List]:
     ##r_values = [0.05, 0.20]
@@ -99,6 +102,7 @@ def prepare_stream(stream_file_path: str, query_count: int, deletions_file_path:
     else:
         deletion_lines = []
         
+    print("> Stream file path:\t{}".format(stream_file_path))
     edge_count = file_len(stream_file_path)
     chunk_size = int(edge_count / query_count)
     chunk_sizes = (query_count - 1) * [chunk_size]

@@ -159,7 +159,7 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
     base_lines = []
     stream_indexes = []
     sample_count = 0
-    valid_line_count = input_line_count - bad_index_count
+    valid_line_count = input_line_count# - bad_index_count
 
     if args.debug:
         print("> valid_line_count: " + str(valid_line_count))
@@ -183,7 +183,8 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
                 base_lines.append(l.strip())
                 
                 if len(base_lines) == io.DEFAULT_BUFFER_SIZE:
-                    out_graph_file.write('\n'.join(base_lines) + "\n")
+                    #out_graph_file.write('\n'.join(base_lines) + "\n")
+                    out_graph_file.write(''.join(base_lines) + "\n")
                     base_lines = []
 
             if valid_ctr == valid_line_count:
@@ -196,31 +197,36 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
         random.shuffle(stream_indexes)
 
     out_stream_file.write('\n'.join(stream_indexes) + "\n")
+    out_stream_file.flush()
+
+
+    #out_graph_file.flush()
 
     if len(base_lines) > 0:
         out_graph_file.write('\n'.join(base_lines) + "\n")
 
-        # Get the chunk properties for the generated stream.
-        chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
+    # Get the chunk properties for the generated stream.
+    chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
 
-        deletion_size = int(args.deletion_ratio * chunk_size)
+    deletion_size = int(args.deletion_ratio * chunk_size)
 
-        prev_chunk = []
-        curr_index = 0
-        already_deleted = []
-        for i in range(len(chunk_sizes)):
-            # On the first iteration (i == 0) we use an empty prev_chunk. On the first time updates are integrated, it doesn't make sense to sample deletions from the first stream update.
-            if i == 1:
-                prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
+    prev_chunk = []
+    curr_index = 0
+    already_deleted = []
+    for i in range(len(chunk_sizes)):
+        # On the first iteration (i == 0) we use an empty prev_chunk. On the first time updates are integrated, it doesn't make sense to sample deletions from the first stream update.
+        if i == 1:
+            prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
 
-            # Add the current chunk to the base graph.            
-            base_lines = base_lines + prev_chunk
+        # Add the current chunk to the base graph.            
+        base_lines = base_lines + prev_chunk
 
-            new_population = [edge for edge in base_lines if not edge in already_deleted]
+        new_population = [edge for edge in base_lines if not edge in already_deleted]
 
-            deletion_sample = random.sample(new_population, deletion_size)
+        deletion_sample = random.sample(new_population, deletion_size)
 
-            already_deleted = already_deleted + deletion_sample
+        already_deleted = already_deleted + deletion_sample
 
-        with open(out_deletions_path, 'w') as out_deletions_file:
-            out_deletions_file.write('\n'.join(already_deleted) + "\n")
+    with open(out_deletions_path, 'w') as out_deletions_file:
+        out_deletions_file.write('\n'.join(already_deleted) + "\n")
+        out_deletions_file.flush()
