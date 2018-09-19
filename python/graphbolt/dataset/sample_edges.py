@@ -184,7 +184,7 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
                 
                 if len(base_lines) == io.DEFAULT_BUFFER_SIZE:
                     #out_graph_file.write('\n'.join(base_lines) + "\n")
-                    out_graph_file.write(''.join(base_lines) + "\n")
+                    out_graph_file.write('\n'.join(base_lines) + "\n")
                     base_lines = []
 
             if valid_ctr == valid_line_count:
