@@ -902,6 +902,9 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         while (running) {
             try {
                 final String updateString = pendingUpdates.take();
+
+                
+
                 final String[] split = updateString.trim().split("\\s+");
 
                 switch (split[0]) {
@@ -918,6 +921,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         break;
                     }
                     case "D": {
+                        System.out.println(updateString);
                         this.registerEdgeDelete(split);
                         break;
                     }
