@@ -119,7 +119,7 @@ public class ParameterHelper {
         String outDirPath = System.getProperty("java.io.tmpdir");
         if(cmd.hasOption(GraphBoltArgumentName.OUTPUT_DIR.toString())) {
             outDirPath = cmd.getOptionValue(GraphBoltArgumentName.OUTPUT_DIR.toString());
-            File outDirHandle = new File(outDirPath);
+            File outDirHandle = new File(outDirPath).getAbsoluteFile();
             if(!outDirHandle.exists()) {
                 boolean result = false;
                 try{
