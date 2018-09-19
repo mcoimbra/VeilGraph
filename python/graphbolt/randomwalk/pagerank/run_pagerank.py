@@ -160,7 +160,7 @@ if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     exit(1)
 if args.data_dir.startswith('~'):
-    args.data_dir = os.path.expanduser(args.data_dir)
+    args.data_dir = os.path.expanduser(args.data_dir).replace('\\', '/')
 if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
     exit(1)
@@ -183,7 +183,7 @@ if args.max_mem <= 0 or not isinstance(args.max_mem, int):
     print("> '-max-mem' must be a positive integer. Exiting.")
     exit(1)
 if args.out_dir.startswith('~'):
-    args.out_dir = os.path.expanduser(args.out_dir)
+    args.out_dir = os.path.expanduser(args.out_dir).replace('\\', '/')
 if len(args.out_dir) == 0:
     print("> '-out-dir' must be a non-empty string. Exiting")
     exit(1)
@@ -237,11 +237,11 @@ else:
     CACHE_BASE = args.cache_dir
 
 if CACHE_BASE.startswith('~'):
-    CACHE_BASE = os.path.expanduser(CACHE_BASE)
+    CACHE_BASE = os.path.expanduser(CACHE_BASE).replace('\\', '/')
 
 if len(args.temp_dir) > 0:
     if args.temp_dir.startswith('~'):
-        args.temp_dir = os.path.expanduser(args.temp_dir)
+        args.temp_dir = os.path.expanduser(args.temp_dir).replace('\\', '/')
     if not (os.path.exists(args.temp_dir) and os.path.isdir(args.temp_dir)):
         print("> Provided temporary directory does not exist: {}. Exiting".format(args.temp_dir))
         exit(1)

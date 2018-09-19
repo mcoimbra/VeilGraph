@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License. """
 __license__ = "Apache 2.0"
 
+from argparse import ArgumentParser
 import os
 from typing import Tuple, List
 
@@ -22,6 +23,19 @@ from typing import Tuple, List
 STREAM_DELETION_RATIO = 0.2
 
 # Utility functions used in GraphBolt's code.
+
+
+#def init_argparse(parser: ArgumentParser) -> None:
+#    parser.add_argument("-m", help="python -m option.", required=False, type=str)
+
+""" def init_argv(argv: List) -> None:
+    argc = len(argv)
+    for i in range(0, argc):
+        if argv[i] == 'python' and (i + 1 < argc) and (i + 2 < argc) and argv[i + 1] == '-m' and argv[i + 2].startswith('graphbolt'):
+            del argv[i + 2]
+            del argv[i + 1]
+            del argv[i]
+            break """
 
 # Get the number of lines in a file.
 # Used on edge .tsv files.
@@ -45,7 +59,7 @@ def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:
 
 
     if out_dir.startswith('~'):
-        out_dir = os.path.expanduser(out_dir)
+        out_dir = os.path.expanduser(out_dir).replace('\\', '/')
 
     evaluation_dir = out_dir + "/Eval/pagerank"
     statistics_dir = out_dir + "/Statistics/pagerank"

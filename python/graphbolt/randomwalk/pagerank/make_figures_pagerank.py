@@ -158,7 +158,7 @@ if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     sys.exit(1)
 if args.data_dir.startswith('~'):
-        args.data_dir = os.path.expanduser(args.data_dir)
+        args.data_dir = os.path.expanduser(args.data_dir).replace('\\', '/')
 if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> 'data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
     sys.exit(1)
@@ -172,7 +172,7 @@ if args.size <= 0 or not isinstance(args.size, int):
     print("> '-size' must be a positive integer. Exiting.")
     sys.exit(1)
 if args.out_dir.startswith('~'):
-        args.out_dir = os.path.expanduser(args.out_dir)
+        args.out_dir = os.path.expanduser(args.out_dir).replace('\\', '/')
 if not (os.path.exists(args.out_dir) and os.path.isdir(args.out_dir)):
     print("> '-out-dir' must be a non-empty string. Exiting")
     sys.exit(1)

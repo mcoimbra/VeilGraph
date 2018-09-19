@@ -53,6 +53,8 @@ parser.add_argument('-d', '--debug', help='debug mode outputs helpful informatio
 parser.add_argument("-q", "--query-count", help="stream query count.", required=True, type=int)
 parser.add_argument("-deletion-ratio", help="number of edges to be deleted, as a fraction of stream chunk size.", required=False, type=float, default=0.20)
 
+
+
 args = parser.parse_args()
 
 # Sanitize arguments.
@@ -88,15 +90,15 @@ if args.deletion_ratio < 0.0:
 
 # Count the number of valid edge lines and note indexes of invalid input lines.
 if args.input_file.startswith('~'):
-    args.input_file = os.path.expanduser(args.input_file)
+    args.input_file = os.path.expanduser(args.input_file).replace('\\', '/')
+
 input_line_count, bad_indexes = localutil.file_stats(args.input_file)
 
 
 
 bad_index_count = len(bad_indexes)
 
-print("input_line_count: {}\tbad_indexes: {}".format(input_line_count, bad_index_count))
-#sys.exit(0)
+
 
 # Calculate the sampling probability and stream size.
 if args.sample_count != None:
@@ -142,12 +144,14 @@ out_stream_path = os.path.join(out_dir, "{}-stream.tsv".format(out_file_name))
 out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_name))
 
 if args.debug:
-    print("> Out file name base:\t{}".format(out_file_name))
     print("> Output directory:\t{}".format(out_dir))
+    print("> Out file name base:\t{}".format(out_file_name))
     print("> Base graph file:\t{}".format(out_graph_path))
     print("> Edge stream file:\t{}".format(out_stream_path))
     print("> Edge deletions file:\t{}".format(out_deletions_path))
     print("> Probability:\t{}".format(p))
+    print("> input_line_count:\t{}".format(input_line_count))
+    print("> bad_indexes:\t{}".format(bad_index_count))
 
 # Sample and write resulting base graph and edge stream files.
 with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_graph_file, open(out_stream_path, 'w') as out_stream_file:
@@ -159,9 +163,7 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
 
     if args.debug:
         print("> valid_line_count: " + str(valid_line_count))
-        print("> bad_index_count: " + str(bad_index_count))
         print("> Probability:\t{}".format(p))
-        #print("> len(dataset):\t{}".format(len(dataset)))
 
     valid_ctr = 0
 
