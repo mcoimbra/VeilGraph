@@ -81,32 +81,34 @@ def rreplace(s: str, old: str, new: str, occurrence: str) -> str:
 
 
 def file_stats(fname: str) -> List:
-    acc = 0
     bad_indexes = []
     with open(fname) as f:
         for i, l in enumerate(f):
             # If the line is empty or is a comment (begins with '#')
             if len(l) == 0 or l.startswith("#"):
-                acc = acc - 1
                 bad_indexes.append(i)
-    acc = acc + i + 1
-    return acc, bad_indexes
+    return i + 1, bad_indexes
 
 def prepare_stream(stream_file_path: str, query_count: int, deletions_file_path: str = '') -> Tuple[int, List, List, int]:
 
-    with open(stream_file_path, 'r') as edge_file:
-        edge_lines = edge_file.readlines()
+    print("> Stream file path:\t{}".format(stream_file_path))
+    with open(stream_file_path, 'r') as stream_file:
+        stream_lines = stream_file.readlines()
+        stream_line_count = len(stream_lines)
 
+    # If deletions path is empty, we are not considering an edge deletions file.
     if len(deletions_file_path) > 0:
+        print("> Deletions file path:\t{}".format(stream_file_path))
         with open(deletions_file_path, 'r') as deletions_file:
             deletion_lines = deletions_file.readlines()
     else:
         deletion_lines = []
-        
-    print("> Stream file path:\t{}".format(stream_file_path))
-    edge_count = file_len(stream_file_path)
-    chunk_size = int(edge_count / query_count)
+    
+    # The stream blocks all have a size of 'chunk_size' except for the last one.
+    chunk_size = int(stream_line_count / query_count)
     chunk_sizes = (query_count - 1) * [chunk_size]
-    chunk_sizes.append(edge_count - sum(chunk_sizes))
 
-    return chunk_size, chunk_sizes, edge_lines, edge_count, deletion_lines
+    # Last block is has the leftover at the end of the stream.
+    chunk_sizes.append(stream_line_count - sum(chunk_sizes))
+
+    return chunk_size, chunk_sizes, stream_lines, stream_line_count, deletion_lines

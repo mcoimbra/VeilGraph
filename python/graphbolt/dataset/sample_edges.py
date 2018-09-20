@@ -53,8 +53,6 @@ parser.add_argument('-d', '--debug', help='debug mode outputs helpful informatio
 parser.add_argument("-q", "--query-count", help="stream query count.", required=True, type=int)
 parser.add_argument("-deletion-ratio", help="number of edges to be deleted, as a fraction of stream chunk size.", required=False, type=float, default=0.20)
 
-
-
 args = parser.parse_args()
 
 # Sanitize arguments.
@@ -83,22 +81,16 @@ if args.deletion_ratio < 0.0:
     print("> '-deletion-ratio' must be positive. Exiting.")
     sys.exit(1)
 
+if args.input_file.startswith('~'):
+    args.input_file = os.path.expanduser(args.input_file).replace('\\', '/')
+
 ###########################################################################
 ############################### APPLICATION ###############################
 ###########################################################################
 
-
 # Count the number of valid edge lines and note indexes of invalid input lines.
-if args.input_file.startswith('~'):
-    args.input_file = os.path.expanduser(args.input_file).replace('\\', '/')
-
 input_line_count, bad_indexes = localutil.file_stats(args.input_file)
-
-
-
 bad_index_count = len(bad_indexes)
-
-
 
 # Calculate the sampling probability and stream size.
 if args.sample_count != None:
@@ -135,95 +127,121 @@ if args.out_dir is None:
 
     # Create the output directory if it does not exist.
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
-
 else:
     out_dir = args.out_dir
+
+if out_dir.startswith('~'):
+    out_dir = os.path.expanduser(out_dir).replace('\\', '/')
 
 out_graph_path = os.path.join(out_dir, "{}-start.tsv".format(out_file_name))
 out_stream_path = os.path.join(out_dir, "{}-stream.tsv".format(out_file_name))
 out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_name))
 
+# Get the chunk properties for the generated stream.
+chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
+
 if args.debug:
     print("> Output directory:\t{}".format(out_dir))
     print("> Out file name base:\t{}".format(out_file_name))
-    print("> Base graph file:\t{}".format(out_graph_path))
-    print("> Edge stream file:\t{}".format(out_stream_path))
-    print("> Edge deletions file:\t{}".format(out_deletions_path))
-    print("> Probability:\t{}".format(p))
-    print("> input_line_count:\t{}".format(input_line_count))
-    print("> bad_indexes:\t{}".format(bad_index_count))
+    print("> Input file:\t{}".format(out_graph_path))
+    print("> Input line count:\t{}".format(input_line_count))
+    print("> Invalid line count:\t{}".format(bad_index_count))
+    print("> Valid line count:\t{}".format(input_line_count - bad_index_count))
+    print("\n")
+    print("> Bad indexes:\t{}".format(bad_indexes))
+    print("\n")
+    print("> Target stream file:\t{}".format(out_stream_path))
+    print("> Target stream size:\t{}".format(stream_size))
+    print("> Stream sampling probability:\t{}".format(p))
+    print("> Stream chunk size:{}".format(chunk_size))
+    print("> Stream chunk count:{}".format(len(chunk_sizes)))
+    print("> Stream edge size:{}".format(edge_count))
+    print("\n")
+    print("> Target deletions file:\t{}".format(out_deletions_path))
+    
+    
+    
 
 # Sample and write resulting base graph and edge stream files.
 with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_graph_file, open(out_stream_path, 'w') as out_stream_file:
     #https://stackoverflow.com/questions/19286657/index-all-except-one-item-in-python
     base_lines = []
-    stream_indexes = []
+    stream_lines = []
     sample_count = 0
-    valid_line_count = input_line_count# - bad_index_count
-
-    if args.debug:
-        print("> valid_line_count: " + str(valid_line_count))
-        print("> Probability:\t{}".format(p))
-
-    valid_ctr = 0
+    valid_ctr = 0       
 
     for i, l in enumerate(dataset):
 
-        ### If the line is not empty and is not a comment (begins with '#')
+        # If the line is not empty and is not a comment (begins with '#').
         if not i in bad_indexes:
-
-            p = (stream_size - sample_count) / (valid_line_count - valid_ctr)
-
+            p = (stream_size - sample_count) / (input_line_count - valid_ctr)
             valid_ctr = valid_ctr + 1
-
             if sample_count != stream_size and random.random() < p:
+                #if args.debug:
+                    #print("> Stream sampled (p={}) {}/{}\t(input position: {}).".format(p, sample_count+1, stream_size, i))
                 sample_count = sample_count + 1
-                stream_indexes.append(l.strip())
+                stream_lines.append(l.strip())
             else:
                 base_lines.append(l.strip())
                 
+                # Efficient storage of the base graph lines to disk.
                 if len(base_lines) == io.DEFAULT_BUFFER_SIZE:
-                    #out_graph_file.write('\n'.join(base_lines) + "\n")
                     out_graph_file.write('\n'.join(base_lines) + "\n")
                     base_lines = []
 
-            if valid_ctr == valid_line_count:
+            if valid_ctr == input_line_count:
                 break
         
-    
+    # Write the last set of edges, whose number was less than 'io.DEFAULT_BUFFER_SIZE'.
+    if len(base_lines) > 0:
+        len_diff = stream_size - len(stream_lines)
+        if args.debug:
+            print("> Length difference:\t{}".format(len_diff))
+        if len_diff > 0:
+            aux_draw = random.sample(base_lines, len_diff)
+            print("> Stream supplement draw:\t{}".format(aux_draw))
+            stream_lines = stream_lines + aux_draw
+            base_lines = [l for l in base_lines if l not in aux_draw]
+        if len(base_lines) > 0:
+            out_graph_file.write('\n'.join(base_lines) + "\n")
 
     # Is stream order randomization required?
     if args.randomize:
-        random.shuffle(stream_indexes)
+        random.shuffle(stream_lines)
 
-    out_stream_file.write('\n'.join(stream_indexes) + "\n")
+    # Store the stream edges to disk.
+    out_stream_file.write('\n'.join(stream_lines) + "\n")
     out_stream_file.flush()
 
+    if args.debug:
+        print('> Stream size:\t{}'.format(len(stream_lines)))
+        print('\n')
 
-    #out_graph_file.flush()
+    
 
-    if len(base_lines) > 0:
-        out_graph_file.write('\n'.join(base_lines) + "\n")
-
-    # Get the chunk properties for the generated stream.
-    chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
-
+    # Number of edges deletions sent each time a block of the update stream is sent.
     deletion_size = int(args.deletion_ratio * chunk_size)
-
-    #prev_chunk = []
-    #curr_index = 0
-    #already_deleted = []
     deletions = []
+
+    # On what stream block are we?
     block_acc = 0
     base_graph_index_limit = valid_ctr + bad_index_count
     for i in range(len(chunk_sizes)):
 
+        if args.debug:
+            print('> Drawing {} lines from interval [{};{}={} + {}]'.format(
+                deletion_size, 
+                bad_index_count, 
+                base_graph_index_limit + block_acc,
+                base_graph_index_limit,
+                block_acc))
+
         # Draw a sample from the original graph plus all the previous chunk blocks we've already iterated over.
-        del_block = random.sample(range(bad_index_count, base_graph_index_limit + block_acc), deletion_size)
+        draw_interval_range = range(bad_index_count, base_graph_index_limit + block_acc)
         
-        # Keep sampling until there isn't a single repetition.
-        checking_repetitions = True
-        while checking_repetitions:
+        # Keep drawing samples until there isn't a single repetition in 'deletions'.
+        while True:
+            del_block = random.sample(draw_interval_range, deletion_size)
             repetitions = 0
             for j in del_block:
                 if j in deletions:
@@ -231,55 +249,55 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
                     break
             if repetitions == 0:
                 break
-            else:
-                del_block = random.sample(range(bad_index_count, base_graph_index_limit + block_acc), deletion_size)
         
         deletions = deletions + del_block
 
-        # 'bloack_acc' sets the upper limit for the sampling procedure.
+        # 'block_acc' sets the upper limit for the sampling procedure.
         block_acc = block_acc + chunk_sizes[i]
 
     # 'deletions' contains indexes associated with the sampled edges to be deleted.
     # Need to retrieve the associated edge strings.
+    deletion_strings = len(deletions) * ['']
 
-    deletion_strings = len(deletions) * ['']#[ind for ind in deletions]
+    if args.debug:
+        print("> Deletion count:\t{}".format(len(deletions)))
+        print("> Base graph index limit:\t{}".format(base_graph_index_limit))
+
     base_deletion_indexes = []
     aux = {}
     for i in range(len(deletions)):
         # String is part of the base graph file.
+        if args.debug:
+            print("> Current deletion:\t{}\t{}".format(i, deletions[i]))
+
         if deletions[i] < base_graph_index_limit:
             base_deletion_indexes.append(deletions[i])
             aux[deletions[i]] = i
-        # String is part of a specific block.
+        # String is part of a specific stream block.
         else:
             # Find the index inside the specific block and retrieve the string.
-            print("deletion_strings[{}] = {}".format(i, stream_indexes[deletions[i] - base_graph_index_limit]))
-            deletion_strings[i] = stream_indexes[deletions[i] - base_graph_index_limit]
-            #stream_index = deletions[i] / chunk_size
-            #block_index = deletions[i] - (stream_index * chunk_size)
-            #deletion_strings[i] = 
+            global_stream_index = deletions[i] - base_graph_index_limit
+            single_block_index = chunk_size * int((global_stream_index / chunk_size))
+            inner_block_index = global_stream_index - single_block_index
+            single_block_index = int(single_block_index / chunk_size)
+
+            print("> Drawing from block:\t{}\t({}:{})".format(global_stream_index, single_block_index, inner_block_index))
+            if args.debug:
+                print("> deletion_strings[{}] = {}".format(i, stream_lines[global_stream_index]))
+            deletion_strings[i] = stream_lines[global_stream_index]
 
 with open(args.input_file, 'r') as dataset:
     for i, l in enumerate(dataset):
-        #print("AYYLMAO")
         if i in base_deletion_indexes:
-            #print("i={} in base_deletion_indexes".format(i))
             deletion_strings[aux[i]] = l.strip()
-
-    #print(base_deletion_indexes)
-    #print(deletion_strings)
-    #print(str(len(deletion_strings)))
-
     deletion_set = set(deletion_strings)
-
-    #print(str(len(deletion_strings)))
-
-    #sys.exit(0)
 
     with open(out_deletions_path, 'w') as out_deletions_file:
         out_deletions_file.write('\n'.join(deletion_strings) + "\n")
         out_deletions_file.flush()
 
+if args.debug:
+    print("\n")
 
 with open(out_deletions_path, 'r') as out_deletions_file, open(out_stream_path, 'r') as out_stream_file:
     deletion_lines = out_deletions_file.readlines()
@@ -291,14 +309,14 @@ with open(out_deletions_path, 'r') as out_deletions_file, open(out_stream_path, 
             curr_del_block = curr_del_block + 1
         max_stream_index = curr_del_block * chunk_size
 
-        curr_del_line = deletion_lines[i]
+        curr_del_line = deletion_lines[i].strip()
         # If the current deletion line exists in the edge stream.
         if curr_del_line in stream_lines:
             curr_index = stream_lines.index(curr_del_line)
             # If its index is below the currently allowed max index.
             if curr_index >= max_stream_index:
-                print("Illegal deletion position.")
-                print("edge {} is at pos {} in the stream and the limit is {}".format(curr_del_line, curr_index, max_stream_index))
+                print("> Illegal deletion position.")
+                print("> edge {} is at pos {} in the stream and the limit is {}".format(curr_del_line, curr_index, max_stream_index))
 
         
         # check if the next deletion_size elements in deletion_lines ocurr before the max.
