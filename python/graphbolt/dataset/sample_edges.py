@@ -210,29 +210,96 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
 
     deletion_size = int(args.deletion_ratio * chunk_size)
 
-    prev_chunk = []
-    curr_index = 0
-    already_deleted = []
+    #prev_chunk = []
+    #curr_index = 0
+    #already_deleted = []
+    deletions = []
+    block_acc = 0
+    base_graph_index_limit = valid_ctr + bad_index_count
     for i in range(len(chunk_sizes)):
-        # On the first iteration (i == 0) we use an empty prev_chunk. On the first time updates are integrated, it doesn't make sense to sample deletions from the first stream update.
-        #if i == 1:
-        if i > 0:
-            #prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
-            prev_chunk = stream_indexes[curr_index:curr_index + chunk_size]
 
-        # Add the current chunk to the base graph.            
-        base_lines = base_lines + prev_chunk
+        # Draw a sample from the original graph plus all the previous chunk blocks we've already iterated over.
+        del_block = random.sample(range(bad_index_count, base_graph_index_limit + block_acc), deletion_size)
+        
+        # Keep sampling until there isn't a single repetition.
+        checking_repetitions = True
+        while checking_repetitions:
+            repetitions = 0
+            for j in del_block:
+                if j in deletions:
+                    repetitions = repetitions + 1
+                    break
+            if repetitions == 0:
+                break
+            else:
+                del_block = random.sample(range(bad_index_count, base_graph_index_limit + block_acc), deletion_size)
+        
+        deletions = deletions + del_block
 
-        new_population = [edge for edge in base_lines if not edge in already_deleted]
+        # 'bloack_acc' sets the upper limit for the sampling procedure.
+        block_acc = block_acc + chunk_sizes[i]
 
-        print("i: {}\tbase_lines: {}\tdeletion_size: {}\tcurr_index: {}\tchunk_sizes: {}\tprev_chunk: {}".format(str(i), str(len(base_lines)), str(deletion_size), str(curr_index), str(len(chunk_sizes)), str(len(prev_chunk))))
+    # 'deletions' contains indexes associated with the sampled edges to be deleted.
+    # Need to retrieve the associated edge strings.
 
-        deletion_sample = random.sample(new_population, deletion_size)
+    deletion_strings = len(deletions) * ['']#[ind for ind in deletions]
+    base_deletion_indexes = []
+    aux = {}
+    for i in range(len(deletions)):
+        # String is part of the base graph file.
+        if deletions[i] < base_graph_index_limit:
+            base_deletion_indexes.append(deletions[i])
+            aux[deletions[i]] = i
+        # String is part of a specific block.
+        else:
+            # Find the index inside the specific block and retrieve the string.
+            print("deletion_strings[{}] = {}".format(i, stream_indexes[deletions[i] - base_graph_index_limit]))
+            deletion_strings[i] = stream_indexes[deletions[i] - base_graph_index_limit]
+            #stream_index = deletions[i] / chunk_size
+            #block_index = deletions[i] - (stream_index * chunk_size)
+            #deletion_strings[i] = 
 
-        already_deleted = already_deleted + deletion_sample
+with open(args.input_file, 'r') as dataset:
+    for i, l in enumerate(dataset):
+        #print("AYYLMAO")
+        if i in base_deletion_indexes:
+            #print("i={} in base_deletion_indexes".format(i))
+            deletion_strings[aux[i]] = l.strip()
 
-        curr_index = curr_index + chunk_sizes[i - 1]
+    #print(base_deletion_indexes)
+    #print(deletion_strings)
+    #print(str(len(deletion_strings)))
+
+    deletion_set = set(deletion_strings)
+
+    #print(str(len(deletion_strings)))
+
+    #sys.exit(0)
 
     with open(out_deletions_path, 'w') as out_deletions_file:
-        out_deletions_file.write('\n'.join(already_deleted) + "\n")
+        out_deletions_file.write('\n'.join(deletion_strings) + "\n")
         out_deletions_file.flush()
+
+
+with open(out_deletions_path, 'r') as out_deletions_file, open(out_stream_path, 'r') as out_stream_file:
+    deletion_lines = out_deletions_file.readlines()
+    stream_lines = out_stream_file.readlines()
+    curr_del_block = 1
+    for i in range(len(deletion_lines)):
+        # set current max allowed stream file index
+        if i % deletion_size == 0:
+            curr_del_block = curr_del_block + 1
+        max_stream_index = curr_del_block * chunk_size
+
+        curr_del_line = deletion_lines[i]
+        # If the current deletion line exists in the edge stream.
+        if curr_del_line in stream_lines:
+            curr_index = stream_lines.index(curr_del_line)
+            # If its index is below the currently allowed max index.
+            if curr_index >= max_stream_index:
+                print("Illegal deletion position.")
+                print("edge {} is at pos {} in the stream and the limit is {}".format(curr_del_line, curr_index, max_stream_index))
+
+        
+        # check if the next deletion_size elements in deletion_lines ocurr before the max.
+    
