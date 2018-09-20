@@ -217,14 +217,15 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
         # On the first iteration (i == 0) we use an empty prev_chunk. On the first time updates are integrated, it doesn't make sense to sample deletions from the first stream update.
         #if i == 1:
         if i > 0:
-            prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
+            #prev_chunk = stream_indexes[curr_index:chunk_sizes[i - 1]]
+            prev_chunk = stream_indexes[curr_index:curr_index + chunk_size]
 
         # Add the current chunk to the base graph.            
         base_lines = base_lines + prev_chunk
 
         new_population = [edge for edge in base_lines if not edge in already_deleted]
 
-        print("{}\t{}\t{}\t{}\t{}\t{}".format(str(i), str(len(base_lines)), str(deletion_size), str(curr_index), str(len(prev_chunk)), str(len(prev_chunk))))
+        print("i: {}\tbase_lines: {}\tdeletion_size: {}\tcurr_index: {}\tchunk_sizes: {}\tprev_chunk: {}".format(str(i), str(len(base_lines)), str(deletion_size), str(curr_index), str(len(chunk_sizes)), str(len(prev_chunk))))
 
         deletion_sample = random.sample(new_population, deletion_size)
 
