@@ -140,24 +140,24 @@ out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_na
 # Get the chunk properties for the generated stream.
 chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
 
-if args.debug:
-    print("> Output directory:\t{}".format(out_dir))
-    print("> Out file name base:\t{}".format(out_file_name))
-    print("> Input file:\t{}".format(out_graph_path))
-    print("> Input line count:\t{}".format(input_line_count))
-    print("> Invalid line count:\t{}".format(bad_index_count))
-    print("> Valid line count:\t{}".format(input_line_count - bad_index_count))
-    print("\n")
-    print("> Bad indexes:\t{}".format(bad_indexes))
-    print("\n")
-    print("> Target stream file:\t{}".format(out_stream_path))
-    print("> Target stream size:\t{}".format(stream_size))
-    print("> Stream sampling probability:\t{}".format(p))
-    print("> Stream chunk size:{}".format(chunk_size))
-    print("> Stream chunk count:{}".format(len(chunk_sizes)))
-    print("> Stream edge size:{}".format(edge_count))
-    print("\n")
-    print("> Target deletions file:\t{}".format(out_deletions_path))
+
+print("> Output directory:\t{}".format(out_dir))
+print("> Out file name base:\t{}".format(out_file_name))
+print("> Input file:\t{}".format(out_graph_path))
+print("> Input line count:\t{}".format(input_line_count))
+print("> Invalid line count:\t{}".format(bad_index_count))
+print("> Valid line count:\t{}".format(input_line_count - bad_index_count))
+print("\n")
+print("> Bad indexes:\t{}".format(bad_indexes))
+print("\n")
+print("> Target stream file:\t{}".format(out_stream_path))
+print("> Target stream size:\t{}".format(stream_size))
+print("> Stream sampling probability:\t{}".format(p))
+print("> Stream chunk size:{}".format(chunk_size))
+print("> Stream chunk count:{}".format(len(chunk_sizes)))
+print("> Stream edge size:{}".format(edge_count))
+print("\n")
+print("> Target deletions file:\t{}".format(out_deletions_path))
     
     
     
@@ -280,9 +280,9 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
             single_block_index = chunk_size * int((global_stream_index / chunk_size))
             inner_block_index = global_stream_index - single_block_index
             single_block_index = int(single_block_index / chunk_size)
-
-            print("> Drawing from block:\t{}\t({}:{})".format(global_stream_index, single_block_index, inner_block_index))
+            
             if args.debug:
+                print("> Drawing from block:\t{}\t({}:{})".format(global_stream_index, single_block_index, inner_block_index))
                 print("> deletion_strings[{}] = {}".format(i, stream_lines[global_stream_index]))
             deletion_strings[i] = stream_lines[global_stream_index]
 
