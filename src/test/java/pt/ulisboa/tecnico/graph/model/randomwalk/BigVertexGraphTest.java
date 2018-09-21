@@ -53,6 +53,8 @@ public class BigVertexGraphTest extends AbstractGraphTest {
 
     private static final class EdgeRemovalCoGroup<K, EV> implements CoGroupFunction<Edge<K, EV>, Edge<K, EV>, Edge<K, EV>> {
 
+        private static final long serialVersionUID = -8702181599856983541L;
+
         @Override
         public void coGroup(Iterable<Edge<K, EV>> edge, Iterable<Edge<K, EV>> edgeToBeRemoved,
                             Collector<Edge<K, EV>> out) throws Exception {

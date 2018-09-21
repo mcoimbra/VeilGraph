@@ -1,0 +1,39 @@
+# http://sbillaudelle.de/2015/02/20/matplotlib-with-style.html
+# http://sbillaudelle.de/2015/02/23/seamlessly-embedding-matplotlib-output-into-latex.html
+
+# Activate latex text rendering
+text.usetex		    :	True
+
+# Controlling font size from matplotlib: https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+SMALL_SIZE		    :	8
+MEDIUM_SIZE		    :	11
+BIGGER_SIZE		    :	12
+
+font.size		    :	SMALL_SIZE          # controls default text sizes
+axes.titlesize		:	SMALL_SIZE     # fontsize of the axes title
+axes.labelsize		:	BIGGER_SIZE    # fontsize of the x and y labels
+xtick.labelsize		:	MEDIUM_SIZE   # fontsize of the tick labels
+ytick.labelsize		:	MEDIUM_SIZE   # fontsize of the tick labels
+legend.fontsize		:	MEDIUM_SIZE   # legend fontsize
+legend.loc		    :	"best"
+figure.titlesize	:	BIGGER_SIZE  # fontsize of the figure title
+
+# Disable automatic layout resize. This way the plot rectangle will always be the same size.
+figure.autolayout	:	False
+legend.loc		    :	"best"
+
+lines.markersize	:	7
+lines.linestyle		:	"--"
+lines.linewidth		:	0.65
+lines.marker		:	"^"
+lines.color		    :	"black"
+
+figure.figsize		:	(8,5)
+
+PLOT_ALPHA = 0.45
+
+# List of matplotlib markers: https://matplotlib.org/api/markers_api.html
+colors		        :	('b.'g.'r.'c.'m.'y.'k')
+
+# Set plot styles for group plots.
+styles		        :	["o","+","*","x","D", "<"]

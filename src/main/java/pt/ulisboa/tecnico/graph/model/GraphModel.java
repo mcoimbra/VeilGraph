@@ -1,13 +1,8 @@
 package pt.ulisboa.tecnico.graph.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.graph.EdgeDirection;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.types.NullValue;
 import pt.ulisboa.tecnico.graph.stream.GraphUpdateTracker;

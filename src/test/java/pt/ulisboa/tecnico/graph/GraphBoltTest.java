@@ -1381,6 +1381,8 @@ public class GraphBoltTest
 	
 	private static final class EdgeRemovalCoGroup<K, EV> implements CoGroupFunction<Edge<K, EV>, Edge<K, EV>, Edge<K, EV>> {
 
+		private static final long serialVersionUID = 2791464822632107942L;
+
 		@Override
 		public void coGroup(Iterable<Edge<K, EV>> edge, Iterable<Edge<K, EV>> edgeToBeRemoved,
 							Collector<Edge<K, EV>> out) throws Exception {
@@ -1510,6 +1512,7 @@ public class GraphBoltTest
 */
 	private static class RankInitializer implements MapFunction<Vertex<Long, Double>, Double> {
 
+		private static final long serialVersionUID = -7897516140927538909L;
 		Long vertexCount;
 
 		public RankInitializer(Long vertexCount) {
@@ -1524,6 +1527,8 @@ public class GraphBoltTest
 	}
 
 	private static class EdgeInitializer implements MapFunction<Edge<Long, NullValue>, Double> {
+		private static final long serialVersionUID = -9077584184213995731L;
+
 		@Override
 		public Double map(Edge<Long, NullValue> value) throws Exception {
 			return 1.0d;
