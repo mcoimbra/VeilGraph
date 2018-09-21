@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.graph.util;
 
+
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -47,7 +49,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("serial")
+
+@SuppressWarnings("unused")
 public class TypeInfoMain<K extends Comparable<K>> {
 
 	void initTypes(K k) {

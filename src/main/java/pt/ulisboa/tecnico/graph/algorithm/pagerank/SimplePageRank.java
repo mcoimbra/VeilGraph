@@ -29,7 +29,7 @@ public class SimplePageRank<K, VV, EV> implements GraphAlgorithm<K, VV, EV, Data
     private final Double initialRank;
     private transient final DataSet<Tuple2<K, Double>> initialRanks;
 
-    private int executionCounter = -1;
+    //private int executionCounter = -1;
 
     public SimplePageRank(final double beta, final double initialRank, final int iterations) {
         this.beta = beta;

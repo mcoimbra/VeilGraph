@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.graph.model.randomwalk;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankParameterHelper;
+//import pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankParameterHelper;
 import pt.ulisboa.tecnico.graph.core.ParameterHelper;
 
 import java.util.Map;

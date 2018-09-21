@@ -1,22 +1,23 @@
 package pt.ulisboa.tecnico.graph.pt.ulisboa.tecnico.graph;
 
-import org.apache.flink.api.common.operators.Order;
+
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.tuple.Tuple2;
+
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.types.NullValue;
-import org.junit.jupiter.api.BeforeAll;
+
 import pt.ulisboa.tecnico.graph.GraphBoltTest;
-import pt.ulisboa.tecnico.graph.model.randomwalk.BigVertexGraphTest;
+
 import pt.ulisboa.tecnico.graph.stream.GraphUpdateTracker;
-import pt.ulisboa.tecnico.graph.stream.GraphUpdateTrackerTest;
+
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+@SuppressWarnings("unused")
 public abstract class AbstractGraphTest {
 
     protected static final Logger LOG = Logger.getLogger(AbstractGraphTest.class.getName());

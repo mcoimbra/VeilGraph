@@ -286,38 +286,37 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
                 print("> deletion_strings[{}] = {}".format(i, stream_lines[global_stream_index]))
             deletion_strings[i] = stream_lines[global_stream_index]
 
-with open(args.input_file, 'r') as dataset:
+# Reread the input file to write the deletions file.
+with open(args.input_file, 'r') as dataset, open(out_deletions_path, 'w') as out_deletions_file:
     for i, l in enumerate(dataset):
         if i in base_deletion_indexes:
             deletion_strings[aux[i]] = l.strip()
-    deletion_set = set(deletion_strings)
-
-    with open(out_deletions_path, 'w') as out_deletions_file:
-        out_deletions_file.write('\n'.join(deletion_strings) + "\n")
-        out_deletions_file.flush()
+    
+    out_deletions_file.write('\n'.join(deletion_strings) + "\n")
+    out_deletions_file.flush()
 
 if args.debug:
     print("\n")
 
+# Check if the deletion stream order is coherent with the update stream order.
 with open(out_deletions_path, 'r') as out_deletions_file, open(out_stream_path, 'r') as out_stream_file:
     deletion_lines = out_deletions_file.readlines()
     stream_lines = out_stream_file.readlines()
     curr_del_block = 1
     for i in range(len(deletion_lines)):
-        # set current max allowed stream file index
+
+        # Set current max allowed stream file index.
         if i % deletion_size == 0:
             curr_del_block = curr_del_block + 1
         max_stream_index = curr_del_block * chunk_size
-
         curr_del_line = deletion_lines[i].strip()
+
         # If the current deletion line exists in the edge stream.
         if curr_del_line in stream_lines:
             curr_index = stream_lines.index(curr_del_line)
+
             # If its index is below the currently allowed max index.
             if curr_index >= max_stream_index:
                 print("> Illegal deletion position.")
                 print("> edge {} is at pos {} in the stream and the limit is {}".format(curr_del_line, curr_index, max_stream_index))
-
-        
-        # check if the next deletion_size elements in deletion_lines ocurr before the max.
-    
+                sys.exit(1)

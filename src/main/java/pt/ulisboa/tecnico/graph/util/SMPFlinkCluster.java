@@ -8,6 +8,7 @@ import org.apache.flink.types.NullValue;
 
 import pt.ulisboa.tecnico.graph.algorithm.pagerank.SimplePageRank;
 
+@SuppressWarnings("unused")
 public class SMPFlinkCluster {
 
 	public static void main(String[] args) {

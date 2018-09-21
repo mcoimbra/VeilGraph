@@ -10,6 +10,7 @@ public class PageRankOperators {
 
     public static class RankMergeOperator extends RichCoGroupFunction<Tuple2<Long, Double>, Tuple2<Long, Double>, Tuple2<Long, Double>> {
 
+        private static final long serialVersionUID = -8323806114882000590L;
         private final Long bigVertexID;
 
         public RankMergeOperator(Long bigVertexID) {

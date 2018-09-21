@@ -485,7 +485,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 //.enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
 
         // See: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
-        if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_PRINT_SYSOUT)) {
+        if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString())) {
             this.env.getConfig().enableSysoutLogging();
         }
         else {
@@ -892,6 +892,10 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             final java.nio.file.Path cachePath = Paths.get(this.cacheDirectory);
             GraphUtils.deleteFileOrFolder(cachePath);
         }
+
+        if ( ! this.keepingTemporaryDirectory) {
+            //TODO: check if necessary to delete files here...
+        }
     }
 
     // GraphBolt main loop.
@@ -1131,7 +1135,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     }
     // Possible algorithm execution strategies.
     public enum Action {
-        REPEAT_LAST_ANSWER,
+        //REPEAT_LAST_ANSWER,
         COMPUTE_APPROXIMATE,
         COMPUTE_EXACT,
         AUTOMATIC

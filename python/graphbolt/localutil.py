@@ -28,18 +28,6 @@ STREAM_DELETION_RATIO = 0.2
 # Utility functions used in GraphBolt's code.
 
 
-#def init_argparse(parser: ArgumentParser) -> None:
-#    parser.add_argument("-m", help="python -m option.", required=False, type=str)
-
-""" def init_argv(argv: List) -> None:
-    argc = len(argv)
-    for i in range(0, argc):
-        if argv[i] == 'python' and (i + 1 < argc) and (i + 2 < argc) and argv[i + 1] == '-m' and argv[i + 2].startswith('graphbolt'):
-            del argv[i + 2]
-            del argv[i + 1]
-            del argv[i]
-            break """
-
 # Get the number of lines in a file.
 # Used on edge .tsv files.
 def file_len(fname: str) -> int:
@@ -49,14 +37,10 @@ def file_len(fname: str) -> int:
         return i + 1
 
 def get_big_vertex_params() -> [List, List, List]:
-    ##r_values = [0.05, 0.20]
-    ##n_values = [0, 1]
-    ##delta_values = [0.1, 1]
 
-    r_values = [0.05]
-    n_values = [2]
-    #n_values = [0, 2, 3]
-    delta_values = [0.1]
+    r_values = [0.05, 0.25]
+    n_values = [0, 1, 2, 3]
+    delta_values = [0.1, 1.0]
     return r_values, n_values, delta_values
 
 def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:

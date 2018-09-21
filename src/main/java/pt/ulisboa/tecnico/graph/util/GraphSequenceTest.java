@@ -741,7 +741,9 @@ public class GraphSequenceTest {
 			}
 			
 			Scanner reader = new Scanner(System.in);
-			char c = reader.next().charAt(0);
+			reader.next().charAt(0);
+
+			reader.close();
 
 		} catch (IOException e) {
 			e.printStackTrace();

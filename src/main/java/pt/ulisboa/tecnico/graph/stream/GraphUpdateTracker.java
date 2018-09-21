@@ -6,12 +6,12 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
+//import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.EdgeDirection;
 import org.apache.flink.graph.Graph;
-import org.apache.flink.runtime.util.EvictingBoundedList;
+//import org.apache.flink.runtime.util.EvictingBoundedList;
 import org.apache.flink.types.LongValue;
 import org.apache.flink.types.NullValue;
 
@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Predicate;
+//import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
@@ -52,7 +52,7 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
     // Accounts for the time user-code (non-Flink) runs to add edges.
     private long accumulatedTime;
 
-    private DataSet<Tuple2<Long, UpdateInfo>> degreeDataset = null;
+//    private DataSet<Tuple2<Long, UpdateInfo>> degreeDataset = null;
 
     private DataSet<Tuple2<K, GraphUpdateTracker.UpdateInfo>> infoMapToDataSet(Map<K, UpdateInfo> infos, ExecutionEnvironment env) {
         final List<Tuple2<K, GraphUpdateTracker.UpdateInfo>> infoList = infos
@@ -353,7 +353,7 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
         ids.forEach(id -> this.infoMap.get(id).reset());
     }
 
-    @SuppressWarnings("serial")
+    
     /*
     @ForwardedFields("f0->f0")
 	private class InfoDataSetReseter implements MapFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>,Tuple2<Long,GraphUpdateTracker.UpdateInfo>> {

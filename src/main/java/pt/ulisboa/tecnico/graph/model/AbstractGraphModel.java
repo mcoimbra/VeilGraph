@@ -11,6 +11,8 @@ import java.util.StringJoiner;
 
 public abstract class AbstractGraphModel<K, VV, EV, R> implements GraphModel<K, VV, EV, R>, Serializable {
 
+    private static final long serialVersionUID = -219967429214937736L;
+
     protected HashMap<String, ArrayList<Long>> statisticsMap = new HashMap<>();
 
     protected Long iteration;

@@ -1,13 +1,13 @@
 package pt.ulisboa.tecnico.graph.util;
 
-import org.apache.flink.api.java.DataSet;
+//import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.tuple.Tuple2;
+//import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.types.NullValue;
 
-import pt.ulisboa.tecnico.graph.algorithm.pagerank.SimplePageRank;
-
+//import pt.ulisboa.tecnico.graph.algorithm.pagerank.SimplePageRank;
+@SuppressWarnings("unused")
 public class LocalSimplePageRankApp {
 
 	public static void main(String[] args) {

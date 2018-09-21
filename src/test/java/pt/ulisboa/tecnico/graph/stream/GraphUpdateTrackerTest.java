@@ -1,11 +1,9 @@
 package pt.ulisboa.tecnico.graph.stream;
 
-import org.apache.flink.graph.Graph;
-import org.apache.flink.types.NullValue;
+
 import org.junit.jupiter.api.*;
 import pt.ulisboa.tecnico.graph.pt.ulisboa.tecnico.graph.AbstractGraphTest;
 
-import java.util.ArrayList;
 
 public class GraphUpdateTrackerTest extends AbstractGraphTest {
 /*

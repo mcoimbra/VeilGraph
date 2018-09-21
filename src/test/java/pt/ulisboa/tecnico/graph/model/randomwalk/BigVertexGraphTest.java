@@ -25,6 +25,7 @@ import java.util.Map;
  */
 @Tag("fast")
 @DisplayName("Big vertex graph model tests")
+@SuppressWarnings("unused")
 public class BigVertexGraphTest extends AbstractGraphTest {
 
 
