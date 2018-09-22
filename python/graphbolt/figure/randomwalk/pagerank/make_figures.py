@@ -58,7 +58,12 @@ import numpy as np
 #GRAPHBOLT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #sys.path.append(GRAPHBOLT_ROOT_DIR)  # append the path to system
 from graphbolt import localutil
+from graphbolt.figure import matplotlib_config
+#from graphbolt.figure.matplotlib_config import PLOT_ALPHA
 
+#print("{}".format(matplotlib_config.PLOT_ALPHA))
+
+#sys.exit(0)
 
 ###########################################################################
 ############################### FUNCTIONS #################################
@@ -206,7 +211,6 @@ if not os.path.exists(EVAL_DIR):
     sys.exit(1)
 else:
     print("Evaluation directory found:\t\t'{}'".format(EVAL_DIR))
-    sys.exit(1)
 
 if not os.path.exists(STATISTICS_DIR):
     print("Statistics directory not found:\t\t'{}'".format(STATISTICS_DIR))
@@ -345,14 +349,14 @@ for r in r_values:
                 result_rbo_matrices[key_label] = rbos
 
                 print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
-                print(result_rbo_matrices)
+                #print(result_rbo_matrices)
 
                 if(args.plot_single_figures):
                     print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
                     fig, ax = plt.subplots()
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("PageRank similarity measure (RBO)")
-                    plt.plot(indexes, rbos, marker=styles[0], alpha=PLOT_ALPHA)
+                    plt.plot(indexes, rbos, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
                     plt.title(key_label)
                     ax.set_xlim(left=0, right=args.chunk_count)
                     x_step = int(args.chunk_count / 10)
@@ -389,7 +393,7 @@ for r in r_values:
                 summary_pagerank_stats_matrix = read_statistics_into_dic(stat_files, args.chunk_count)
 
                 print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
-                print(summary_pagerank_stats_matrix)
+                #print(summary_pagerank_stats_matrix)
 
                 # Programmatically store the speedup values.
                 summary_pagerank_stats_matrix['speedup'] = [exact_time / summarized_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
@@ -407,8 +411,8 @@ for r in r_values:
                     ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("Summary vertices and edges as a fraction of total graph")
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=styles[0], alpha=PLOT_ALPHA)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=styles[1], alpha=PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], alpha=matplotlib_config.PLOT_ALPHA)
                     ax.set_title(key_label)
                     ax.set_xlim(left=1, right=args.chunk_count)
                     plt.title(key_label)
@@ -428,8 +432,8 @@ for r in r_values:
 
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("Summary vertices and edges as fractions of total graph")
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=styles[0], color=colors[0], alpha=PLOT_ALPHA)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=styles[1], color=colors[1], alpha=PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], color=matplotlib_config.colors[0], alpha=matplotlib_config.PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], color=matplotlib_config.colors[1], alpha=matplotlib_config.PLOT_ALPHA)
                     ax.set_title(key_label)
                     ax.set_xlim(left=1, right=args.chunk_count)
                     plt.title(key_label)
@@ -439,7 +443,7 @@ for r in r_values:
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
                     plt.xticks(new_xticks)
                     ax_c = ax.twinx()
-                    ax_c.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label="PageRank Time", marker=styles[2], color=colors[2], alpha=PLOT_ALPHA)
+                    ax_c.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label="PageRank Time", marker=matplotlib_config.styles[2], color=matplotlib_config.colors[2], alpha=matplotlib_config.PLOT_ALPHA)
                     ax_c.set_ylabel("Summarized PageRank execution time")
 
                     save_figure(figure_path_name + '-Savings_Time', fig_file_types)
@@ -455,7 +459,7 @@ for r in r_values:
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("Summarized PageRank execution time")
                     plt.title(key_label)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
                     ax = plt.gca()
                     x_step = int(args.chunk_count / 10)
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -472,7 +476,7 @@ for r in r_values:
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("Summarized PageRank execution time")
                     plt.title(key_label)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
                     ax = plt.gca()
                     x_step = int(args.chunk_count / 10)
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -504,16 +508,16 @@ fig, ax = plt.subplots()
 plt.ylabel("Summarized PageRank execution time")
 
 PLOT_LIMIT = 5
-
+print("PLOT_ALPHA:\t{}".format(matplotlib_config.PLOT_ALPHA))
 ##### PLOT the five lowest summarized PageRank execution times.
 for plot_counter, k in enumerate(time_ordered_matrices.keys()):
     matrix = time_ordered_matrices[k]
     if plot_counter == PLOT_LIMIT:
         break
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
 
-    plt.plot(matrix["execution_count"], matrix["computation_time"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    plt.plot(matrix["execution_count"], matrix["computation_time"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -524,6 +528,8 @@ plt.legend()
 save_figure(figure_path_name + '-Time-top-{}'.format(PLOT_LIMIT), fig_file_types)
 plt.close(fig)
 
+
+
 ##### PLOT the five lowest summarized PageRank execution times divided by the exact version time.
 fig, ax = plt.subplots()
 plt.ylabel("Summarized PageRank execution time as a fraction of complete time")
@@ -533,9 +539,9 @@ for plot_counter, k in enumerate(time_ordered_matrices.keys()):
     matrix = time_ordered_matrices[k]
     if plot_counter == PLOT_LIMIT:
         break
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
-    plt.plot(matrix["execution_count"], matrix["inv_speedup"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
+    plt.plot(matrix["execution_count"], matrix["inv_speedup"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
 plt.xticks(new_xticks)
@@ -559,10 +565,10 @@ style_ctr = 0
 for plot_counter, k in enumerate(time_ordered_matrices.keys()):
     matrix = time_ordered_matrices[k]
     if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
-        color = colors[style_ctr % len(colors)]
-        style = styles[(style_ctr - len(linestyles)) % len(styles)]
+        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
         style_ctr = style_ctr + 1
-        plt.plot(matrix["execution_count"], matrix["inv_speedup"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+        plt.plot(matrix["execution_count"], matrix["inv_speedup"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -584,9 +590,9 @@ for plot_counter, k in enumerate(time_ordered_matrices.keys()):
     matrix = time_ordered_matrices[k]
     if plot_counter == PLOT_LIMIT:
         break
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
-    plt.plot(matrix["execution_count"], matrix["speedup"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
+    plt.plot(matrix["execution_count"], matrix["speedup"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -612,11 +618,11 @@ for plot_counter, k in enumerate(time_ordered_matrices.keys()):
     matrix = time_ordered_matrices[k]
 
     if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
-        color = colors[style_ctr % len(colors)]
-        style = styles[(style_ctr - len(linestyles)) % len(styles)]
+        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
         style_ctr = style_ctr + 1
 
-        plt.plot(matrix["execution_count"], matrix["speedup"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+        plt.plot(matrix["execution_count"], matrix["speedup"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -647,10 +653,10 @@ for plot_counter, k in enumerate(summary_vertex_ordered_matrices.keys()):
         break
 
     matrix = summary_vertex_ordered_matrices[k]
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
 
-    plt.plot(matrix["execution_count"], matrix["summary_vertex_ratio"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    plt.plot(matrix["execution_count"], matrix["summary_vertex_ratio"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -680,10 +686,10 @@ style_ctr = 0
 for plot_counter, k in enumerate(summary_vertex_ordered_matrices.keys()):
     if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
         matrix = summary_vertex_ordered_matrices[k]
-        color = colors[style_ctr % len(colors)]
-        style = styles[(style_ctr - len(linestyles)) % len(styles)]
+        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
         style_ctr = style_ctr + 1
-        plt.plot(matrix["execution_count"], matrix["summary_vertex_ratio"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+        plt.plot(matrix["execution_count"], matrix["summary_vertex_ratio"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -712,9 +718,9 @@ for plot_counter, k in enumerate(summary_edge_ordered_matrices.keys()):
         break
 
     matrix = summary_edge_ordered_matrices[k]
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
-    plt.plot(matrix["execution_count"], matrix["summary_edge_ratio"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
+    plt.plot(matrix["execution_count"], matrix["summary_edge_ratio"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -743,10 +749,10 @@ for plot_counter, k in enumerate(summary_edge_ordered_matrices.keys()):
     if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
 
         matrix = summary_edge_ordered_matrices[k]     
-        color = colors[style_ctr % len(colors)]
-        style = styles[(style_ctr - len(linestyles)) % len(styles)]
+        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
         style_ctr = style_ctr + 1
-        plt.plot(matrix["execution_count"], matrix["summary_edge_ratio"], label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+        plt.plot(matrix["execution_count"], matrix["summary_edge_ratio"], label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -783,11 +789,11 @@ for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
         min_y_tick = curr_min_rbo
 
     
-    color = colors[plot_counter % len(colors)]
-    style = styles[(plot_counter - len(linestyles)) % len(styles)]
+    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
 
     # We are starting at index 1 to skip the first index which is a comparison between two complete PageRank executions
-    plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+    plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
@@ -830,12 +836,12 @@ for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
             min_y_tick = curr_min_rbo
 
         
-        color = colors[style_ctr % len(colors)]
-        style = styles[(style_ctr - len(linestyles)) % len(styles)]
+        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
         style_ctr = style_ctr + 1
 
         # We are starting at index 1 to skip the first index which is a comparison between two complete PageRank executions
-        plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=PLOT_ALPHA)
+        plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
 x_step = int(args.chunk_count / 10)
 new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
