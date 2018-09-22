@@ -59,11 +59,7 @@ import numpy as np
 #sys.path.append(GRAPHBOLT_ROOT_DIR)  # append the path to system
 from graphbolt import localutil
 from graphbolt.figure import matplotlib_config
-#from graphbolt.figure.matplotlib_config import PLOT_ALPHA
 
-#print("{}".format(matplotlib_config.PLOT_ALPHA))
-
-#sys.exit(0)
 
 ###########################################################################
 ############################### FUNCTIONS #################################
@@ -226,62 +222,6 @@ else:
 
 
 ###########################################################################
-########################### MATPLOTLIB CONFIGS ############################
-###########################################################################
-
-# http://sbillaudelle.de/2015/02/20/matplotlib-with-style.html
-# http://sbillaudelle.de/2015/02/23/seamlessly-embedding-matplotlib-output-into-latex.html
-
-# Activate latex text rendering
-# plt.rc('text', usetex=True)
-
-# # Controlling font size from matplotlib: https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
-# SMALL_SIZE = 8
-# MEDIUM_SIZE = 11
-# BIGGER_SIZE = 12
-
-# plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-# plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-# plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
-# plt.rc('xtick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-# plt.rc('ytick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-# plt.rc('legend', fontsize=MEDIUM_SIZE)   # legend fontsize
-# plt.rc('legend', loc="best")
-# plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-
-# # Disable automatic layout resize. This way the plot rectangle will always be the same size.
-# plt.rcParams['figure.autolayout'] = False
-# plt.rcParams['legend.loc'] = "best"
-
-# plt.rcParams['lines.markersize'] = 7
-# plt.rcParams['lines.linestyle'] = "--"
-# plt.rcParams['lines.linewidth'] = 0.65
-# plt.rcParams['lines.marker'] = "^"
-# plt.rcParams['lines.color'] = "black"
-
-# plt.rcParams['figure.figsize'] = (8,5)
-
-# PLOT_ALPHA = 0.45
-
-# # List of matplotlib markers: https://matplotlib.org/api/markers_api.html
-# colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
-
-# # Set plot styles for group plots.
-# styles = ["o","+","*","x","D", "<"]
-
-# # Set linestyles.
-# linestyles = ['_', '-', '--', ':']
-# markers = []
-# # List of matplotlib markers: https://matplotlib.org/api/markers_api.html
-# for m in Line2D.markers:
-#     try:
-#         if len(m) == 1 and m != ' ':
-#             markers.append(m)
-#     except TypeError:
-#         pass
-
-
-###########################################################################
 ############################ GENERATE FIGURES #############################
 ###########################################################################
 
@@ -356,13 +296,18 @@ for r in r_values:
                     fig, ax = plt.subplots()
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("PageRank similarity measure (RBO)")
-                    plt.plot(indexes, rbos, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
+                    plt.yticks(rotation=45)
+
+                    plot_rbo = [100 * y for y in rbos]
+
+                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+                    plt.plot(indexes, plot_rbo, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
                     plt.title(key_label)
                     ax.set_xlim(left=0, right=args.chunk_count)
                     x_step = int(args.chunk_count / 10)
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [0]
                     plt.xticks(new_xticks)
-                    plt.legend()
+                    #plt.legend()
                     save_figure(figure_path_name + '-RBO', fig_file_types)
 
                     plt.close(fig)
@@ -410,7 +355,8 @@ for r in r_values:
                     # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
                     ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
                     plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summary vertices and edges as a fraction of total graph")
+                    plt.ylabel("Summary vertices and edges as fractions of total graph")
+                    plt.yticks(rotation=45)
                     plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
                     plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], alpha=matplotlib_config.PLOT_ALPHA)
                     ax.set_title(key_label)
@@ -432,6 +378,7 @@ for r in r_values:
 
                     plt.xlabel("Number of PageRank executions")
                     plt.ylabel("Summary vertices and edges as fractions of total graph")
+                    plt.yticks(rotation=45)
                     plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], color=matplotlib_config.colors[0], alpha=matplotlib_config.PLOT_ALPHA)
                     plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], color=matplotlib_config.colors[1], alpha=matplotlib_config.PLOT_ALPHA)
                     ax.set_title(key_label)
@@ -439,12 +386,15 @@ for r in r_values:
                     plt.title(key_label)
                     plt.legend()
                     
+                    
                     x_step = int(args.chunk_count / 10)
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
                     plt.xticks(new_xticks)
                     ax_c = ax.twinx()
                     ax_c.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label="PageRank Time", marker=matplotlib_config.styles[2], color=matplotlib_config.colors[2], alpha=matplotlib_config.PLOT_ALPHA)
                     ax_c.set_ylabel("Summarized PageRank execution time")
+                    ax_c.yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
+                    plt.legend()
 
                     save_figure(figure_path_name + '-Savings_Time', fig_file_types)
 
@@ -474,20 +424,24 @@ for r in r_values:
                     ###### PLOT PageRank speedup figure.
                     fig = plt.figure()
                     plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summarized PageRank execution time")
+                    plt.ylabel("Summarized PageRank execution speedup")
                     plt.title(key_label)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
+                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['speedup'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
+                    #
+                    #plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
                     ax = plt.gca()
                     x_step = int(args.chunk_count / 10)
                     new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
                     plt.xticks(new_xticks)
                     ax.set_xlim(left=1, right=args.chunk_count)
-                    plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
+                    #plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
                     plt.legend()
                     
                     save_figure(figure_path_name + '-Speedup', fig_file_types)
 
                     plt.close(fig)
+
+                    
 
 # Create a directory for the figures of the (current dataset, iteration count, RBO length, dampening factor) combination.
 figure_path_dir = '{KW_FIGURES_ROOT}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
@@ -768,7 +722,7 @@ plt.close(fig)
 
 ##### PLOT the five highest RBO results.
 fig, ax = plt.subplots()
-plt.ylabel("PageRank similarity measure RBO")
+plt.ylabel("PageRank similarity measure (RBO)")
 plt.yticks(rotation=45)
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
 
@@ -812,7 +766,7 @@ plt.close(fig)
 
 ##### PLOT the three highest and three lowest RBO results.
 fig, ax = plt.subplots()
-plt.ylabel("PageRank similarity measure RBO")
+plt.ylabel("PageRank similarity measure (RBO)")
 plt.yticks(rotation=45)
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
 sorted_rbos = sorted(list(result_rbo_matrices.items()), reverse=True, key=lambda rbo_list: np.mean(rbo_list[1]))

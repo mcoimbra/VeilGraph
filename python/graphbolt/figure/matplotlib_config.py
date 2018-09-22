@@ -1,10 +1,19 @@
-
-print("TEST")
-
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import rc
 from matplotlib import rcParams
+from matplotlib import style
+
+# https://stackoverflow.com/questions/15814635/prettier-default-plot-colors-in-matplotlib
+# http://seaborn.pydata.org/tutorial/color_palettes.html
+#import seaborn as sns
+
+# http://tonysyu.github.io/mpltools/auto_examples/style/plot_ggplot.html
+#style.use('ggplot')
+
+###########################################################################
+########################### MATPLOTLIB CONFIGS ############################
+###########################################################################
 
 # http://sbillaudelle.de/2015/02/20/matplotlib-with-style.html
 # http://sbillaudelle.de/2015/02/23/seamlessly-embedding-matplotlib-output-into-latex.html
@@ -41,7 +50,12 @@ plt.rcParams['figure.figsize'] = (8,5)
 PLOT_ALPHA = 0.45
 
 # List of matplotlib markers: https://matplotlib.org/api/markers_api.html
-colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
+#colors = ('b', 'g', 'r', 'c', 'm', 'y', 'k')
+
+# Convert the cycler of rcParams to a list of colors strings.
+# https://matplotlib.org/examples/color/color_cycle_demo.html
+# https://matplotlib.org/gallery/color/color_cycler.html
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 # Set plot styles for group plots.
 styles = ["o","+","*","x","D", "<"]
