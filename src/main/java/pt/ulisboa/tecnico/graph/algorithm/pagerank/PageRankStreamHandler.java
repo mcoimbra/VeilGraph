@@ -195,10 +195,21 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     private void outputResult(final String date, final DataSet<Tuple2<Long, Double>> ranks) {
         super.outputFormat.setIteration(super.iteration);
         super.outputFormat.setTags(date);
-        ranks
+
+        if(super.checkingPeriodicFullAccuracy) {
+            if(super.iteration % 10 == 0) {
+                ranks
                 .sortPartition(1, Order.DESCENDING)
-                .setParallelism(1).first(this.pageRankSize)
+                .setParallelism(1)
                 .output(super.outputFormat);
+            }
+        }
+        else {
+            ranks
+            .sortPartition(1, Order.DESCENDING)
+            .setParallelism(1).first(this.pageRankSize)
+            .output(super.outputFormat);
+        }
     }
 
     // GraphBolt stream UDFs.

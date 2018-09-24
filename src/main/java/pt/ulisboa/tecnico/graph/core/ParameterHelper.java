@@ -42,6 +42,8 @@ public class ParameterHelper {
 
         LOADING_WEB_MANAGER("web"),
 
+        PERIODIC_FULL_ACCURACY_SET("periodic-full-accuracy")
+
         TEMP_DIR("temp"),
         STREAM_PATH("stream_path"),
         EXECUTION_LIMIT("execution_limit");
@@ -261,6 +263,10 @@ public class ParameterHelper {
 
         argValues.put(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString(), cmd.hasOption(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString()));
 
+        argValues.put(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(), cmd.hasOption(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString()));
+
+        
+
         argValues.put(GraphBoltArgumentName.KEEP_LOGS.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_LOGS.toString()));
 
         argValues.put(GraphBoltArgumentName.KEEP_CACHE.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_CACHE.toString()));
@@ -373,6 +379,13 @@ public class ParameterHelper {
                 false, "should the Flink web manager be started?");
         usingWebManagerOption.setRequired(false);
         options.addOption(usingWebManagerOption);
+
+
+        final Option checkingPeriodically = new Option(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(),
+                false, "should all the results be checked periodically?");
+        checkingPeriodically.setRequired(false);
+        options.addOption(checkingPeriodically);
+        
 
         final Option keepLogDirectoryOption = new Option(GraphBoltArgumentName.KEEP_LOGS.toString(),
                 false, "should Apache Flink logs be deleted?");

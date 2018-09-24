@@ -312,6 +312,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.dumpingModel = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DUMP_MODEL.toString());
         this.saveFlinkJobOperatorStatistics = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
         this.saveFlinkJobOperatorJSON = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
+
+        this.checkingPeriodicFullAccuracy = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
     }
 
     /**
