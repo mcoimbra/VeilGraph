@@ -291,6 +291,9 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
 # Reread the input file to write the deletions file.
 with open(args.input_file, 'r') as dataset, open(out_deletions_path, 'w') as out_deletions_file:
     for i, l in enumerate(dataset):
+        if (i % 20000 == 0):
+            print('> Input file line:\t{}'.format(i))
+            print('> {}'.format(l.strip()))
         if i in base_deletion_indexes:
             deletion_strings[aux[i]] = l.strip()
     

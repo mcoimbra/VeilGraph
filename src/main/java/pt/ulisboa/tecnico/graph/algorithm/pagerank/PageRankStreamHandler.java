@@ -46,6 +46,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     final private Integer pageRankIterations;
     final private Integer pageRankSize;
     final private Double pageRankDampeningFactor;
+    final protected Integer pageRankPercentage;
 
 
     @Override
@@ -74,6 +75,11 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
 
         this.pageRankIterations = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_ITERATIONS.toString()));
         this.pageRankSize = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_SIZE.toString()));
+
+        this.pageRankPercentage = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
+
+        
+
         this.pageRankDampeningFactor = ((Double)argValues.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR.toString()));
 
         final StringJoiner nameJoiner = new StringJoiner("_")
@@ -205,10 +211,24 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             }
         }
         else {
-            ranks
-            .sortPartition(1, Order.DESCENDING)
-            .setParallelism(1).first(this.pageRankSize)
-            .output(super.outputFormat);
+
+            if (this.pageRankPercentage < 0) {
+                try {
+                    ranks.sortPartition(1, Order.DESCENDING).setParallelism(1)
+                            .first(this.pageRankPercentage * new Long(ranks.count()).intValue())
+                            .output(super.outputFormat);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            else {
+                ranks
+                .sortPartition(1, Order.DESCENDING)
+                .setParallelism(1).first(this.pageRankSize)
+                .output(super.outputFormat);
+            }
+
         }
     }
 
