@@ -265,7 +265,8 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
         print("> Deletion count:\t{}".format(len(deletions)))
         print("> Base graph index limit:\t{}".format(base_graph_index_limit))
 
-    base_deletion_indexes = []
+    #base_deletion_indexes = []
+    base_deletion_indexes = set()
     aux = {}
     for i in range(len(deletions)):
         # String is part of the base graph file.
@@ -273,7 +274,8 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
             print("> Current deletion:\t{}\t{}".format(i, deletions[i]))
 
         if deletions[i] < base_graph_index_limit:
-            base_deletion_indexes.append(deletions[i])
+            #base_deletion_indexes.append(deletions[i])
+            base_deletion_indexes.add(deletions[i])
             aux[deletions[i]] = i
         # String is part of a specific stream block.
         else:
