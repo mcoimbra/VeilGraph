@@ -137,8 +137,7 @@ out_graph_path = os.path.join(out_dir, "{}-start.tsv".format(out_file_name))
 out_stream_path = os.path.join(out_dir, "{}-stream.tsv".format(out_file_name))
 out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_name))
 
-# Get the chunk properties for the generated stream.
-chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
+
 
 
 print("> Output directory:\t{}".format(out_dir))
@@ -153,9 +152,6 @@ print("\n")
 print("> Target stream file:\t{}".format(out_stream_path))
 print("> Target stream size:\t{}".format(stream_size))
 print("> Stream sampling probability:\t{}".format(p))
-print("> Stream chunk size:{}".format(chunk_size))
-print("> Stream chunk count:{}".format(len(chunk_sizes)))
-print("> Stream edge size:{}".format(edge_count))
 print("\n")
 print("> Target deletions file:\t{}".format(out_deletions_path))
     
@@ -212,6 +208,12 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
     # Store the stream edges to disk.
     out_stream_file.write('\n'.join(stream_lines) + "\n")
     out_stream_file.flush()
+
+    # Get the chunk properties for the generated stream.
+    chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
+    print("> Stream chunk size:{}".format(chunk_size))
+    print("> Stream chunk count:{}".format(len(chunk_sizes)))
+    print("> Stream edge size:{}".format(edge_count))
 
     if args.debug:
         print('> Stream size:\t{}'.format(len(stream_lines)))

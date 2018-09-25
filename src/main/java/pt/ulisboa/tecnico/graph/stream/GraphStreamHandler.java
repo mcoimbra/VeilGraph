@@ -243,6 +243,11 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     private transient PrintStream statisticsPrintStream;
 
 
+    /**
+     * Should we periodically store the total of all algorithm results?
+     */
+    protected boolean checkingPeriodicFullAccuracy;
+
 
     private short ELEMENT_COUNT_PER_UPDATE_MSG = 3;
     private short UPDATE_SOURCE_VERTEX_INDEX = 1;
