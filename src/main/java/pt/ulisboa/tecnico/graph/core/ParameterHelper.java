@@ -282,7 +282,7 @@ public class ParameterHelper {
 
             final File cacheFile = new File(cachePath);
             if (! cacheFile.exists() || ! cacheFile.isDirectory())
-                throw new IllegalArgumentException(GraphBoltArgumentName.CACHE.toString() + " must be a valid file path.");
+                throw new IllegalArgumentException(GraphBoltArgumentName.CACHE.toString() + " must be a valid file path. Provided: " + cachePath);
 
             argValues.put(GraphBoltArgumentName.CACHE.toString(), cachePath);
         }
