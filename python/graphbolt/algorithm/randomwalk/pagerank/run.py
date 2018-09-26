@@ -137,7 +137,7 @@ parser.add_argument("-i", "--input-file", help="dataset name.", required=True, t
 parser.add_argument("-cache-dir", help="cache directory name.", required=False, type=str, default="")
 parser.add_argument("-temp-dir", help="temporary directory name.", required=False, type=str, default="")
 parser.add_argument("-flink-address", help="Flink cluster's JobManager address.", required=False, type=str, default="")
-parser.add_argument("-flink-port", help="Flink cluster's JobManager port.", required=False, type=int, default=6123)
+parser.add_argument("-flink-port", help="Flink cluster's JobManager port.", required=False, type=int, default=8081)
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
 parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
 parser.add_argument("-chunks", "--chunk-count", help="set desired number of chunks to be sent by the streamer.", required=True, type=int, default=50)

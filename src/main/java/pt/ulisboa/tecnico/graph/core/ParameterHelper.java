@@ -42,7 +42,7 @@ public class ParameterHelper {
 
         LOADING_WEB_MANAGER("web"),
 
-        PERIODIC_FULL_ACCURACY_SET("periodic-full-accuracy"),
+        PERIODIC_FULL_ACCURACY_SET("periodic_full_accuracy"),
 
         TEMP_DIR("temp"),
         STREAM_PATH("stream_path"),
