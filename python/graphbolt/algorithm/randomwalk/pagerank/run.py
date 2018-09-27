@@ -57,6 +57,7 @@ from graphbolt import localutil
 
 streamer_server = None
 
+
 def kill_proc_tree(pid: int, including_parent: bool = True) -> None:
     # See https://stackoverflow.com/questions/1230669/subprocess-deleting-child-processes-in-windows/4229404?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
     # http://psutil.readthedocs.io/en/latest/
@@ -74,12 +75,14 @@ def kill_proc_tree(pid: int, including_parent: bool = True) -> None:
         parent.kill()
         parent.wait(5)
 
+
 def register_grandchildren(pid: int, processes: List) -> None:
     parent = psutil.Process(pid)
     children = parent.children(recursive=True)
     for child in children:
         print("> Adding grandchild {}.".format(child.pid))
         processes.append(child.pid)
+
 
 def cleanup(processes: List) -> None:
     for pid in process_list:
@@ -93,7 +96,8 @@ def cleanup(processes: List) -> None:
         streamer_server.shutdown()
         streamer_server.out.flush()
         streamer_server.out.close()
-   
+
+
 # Prepare the handler for SIGINT (Ctrl+C).
 def signal_handler(signal, frame) -> None:
     print("\n\n> SIGINT received. Stopping processes' execution...\n")
@@ -101,6 +105,7 @@ def signal_handler(signal, frame) -> None:
     print("> Done. Exiting.")
     sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def start_process(command: str, stdout: TextIOWrapper = None, stderr: TextIOWrapper = None) -> subprocess.Popen:
     
@@ -125,6 +130,7 @@ def start_process(command: str, stdout: TextIOWrapper = None, stderr: TextIOWrap
 ############################# READ ARGUMENTS ##############################
 ###########################################################################
 
+
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
 DESCRIPTION_TEXT = "GraphBolt approximate processing of graphs over streams"
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
@@ -141,7 +147,7 @@ parser.add_argument("-flink-port", help="Flink cluster's JobManager port.", requ
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
 parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
 parser.add_argument("-chunks", "--chunk-count", help="set desired number of chunks to be sent by the streamer.", required=True, type=int, default=50)
-parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", required=True, type=int, default=1000)
+parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", required=False, type=int, default=-1000)
 parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManager parallelism.", required=False, type=int, default=1)
 parser.add_argument("-concurrent-jobs", help="set desired GraphBolt instances to run at the same time. The more, the faster a batch of tests will run.", required=False, type=int, default=1)
 parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
@@ -149,44 +155,51 @@ parser.add_argument("-iterations", help="set desired PageRank power-method itera
 parser.add_argument("-max-mem", help="ammount of memory made available to Maven.", required=False, type=int, default=2048)
 parser.add_argument("-dump-summary", help="should intermediate summary graphs be saved to disk?", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-periodic-full-dump", help="should GraphBolt save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-size-percent", help="set desired GraphBolt RBO rank length as percentage of total graph.", required=False, type=float, default=-1.0)
 
 args = parser.parse_args()
 
 # Sanitize arguments and exit on invalid values.
+
+if args.size_percent > 0 and args.size > 0:
+    print("> Only one of 'size-percent' and 'size' may be provided. Exiting.")
+    sys.exit(1)
+
 if args.flink_port <= 0 or not isinstance(args.flink_port, int):
     print("> '-flink_port' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.data_dir.startswith('~'):
     args.data_dir = os.path.expanduser(args.data_dir).replace('\\', '/')
 if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
-    exit(1)
+    sys.exit(1)
 if args.iterations <= 0 or not isinstance(args.iterations, int):
     print("> '-iterations' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.dampening <= 0 or not isinstance(args.dampening, float):
     print("> '-dampening' must be a positive float in ]0; 1[. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.parallelism <= 0 or not isinstance(args.parallelism, int):
     print("> '-parallelism' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.concurrent_jobs <= 0 or not isinstance(args.concurrent_jobs, int):
     print("> '-concurrent_jobs' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.size <= 0 or not isinstance(args.size, int):
     print("> '-size' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.max_mem <= 0 or not isinstance(args.max_mem, int):
     print("> '-max-mem' must be a positive integer. Exiting.")
-    exit(1)
+    sys.exit(1)
 if args.out_dir.startswith('~'):
     args.out_dir = os.path.expanduser(args.out_dir).replace('\\', '/')
 if len(args.out_dir) == 0:
     print("> '-out-dir' must be a non-empty string. Exiting")
-    exit(1)
+    sys.exit(1)
 
 if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
     print("> '-data-dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
@@ -422,13 +435,24 @@ else:
     FLINK_JOB_STATS_FLAG = ""
 
 
+
+#PERIODIC_DUMP_STR = ''.format(args.periodic_full_dump)
+PERIODIC_DUMP_STR = ''
+# if args.periodic_full_dump:
+#     PERIODIC_DUMP_STR = '-periodic_full_accuracy'
+
+SIZE_PERCENT_STR = ''
+if args.size_percent > 0:
+    args.size = args.size * args.size_percent
+    #SIZE_PERCENT_STR = '-percentage ' + str(args.size_percent)
+
 #TODO: "mvn -f ../pom.xml " requires that a graphbolt.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
 
 
 # Build complete PageRank command.
 ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
 ### Article - on running exec:exec - https://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
-graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} -temp '{KW_TEMP_DIR}'"'''.format(KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism, KW_TEMP_DIR = TEMP_DIR).replace('\\', '/')
+graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_SIZE_PERCENT_STR}"'''.format(KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_SIZE_PERCENT_STR = SIZE_PERCENT_STR).replace('\\', '/')
 
 print("{}\n".format(graphbolt_run_command))
 
@@ -489,12 +513,12 @@ for r in r_values:
 
             # Build command to execute. pt.ulisboa.tecnico.graph.Main
             ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
-            graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}'"'''.format(
+            graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} -size {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_SIZE_PERCENT_STR}"'''.format(
                 KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, 
                 KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,
                 KW_r = r, KW_n = n, KW_delta = delta, KW_DATA_DIR = args.data_dir, 
                 KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism,
-                KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR).replace('\\', '/')
+                KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_SIZE_PERCENT_STR = SIZE_PERCENT_STR).replace('\\', '/')
             
             print("{}\n".format(graphbolt_run_command))
 
