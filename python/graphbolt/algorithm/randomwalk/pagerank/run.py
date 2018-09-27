@@ -438,7 +438,7 @@ else:
 
 SIZE_STR = ''
 if args.size > 0 and args.size_percent < 0.0:
-    SIZE_STR = '-size ' + args.size
+    SIZE_STR = '-size ' + str(args.size)
 #PERIODIC_DUMP_STR = ''.format(args.periodic_full_dump)
 PERIODIC_DUMP_STR = ''
 
