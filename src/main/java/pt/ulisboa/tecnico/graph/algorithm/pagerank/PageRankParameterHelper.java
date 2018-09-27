@@ -94,7 +94,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 		}
 
 		if(super.cmd.hasOption(PageRankArgumentName.PAGERANK_PERCENTAGE.toString())) {
-			final Integer percentage = Integer.parseInt(super.cmd.getOptionValue(PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
+			final Float percentage = Float.parseFloat(super.cmd.getOptionValue(PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
 
 			if(percentage <= 0)
 				throw new IllegalArgumentException(PageRankArgumentName.PAGERANK_PERCENTAGE.toString() + " must be a positive integer.");
@@ -102,7 +102,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 			super.argValues.put(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), percentage);
 		}
 		else {
-
+			super.argValues.put(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), -1.0f);
 		}
 
 		// Default to PageRank dampening factor of 0.85.

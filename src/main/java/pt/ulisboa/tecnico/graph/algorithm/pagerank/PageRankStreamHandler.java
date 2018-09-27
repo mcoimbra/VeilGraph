@@ -46,7 +46,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     final private Integer pageRankIterations;
     final private Integer pageRankSize;
     final private Double pageRankDampeningFactor;
-    final protected Integer pageRankPercentage;
+    final protected Float pageRankPercentage;
 
 
     @Override
@@ -76,7 +76,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         this.pageRankIterations = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_ITERATIONS.toString()));
         this.pageRankSize = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_SIZE.toString()));
 
-        this.pageRankPercentage = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
+        this.pageRankPercentage = ((Float)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
 
         
 
@@ -202,20 +202,18 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         super.outputFormat.setIteration(super.iteration);
         super.outputFormat.setTags(date);
 
-        if(super.checkingPeriodicFullAccuracy) {
-            if(super.iteration % 10 == 0) {
-                ranks
-                .sortPartition(1, Order.DESCENDING)
-                .setParallelism(1)
-                .output(super.outputFormat);
-            }
+        if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0)) {
+            ranks
+            .sortPartition(1, Order.DESCENDING)
+            .setParallelism(1)
+            .output(super.outputFormat);
         }
         else {
-
-            if (this.pageRankPercentage < 0) {
+            if (this.pageRankPercentage > 0) {
                 try {
+                    final Float rankNumber = this.pageRankPercentage * new Long(ranks.count()).intValue();
                     ranks.sortPartition(1, Order.DESCENDING).setParallelism(1)
-                            .first(this.pageRankPercentage * new Long(ranks.count()).intValue())
+                            .first(rankNumber.intValue())
                             .output(super.outputFormat);
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
