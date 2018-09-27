@@ -189,7 +189,7 @@ if args.parallelism <= 0 or not isinstance(args.parallelism, int):
 if args.concurrent_jobs <= 0 or not isinstance(args.concurrent_jobs, int):
     print("> '-concurrent_jobs' must be a positive integer. Exiting.")
     sys.exit(1)
-if args.size <= 0 or not isinstance(args.size, int):
+if (args.size <= 0 and args.size_percent < 0) or not isinstance(args.size, int):
     print("> '-size' must be a positive integer. Exiting.")
     sys.exit(1)
 if args.max_mem <= 0 or not isinstance(args.max_mem, int):
