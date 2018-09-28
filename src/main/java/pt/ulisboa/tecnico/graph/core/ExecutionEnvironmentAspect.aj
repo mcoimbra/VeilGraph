@@ -135,8 +135,8 @@ public aspect ExecutionEnvironmentAspect {
 
 
         final boolean isFlinkWebUIAvailable =
-                GraphStreamHandler.getInstance().isRunningRemote() ||
-                GraphStreamHandler.getInstance().runningLocalFlinkWebUI();
+                GraphStreamHandler.getInstance().isRunningRemote();// ||
+                //GraphStreamHandler.getInstance().runningLocalFlinkWebUI();
 
 
         if(!isFlinkWebUIAvailable) {
