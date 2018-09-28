@@ -203,30 +203,35 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         super.outputFormat.setTags(date);
 
         if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0)) {
+            System.out.println("> Full result dump.");
             ranks
-            .sortPartition(1, Order.DESCENDING)
-            .setParallelism(1)
-            .output(super.outputFormat);
+                .sortPartition(1, Order.DESCENDING)
+                .setParallelism(1)
+                .output(super.outputFormat);
         }
         else {
             if (this.pageRankPercentage > 0) {
                 try {
                     final Float rankNumber = this.pageRankPercentage * new Long(ranks.count()).intValue();
-                    ranks.sortPartition(1, Order.DESCENDING).setParallelism(1)
-                            .first(rankNumber.intValue())
-                            .output(super.outputFormat);
+                    System.out.println("> Percentage dump: " + rankNumber);
+                    ranks
+                        .sortPartition(1, Order.DESCENDING)
+                        .setParallelism(1)
+                        .first(rankNumber.intValue())
+                        .output(super.outputFormat);
                 } catch (Exception e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
             else {
+                System.out.println("> Ranking dump: " + this.pageRankSize);
                 ranks
-                .sortPartition(1, Order.DESCENDING)
-                .setParallelism(1).first(this.pageRankSize)
-                .output(super.outputFormat);
+                    .sortPartition(1, Order.DESCENDING)
+                    .setParallelism(1)
+                    .first(this.pageRankSize)
+                    .output(super.outputFormat);
             }
-
         }
     }
 
