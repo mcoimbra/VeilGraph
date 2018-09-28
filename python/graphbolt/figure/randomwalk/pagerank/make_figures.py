@@ -783,6 +783,8 @@ for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
     
     if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
 
+        #print('> Plotting counter #{}/{}'.format(plot_counter, matrix_count))
+
         rbos = [100 * y for y in sorted_rbos_dict[k]]
 
         curr_min_rbo = min(rbos)
