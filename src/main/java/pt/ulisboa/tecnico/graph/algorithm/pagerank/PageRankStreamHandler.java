@@ -202,11 +202,13 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         super.outputFormat.setIteration(super.iteration);
         super.outputFormat.setTags(date);
 
+        // https://ci.apache.org/projects/flink/flink-docs-master/api/java/org/apache/flink/api/java/DataSet.html#writeAsText-java.lang.String-
+
         if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0)) {
             System.out.println("> Full result dump.");
             ranks
                 .sortPartition(1, Order.DESCENDING)
-                .setParallelism(1)
+                //.setParallelism(1)
                 .output(super.outputFormat);
         }
         else {
@@ -216,7 +218,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
                     System.out.println("> Percentage dump: " + rankNumber);
                     ranks
                         .sortPartition(1, Order.DESCENDING)
-                        .setParallelism(1)
+                        //.setParallelism(1)
                         .first(rankNumber.intValue())
                         .output(super.outputFormat);
                 } catch (Exception e) {
@@ -228,7 +230,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
                 System.out.println("> Ranking dump: " + this.pageRankSize);
                 ranks
                     .sortPartition(1, Order.DESCENDING)
-                    .setParallelism(1)
+                    //.setParallelism(1)
                     .first(this.pageRankSize)
                     .output(super.outputFormat);
             }
