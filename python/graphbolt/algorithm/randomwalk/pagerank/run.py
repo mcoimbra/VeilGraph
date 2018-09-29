@@ -158,9 +158,15 @@ parser.add_argument("-delete-edges", help="should edge deletions be sent in the 
 parser.add_argument("-periodic-full-dump", help="should GraphBolt save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-size-percent", help="set desired GraphBolt RBO rank length as percentage of total graph.", required=False, type=float, default=-1.0)
 
+parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
+
 args = parser.parse_args()
 
 # Sanitize arguments and exit on invalid values.
+
+if (args.list != None) and (len(args.list) <= 0 or (len(args.list) % 3 ) != 0):
+    print("> Big vertex parameter list must be a multiple of three. Exiting.")
+    sys.exit(1)
 
 if args.size_percent > 0 and args.size > 0:
     print("> Only one of 'size-percent' and 'size' may be provided. Exiting.")
@@ -206,8 +212,6 @@ if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isd
     exit(1)
 
 print("> Arguments: {}".format(args))
-
-
 
 # Each summarized execution has two process steps: 1 - execute GraphBolt; 2 - execute python RBO evaluation.
 # If the sequence "Step 1 -> Step 2" for summarized GraphBolt execution 'i' is self-contained in a single process 'Si', then we are free to start as many 'Si' concurrently as the hardware allows...
@@ -313,6 +317,13 @@ if not os.path.exists(TEMP_DIR):
     pathlib.Path(TEMP_DIR).mkdir(parents=True, exist_ok=True)
 else:
     print("Temporary directory found:\t\t'{}'".format(TEMP_DIR))
+
+
+
+
+
+#else:
+#    r_values, n_values, delta_values = localutil.get_big_vertex_params()
 
 ###########################################################################
 ########################### CONFIGURE STREAMER ############################
@@ -498,134 +509,143 @@ else:
 ######################### RUN APPROXIMATE VERSION #########################
 ###########################################################################
 
-print("Iterating summarized PageRank parameters...")
+
 
 # Execute the summarized version of PageRank for different parameters.
-r_values, n_values, delta_values = localutil.get_big_vertex_params()
+if args.list != None:
+    i = 0
+    print("Iterating summarized PageRank parameters...")
+    while i < len(args.list):
+        r = float(args.list[i])
+        n = int(args.list[i+1])
+        delta = float(args.list[i+2])
 
-for r in r_values:
-    for n in n_values:
-        for delta in delta_values:
+        i = i + 3
 
-            print("{}\tGraphBolt parameters - r={}\tn={}\tdelta={}\n".format(SHELL_COMMENT * 5, r, n, delta))
 
-            # This is used as a flag to tell GraphBolt to flush intermediate summary graphs to disk.
-            if args.dump_summary:
-                SUMMARY_TEXT = "-dump"
-            else:
-                SUMMARY_TEXT = ""
+#for r in r_values:
+    #for n in n_values:
+    #    for delta in delta_values:
 
-            # Build command to execute. pt.ulisboa.tecnico.graph.Main
-            ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
-            graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_SIZE_PERCENT_STR}"'''.format(
-                KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, 
-                KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = SIZE_STR,
-                KW_r = r, KW_n = n, KW_delta = delta, KW_DATA_DIR = args.data_dir, 
-                KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism,
-                KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_SIZE_PERCENT_STR = SIZE_PERCENT_STR).replace('\\', '/')
-            
-            print("{}\n".format(graphbolt_run_command))
+        print("{}\tGraphBolt parameters - r={}\tn={}\tdelta={}\n".format(SHELL_COMMENT * 5, r, n, delta))
 
-            # Build path to output directory file.
-            graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}-{KW_r:.2f}-{KW_n}-{KW_delta:.2f}.txt'.format(
-                KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_DAMPENING_FACTOR = args.dampening,
-                KW_NUM_ITERATIONS = args.iterations, KW_r = r, KW_n = n, KW_delta = delta)
-            print("{}\n".format(graphbolt_output_file))
+        # This is used as a flag to tell GraphBolt to flush intermediate summary graphs to disk.
+        if args.dump_summary:
+            SUMMARY_TEXT = "-dump"
+        else:
+            SUMMARY_TEXT = ""
 
-            summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
+        # Build command to execute. pt.ulisboa.tecnico.graph.Main
+        ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
+        graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_SIZE_PERCENT_STR}"'''.format(
+            KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, 
+            KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = SIZE_STR,
+            KW_r = r, KW_n = n, KW_delta = delta, KW_DATA_DIR = args.data_dir, 
+            KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism,
+            KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_SIZE_PERCENT_STR = SIZE_PERCENT_STR).replace('\\', '/')
+        
+        print("{}\n".format(graphbolt_run_command))
+
+        # Build path to output directory file.
+        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}-{KW_r:.2f}-{KW_n}-{KW_delta:.2f}.txt'.format(
+            KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_DAMPENING_FACTOR = args.dampening,
+            KW_NUM_ITERATIONS = args.iterations, KW_r = r, KW_n = n, KW_delta = delta)
+        print("{}\n".format(graphbolt_output_file))
+
+        summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
     KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
     KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
-            # Build summarized PageRank evaluation command (RBO evaluation code).
-            graphbolt_eval_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/batch_rank_evaluator.py" "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
-                KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
+        # Build summarized PageRank evaluation command (RBO evaluation code).
+        graphbolt_eval_command = '{KW_PYTHON_PATH} "{KW_GRAPHBOLT_DIR}/python/batch_rank_evaluator.py" "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
+            KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
 
-            # Build path to RBO evaluation file.
-            graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
-                KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        # Build path to RBO evaluation file.
+        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
+            KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
-            # Save current iteration commands to shell file.
-            with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
-                # Format current moment as a UTC timestamp.
-                now = datetime.datetime.utcnow()
-                utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
-                timestamp = str(utc_dt) + " (UTC)"
+        # Save current iteration commands to shell file.
+        with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
+            # Format current moment as a UTC timestamp.
+            now = datetime.datetime.utcnow()
+            utc_dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, tzinfo=pytz.utc)
+            timestamp = str(utc_dt) + " (UTC)"
 
-                shell_file.write("{} {} r = {}\tn = {}\tdelta = {}\n\n".format(SHELL_COMMENT * 5, timestamp, r, n, delta))
-                shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
-                shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_eval_command, graphbolt_output_eval_path))
+            shell_file.write("{} {} r = {}\tn = {}\tdelta = {}\n\n".format(SHELL_COMMENT * 5, timestamp, r, n, delta))
+            shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
+            shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_eval_command, graphbolt_output_eval_path))
 
-            
-            # Skip summarized PageRank version if the directory for a given parameter combination is found.
-            need_to_run_this_approx = False
-            # Was a results directory found?
-            if not os.path.exists(summarized_pagerank_result_path):
-                print("> Approximate PageRank results not found:\t{}".format(summarized_pagerank_result_path))
+        
+        # Skip summarized PageRank version if the directory for a given parameter combination is found.
+        need_to_run_this_approx = False
+        # Was a results directory found?
+        if not os.path.exists(summarized_pagerank_result_path):
+            print("> Approximate PageRank results not found:\t{}".format(summarized_pagerank_result_path))
+            print("> Need to run summarized PageRank")
+            need_to_run_this_approx = True
+        else:
+            names = os.listdir(summarized_pagerank_result_path)
+            paths = [os.path.join(summarized_pagerank_result_path, name) for name in names]
+            sizes = [(path, os.stat(path).st_size) for path in paths]
+
+            # Does the result directory have the expected number of files?
+            if len(names) != int(args.chunk_count) + 1:
+                print("> Expected {} but got {} summarized PageRank results at {}.".format(int(args.chunk_count) + 1, len(names), summarized_pagerank_result_path))
                 print("> Need to run summarized PageRank")
                 need_to_run_this_approx = True
             else:
-                names = os.listdir(summarized_pagerank_result_path)
-                paths = [os.path.join(summarized_pagerank_result_path, name) for name in names]
-                sizes = [(path, os.stat(path).st_size) for path in paths]
+                found_zeros = False
 
-                # Does the result directory have the expected number of files?
-                if len(names) != int(args.chunk_count) + 1:
-                    print("> Expected {} but got {} summarized PageRank results at {}.".format(int(args.chunk_count) + 1, len(names), summarized_pagerank_result_path))
+                # Do they all have data?
+                for [path, sz] in sizes:
+                    if sz == 0:
+                        found_zeros = True
+                        break
+                if found_zeros:
+                    print("> Found summarized PageRank results with value of zero at {}.".format(summarized_pagerank_result_path))
                     print("> Need to run summarized PageRank")
                     need_to_run_this_approx = True
-                else:
-                    found_zeros = False
-
-                    # Do they all have data?
-                    for [path, sz] in sizes:
-                        if sz == 0:
-                            found_zeros = True
-                            break
-                    if found_zeros:
-                        print("> Found summarized PageRank results with value of zero at {}.".format(summarized_pagerank_result_path))
-                        print("> Need to run summarized PageRank")
-                        need_to_run_this_approx = True
 
 
-            # If were invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
-            if need_to_run_this_approx and (not args.rbo_only):
-                with open(graphbolt_output_file, 'w') as out_file:
-                    print("> Executing summarized version...")
+        # If were invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
+        if need_to_run_this_approx and (not args.rbo_only):
+            with open(graphbolt_output_file, 'w') as out_file:
+                print("> Executing summarized version...")
 
-                    print("> Results directory:\t{}".format(summarized_pagerank_result_path))
+                print("> Results directory:\t{}".format(summarized_pagerank_result_path))
 
 
 
-                    approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
-            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+                approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
-                    print("> Statistics directory:\t{}".format(approx_stats_path))
-                    print("> Eval file:\t{}".format(graphbolt_output_eval_path))
+                print("> Statistics directory:\t{}".format(approx_stats_path))
+                print("> Eval file:\t{}".format(graphbolt_output_eval_path))
 
-                    process = start_process(graphbolt_run_command, out_file)
-                    process_list.append(process.pid)
+                process = start_process(graphbolt_run_command, out_file)
+                process_list.append(process.pid)
 
-                    print("\n> Registering children of process {}...".format(process.pid))
-                    register_grandchildren(process.pid, process_list)
-                    print("> Finished registering children of process {}.".format(process.pid))
-                    process.wait()
-                    print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
-            elif args.rbo_only:
-                print("> Skipping summarized execution, attempting to generate RBO directly.")
-            else:
-                print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
+                print("\n> Registering children of process {}...".format(process.pid))
+                register_grandchildren(process.pid, process_list)
+                print("> Finished registering children of process {}.".format(process.pid))
+                process.wait()
+                print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
+        elif args.rbo_only:
+            print("> Skipping summarized execution, attempting to generate RBO directly.")
+        else:
+            print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-            # Execute RBO evaluation code.
-            print("{}".format(graphbolt_eval_command))
-            print("{}".format(graphbolt_output_eval_path))
+        # Execute RBO evaluation code.
+        print("{}".format(graphbolt_eval_command))
+        print("{}".format(graphbolt_output_eval_path))
 
-            # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
-            if os.path.isdir(summarized_pagerank_result_path):
-                with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
-                    print("> Calculating RBO of summarized version...\n")
+        # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
+        if os.path.isdir(summarized_pagerank_result_path):
+            with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
+                print("> Calculating RBO of summarized version...\n")
 
 
-                    batch_rank_evaluator.compute_rbo(summarized_pagerank_result_path, complete_pagerank_result_path, out = rbo_out_file)
+                batch_rank_evaluator.compute_rbo(summarized_pagerank_result_path, complete_pagerank_result_path, out = rbo_out_file)
             
 ###########################################################################
 ############################# CLEANUP ON EXIT #############################

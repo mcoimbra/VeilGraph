@@ -27,31 +27,23 @@ import sys
 from .RBO import score
 
 def evaluate(file1: str, file2: str, p_value: float = 0.98) -> float:
-    try:
-        with open(file1) as f1:
-            try:
-                with open(file2) as f2:
-                    list_to_evaluate = f1.readlines()
-                    gold_list = f2.readlines()
 
-                    # In case the ranking files have semi-colon-separated values, assume the first value is the node id. Discard the rest for each line.
-                    list_to_evaluate_sans_rank = []
-                    for l in list_to_evaluate:
-                        node_id = l[0:l.rfind(";")]
-                        list_to_evaluate_sans_rank.append(node_id)
+    with open(file1) as f1, open(file2) as f2:
+        list_to_evaluate = f1.readlines()
+        gold_list = f2.readlines()
 
-                    gold_list_sans_rank = []
-                    for l in gold_list:
-                        node_id = l[0:l.rfind(";")]
-                        gold_list_sans_rank.append(node_id)
+        # In case the ranking files have semi-colon-separated values, assume the first value is the node id. Discard the rest for each line.
+        list_to_evaluate_sans_rank = []
+        for l in list_to_evaluate:
+            node_id = l[0:l.rfind(";")]
+            list_to_evaluate_sans_rank.append(node_id)
 
-                    return score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
+        gold_list_sans_rank = []
+        for l in gold_list:
+            node_id = l[0:l.rfind(";")]
+            gold_list_sans_rank.append(node_id)
 
-            except FileNotFoundError:
-                print("File not found:", file2, file=sys.stderr)
-
-    except FileNotFoundError:
-        print("File not found:", file1, file=sys.stderr)
+        return score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
 
 
 if __name__ == "__main__":
