@@ -36,16 +36,16 @@ def file_len(fname: str) -> int:
             pass
         return i + 1
 
-def get_big_vertex_params() -> [List, List, List]:
+# def get_big_vertex_params() -> [List, List, List]:
 
-    # r_values = [0.15]
-    # n_values = [1]
-    # delta_values = [0.5]
+#     # r_values = [0.15]
+#     # n_values = [1]
+#     # delta_values = [0.5]
 
-    r_values = [0.05, 0.15, 0.25]
-    n_values = [0, 1, 2, 3]
-    delta_values = [0.1, 0.5, 1.0]
-    return r_values, n_values, delta_values
+#     r_values = [0.05, 0.15, 0.25]
+#     n_values = [0, 1, 2, 3]
+#     delta_values = [0.1, 0.5, 1.0]
+#     return r_values, n_values, delta_values
 
 def get_pagerank_data_paths(out_dir: str) -> [str, str, str, str, str, str]:
 

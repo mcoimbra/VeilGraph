@@ -461,6 +461,8 @@ if args.size_percent > 0:
     #args.size = args.size * args.size_percent
     SIZE_PERCENT_STR = '-percentage ' + str(args.size_percent)
 
+
+#TODO: when checking if it's necessary to run PageRank for a given parameter combination (or for complete version), need to check if we are running with periodic full outputs and the existing fils are without periodic (or vice-versa). In this case, need to execute.
 #TODO: "mvn -f ../pom.xml " requires that a graphbolt.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
 
 

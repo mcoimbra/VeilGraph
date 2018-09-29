@@ -152,9 +152,15 @@ parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", requ
 parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 
+parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
+
 args = parser.parse_args()
 
 # Sanitize arguments and exit on invalid values.
+if (args.list != None) and (len(args.list) <= 0 or (len(args.list) % 3 ) != 0):
+    print("> Big vertex parameter list must be a multiple of three. Exiting.")
+    sys.exit(1)
+
 if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     sys.exit(1)
@@ -226,7 +232,7 @@ else:
 ###########################################################################
 
 # Execute figure generation for different parameters.
-r_values, n_values, delta_values = localutil.get_big_vertex_params()
+#r_values, n_values, delta_values = localutil.get_big_vertex_params()
 
 # Dictionary to store GraphBolt PageRank statistics for each parameter combination that was found.
 result_statistic_matrices = {}
@@ -241,205 +247,213 @@ complete_pagerank_stats_matrix = read_statistics_into_dic([complete_pagerank_sta
 stream_file_path = "{KW_DATA_DIR}/{KW_DATASET_NAME}/{KW_DATASET_NAME}-stream.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_NAME = args.dataset_name)
 
 # Parse statistics and generate figures for individual summarized executions.
-for r in r_values:
-    for n in n_values:
-        for delta in delta_values:
+# for r in r_values:
+#     for n in n_values:
+#         for delta in delta_values:
+if args.list != None:
+    i = 0
+    print("Iterating summarized PageRank parameters...")
+    while i < len(args.list):
+        r = float(args.list[i])
+        n = int(args.list[i+1])
+        delta = float(args.list[i+2])
+
+        i = i + 3
+            
+        indexes = []
+        rbos = []
+        
+        # Label to use in subsequent plots. Also used as a key for the map of GraphBolt statistic matrices.
+        key_label = r'\textit{r} = KW_r, \textit{n} = KW_n, $\Delta$ = KW_delta'.replace("KW_r", "{KW_r:.2f}".format(KW_r = r)).replace("KW_n", "{KW_n}".format(KW_n = n)).replace("KW_delta", "{KW_delta:.2f}".format(KW_delta = delta)) 
+
+
+        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
+        KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+
+        ##### Make RBO figure.
+        print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path))
+        if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
+            file_sz = localutil.file_len(graphbolt_output_eval_path)
+        else:
+            file_sz = -1
+        print("> File has {} lines.".format(file_sz))
+        
+        if os.path.isfile(graphbolt_output_eval_path) and file_sz  == args.chunk_count + 1:
+            with open(graphbolt_output_eval_path, 'r') as eval_results:
+                rbo_lines = eval_results.readlines()
+
+                for l in rbo_lines:
+                    i, rbo = l.split(";")
+                    rbos.append(float(rbo))
+                    indexes.append(int(i))
+
+            # Create a dedicated directory for the current dataset and PageRank parameters.
+            figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+
+            # Single-plot figures will be crowded together in a specific 'singles' directory.
+            figure_singles_new_dir_path = '{KW_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}/singles'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_FIGURE_BASE_NAME = figure_base_name)
+
+            # Create 'singles' directory.
+            pathlib.Path(figure_singles_new_dir_path).mkdir(parents=True, exist_ok=True)
+
+            # Set the figure base name for the GraphBolt vertex K set parameters.
+            figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
             
             
-            indexes = []
-            rbos = []
-            
-            # Label to use in subsequent plots. Also used as a key for the map of GraphBolt statistic matrices.
-            key_label = r'\textit{r} = KW_r, \textit{n} = KW_n, $\Delta$ = KW_delta'.replace("KW_r", "{KW_r:.2f}".format(KW_r = r)).replace("KW_n", "{KW_n}".format(KW_n = n)).replace("KW_delta", "{KW_delta:.2f}".format(KW_delta = delta)) 
+            result_rbo_matrices[key_label] = rbos
+
+            print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+            #print(result_rbo_matrices)
+
+            if(args.plot_single_figures):
+                print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
+                fig, ax = plt.subplots()
+                plt.xlabel("Number of PageRank executions")
+                plt.ylabel("PageRank similarity measure (RBO)")
+                plt.yticks(rotation=45)
+
+                plot_rbo = [100 * y for y in rbos]
+
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+                plt.plot(indexes, plot_rbo, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
+                plt.title(key_label)
+                ax.set_xlim(left=0, right=args.chunk_count)
+                x_step = int(args.chunk_count / 10)
+                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [0]
+                plt.xticks(new_xticks)
+                #plt.legend()
+                save_figure(figure_path_name + '-RBO', fig_file_types)
+
+                plt.close(fig)
 
 
-            graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
-            KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        
+        # Read the statistics file for the current parameter combination.
+        summary_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/{KW_DATASET_NAME}-start.tsv'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
-            ##### Make RBO figure.
-            print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path))
-            if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
-                file_sz = localutil.file_len(graphbolt_output_eval_path)
-            else:
-                file_sz = -1
-            print("> File has {} lines.".format(file_sz))
-            
-            if os.path.isfile(graphbolt_output_eval_path) and file_sz  == args.chunk_count + 1:
-                with open(graphbolt_output_eval_path, 'r') as eval_results:
-                    rbo_lines = eval_results.readlines()
+        big_vertex_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.tsv'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
-                    for l in rbo_lines:
-                        i, rbo = l.split(";")
-                        rbos.append(float(rbo))
-                        indexes.append(int(i))
 
-                # Create a dedicated directory for the current dataset and PageRank parameters.
-                figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+        pagerank_file_ok = os.path.isfile(summary_pagerank_stats_path) and os.stat(summary_pagerank_stats_path).st_size > 0 and localutil.file_len(summary_pagerank_stats_path) == args.chunk_count + 1
 
-                # Single-plot figures will be crowded together in a specific 'singles' directory.
-                figure_singles_new_dir_path = '{KW_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}/singles'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_FIGURE_BASE_NAME = figure_base_name)
+        big_vertex_file_ok = os.path.isfile(big_vertex_stats_path) and os.stat(big_vertex_stats_path).st_size > 0 and localutil.file_len(big_vertex_stats_path) == args.chunk_count + 1
 
-                # Create 'singles' directory.
-                pathlib.Path(figure_singles_new_dir_path).mkdir(parents=True, exist_ok=True)
+        if not pagerank_file_ok:
+            print("PageRank results file had a problem: " + summary_pagerank_stats_path)
+            sys.exit(1)
+        elif not big_vertex_file_ok:
+            print("Big vertex file had a problem: " + summary_pagerank_stats_path)
+            sys.exit(1)
+        else:
 
-                # Set the figure base name for the GraphBolt vertex K set parameters.
-                figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
+            stat_files = [summary_pagerank_stats_path, big_vertex_stats_path]
+            summary_pagerank_stats_matrix = read_statistics_into_dic(stat_files, args.chunk_count)
+
+            print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+            #print(summary_pagerank_stats_matrix)
+
+            # Programmatically store the speedup values.
+            summary_pagerank_stats_matrix['speedup'] = [exact_time / summarized_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
+
+            summary_pagerank_stats_matrix['inv_speedup'] = [summarized_time / exact_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
+
+            result_statistic_matrices[key_label] = summary_pagerank_stats_matrix
+
+            ##### Make statistics figures specific to each individual parameter combination.
+            if(args.plot_single_figures):
+                ###### PLOT summary graph vertex and edge count as fraction of complete graph.
+                # Custom ticker: https://matplotlib.org/examples/pylab_examples/custom_ticker1.html
+                fig, ax = plt.subplots()
+                # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+                plt.xlabel("Number of PageRank executions")
+                plt.ylabel("Summary vertices and edges as fractions of total graph")
+                plt.yticks(rotation=45)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], alpha=matplotlib_config.PLOT_ALPHA)
+                ax.set_title(key_label)
+                ax.set_xlim(left=1, right=args.chunk_count)
+                plt.title(key_label)
+                plt.legend()
+                
+                x_step = int(args.chunk_count / 10)
+                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+                plt.xticks(new_xticks)
+                save_figure(figure_path_name + '-Savings', fig_file_types)
+
+
+                #####################
+                ###### PLOT execution time AND summary graph vertex and edge count as fraction of complete graph.
+                fig, ax = plt.subplots()
+                # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+
+                plt.xlabel("Number of PageRank executions")
+                plt.ylabel("Summary vertices and edges as fractions of total graph")
+                plt.yticks(rotation=45)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], color=matplotlib_config.colors[0], alpha=matplotlib_config.PLOT_ALPHA)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], color=matplotlib_config.colors[1], alpha=matplotlib_config.PLOT_ALPHA)
+                ax.set_title(key_label)
+                ax.set_xlim(left=1, right=args.chunk_count)
+                plt.title(key_label)
+                plt.legend()
                 
                 
-                result_rbo_matrices[key_label] = rbos
+                x_step = int(args.chunk_count / 10)
+                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+                plt.xticks(new_xticks)
+                ax_c = ax.twinx()
+                ax_c.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label="PageRank Time", marker=matplotlib_config.styles[2], color=matplotlib_config.colors[2], alpha=matplotlib_config.PLOT_ALPHA)
+                ax_c.set_ylabel("Summarized PageRank execution time")
+                ax_c.yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
+                plt.legend()
 
-                print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
-                #print(result_rbo_matrices)
+                save_figure(figure_path_name + '-Savings_Time', fig_file_types)
 
-                if(args.plot_single_figures):
-                    print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
-                    fig, ax = plt.subplots()
-                    plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("PageRank similarity measure (RBO)")
-                    plt.yticks(rotation=45)
+                plt.close(fig)
 
-                    plot_rbo = [100 * y for y in rbos]
+                ###### PLOT PageRank time figure.
+                fig = plt.figure()
 
-                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
-                    plt.plot(indexes, plot_rbo, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
-                    plt.title(key_label)
-                    ax.set_xlim(left=0, right=args.chunk_count)
-                    x_step = int(args.chunk_count / 10)
-                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [0]
-                    plt.xticks(new_xticks)
-                    #plt.legend()
-                    save_figure(figure_path_name + '-RBO', fig_file_types)
+                # Custom ticker: https://matplotlib.org/examples/pylab_examples/custom_ticker1.html
+                # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
 
-                    plt.close(fig)
+                plt.xlabel("Number of PageRank executions")
+                plt.ylabel("Summarized PageRank execution time")
+                plt.title(key_label)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
+                ax = plt.gca()
+                x_step = int(args.chunk_count / 10)
+                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+                plt.xticks(new_xticks)
+                ax.set_xlim(left=1, right=args.chunk_count)
+                plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
+                plt.legend()
+                
+                save_figure(figure_path_name + '-Time', fig_file_types)
+                plt.close(fig)
 
+                ###### PLOT PageRank speedup figure.
+                fig = plt.figure()
+                plt.xlabel("Number of PageRank executions")
+                plt.ylabel("Summarized PageRank execution speedup")
+                plt.title(key_label)
+                plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['speedup'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
+                #
+                #plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
+                ax = plt.gca()
+                x_step = int(args.chunk_count / 10)
+                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+                plt.xticks(new_xticks)
+                ax.set_xlim(left=1, right=args.chunk_count)
+                #plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
+                plt.legend()
+                
+                save_figure(figure_path_name + '-Speedup', fig_file_types)
 
-            
-            # Read the statistics file for the current parameter combination.
-            summary_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/{KW_DATASET_NAME}-start.tsv'.format(
-            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
-
-            big_vertex_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.tsv'.format(
-            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
-
-
-            pagerank_file_ok = os.path.isfile(summary_pagerank_stats_path) and os.stat(summary_pagerank_stats_path).st_size > 0 and localutil.file_len(summary_pagerank_stats_path) == args.chunk_count + 1
-
-            big_vertex_file_ok = os.path.isfile(big_vertex_stats_path) and os.stat(big_vertex_stats_path).st_size > 0 and localutil.file_len(big_vertex_stats_path) == args.chunk_count + 1
-
-            if not pagerank_file_ok:
-                print("PageRank results file had a problem: " + summary_pagerank_stats_path)
-                sys.exit(1)
-            elif not big_vertex_file_ok:
-                print("Big vertex file had a problem: " + summary_pagerank_stats_path)
-                sys.exit(1)
-            else:
-
-                stat_files = [summary_pagerank_stats_path, big_vertex_stats_path]
-                summary_pagerank_stats_matrix = read_statistics_into_dic(stat_files, args.chunk_count)
-
-                print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
-                #print(summary_pagerank_stats_matrix)
-
-                # Programmatically store the speedup values.
-                summary_pagerank_stats_matrix['speedup'] = [exact_time / summarized_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
-
-                summary_pagerank_stats_matrix['inv_speedup'] = [summarized_time / exact_time for summarized_time,exact_time in zip(summary_pagerank_stats_matrix["computation_time"], complete_pagerank_stats_matrix["computation_time"])]
-
-                result_statistic_matrices[key_label] = summary_pagerank_stats_matrix
-
-                ##### Make statistics figures specific to each individual parameter combination.
-                if(args.plot_single_figures):
-                    ###### PLOT summary graph vertex and edge count as fraction of complete graph.
-                    # Custom ticker: https://matplotlib.org/examples/pylab_examples/custom_ticker1.html
-                    fig, ax = plt.subplots()
-                    # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
-                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
-                    plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summary vertices and edges as fractions of total graph")
-                    plt.yticks(rotation=45)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], alpha=matplotlib_config.PLOT_ALPHA)
-                    ax.set_title(key_label)
-                    ax.set_xlim(left=1, right=args.chunk_count)
-                    plt.title(key_label)
-                    plt.legend()
-                    
-                    x_step = int(args.chunk_count / 10)
-                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-                    plt.xticks(new_xticks)
-                    save_figure(figure_path_name + '-Savings', fig_file_types)
-
-
-                    #####################
-                    ###### PLOT execution time AND summary graph vertex and edge count as fraction of complete graph.
-                    fig, ax = plt.subplots()
-                    # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
-                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
-
-                    plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summary vertices and edges as fractions of total graph")
-                    plt.yticks(rotation=45)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_vertex_ratio'], label=r"$\vert$V$\vert$", marker=matplotlib_config.styles[0], color=matplotlib_config.colors[0], alpha=matplotlib_config.PLOT_ALPHA)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['summary_edge_ratio'], label=r"$\vert$E$\vert$", marker=matplotlib_config.styles[1], color=matplotlib_config.colors[1], alpha=matplotlib_config.PLOT_ALPHA)
-                    ax.set_title(key_label)
-                    ax.set_xlim(left=1, right=args.chunk_count)
-                    plt.title(key_label)
-                    plt.legend()
-                    
-                    
-                    x_step = int(args.chunk_count / 10)
-                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-                    plt.xticks(new_xticks)
-                    ax_c = ax.twinx()
-                    ax_c.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label="PageRank Time", marker=matplotlib_config.styles[2], color=matplotlib_config.colors[2], alpha=matplotlib_config.PLOT_ALPHA)
-                    ax_c.set_ylabel("Summarized PageRank execution time")
-                    ax_c.yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
-                    plt.legend()
-
-                    save_figure(figure_path_name + '-Savings_Time', fig_file_types)
-
-                    plt.close(fig)
-
-                    ###### PLOT PageRank time figure.
-                    fig = plt.figure()
-
-                    # Custom ticker: https://matplotlib.org/examples/pylab_examples/custom_ticker1.html
-                    # On PercentFormatter arguments: https://matplotlib.org/api/ticker_api.html#module-matplotlib.ticker
-
-                    plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summarized PageRank execution time")
-                    plt.title(key_label)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
-                    ax = plt.gca()
-                    x_step = int(args.chunk_count / 10)
-                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-                    plt.xticks(new_xticks)
-                    ax.set_xlim(left=1, right=args.chunk_count)
-                    plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
-                    plt.legend()
-                    
-                    save_figure(figure_path_name + '-Time', fig_file_types)
-                    plt.close(fig)
-
-                    ###### PLOT PageRank speedup figure.
-                    fig = plt.figure()
-                    plt.xlabel("Number of PageRank executions")
-                    plt.ylabel("Summarized PageRank execution speedup")
-                    plt.title(key_label)
-                    plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['speedup'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
-                    #
-                    #plt.plot(summary_pagerank_stats_matrix['execution_count'], summary_pagerank_stats_matrix['computation_time'], label = key_label, alpha=matplotlib_config.PLOT_ALPHA)
-                    ax = plt.gca()
-                    x_step = int(args.chunk_count / 10)
-                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-                    plt.xticks(new_xticks)
-                    ax.set_xlim(left=1, right=args.chunk_count)
-                    #plt.gca().yaxis.set_major_formatter(mtick.FormatStrFormatter('%d s'))
-                    plt.legend()
-                    
-                    save_figure(figure_path_name + '-Speedup', fig_file_types)
-
-                    plt.close(fig)
+                plt.close(fig)
 
                     
 
