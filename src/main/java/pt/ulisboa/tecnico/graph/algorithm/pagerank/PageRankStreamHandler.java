@@ -108,6 +108,15 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             nameJoiner.add("complete");
         }
 
+        nameJoiner.add("P" + super.env.getParallelism());
+
+        if(super.deletingEdges) {
+            nameJoiner.add("D");
+        }
+        else {
+            nameJoiner.add("A");
+        }
+
         super.customName = nameJoiner.toString();
     }
 

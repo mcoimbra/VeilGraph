@@ -40,6 +40,8 @@ public class ParameterHelper {
         SERVER_PORT_SHORT("p"), SERVER_PORT("port"),
         SERVER_ADDRESS_SHORT("ip"), SERVER_ADDRESS("address"),
 
+        DELETING_EDGES("with_deletions"),
+
         LOADING_WEB_MANAGER("web"),
 
         PERIODIC_FULL_ACCURACY_SET("periodic_full_accuracy"),
@@ -264,6 +266,8 @@ public class ParameterHelper {
         argValues.put(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString(), cmd.hasOption(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString()));
 
         argValues.put(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(), cmd.hasOption(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString()));
+
+        argValues.put(GraphBoltArgumentName.DELETING_EDGES.toString(), cmd.hasOption(GraphBoltArgumentName.DELETING_EDGES.toString()));
 
         
 

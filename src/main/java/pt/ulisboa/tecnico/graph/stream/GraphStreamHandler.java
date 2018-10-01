@@ -76,6 +76,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         return GraphStreamHandler.singleton;
     }
 
+
+
+    /** 
+     * Are we deleting edges in this execution? Used to create the name of the result directories.
+     */
+    protected final boolean deletingEdges;
+
     /**
      * Directory name to reflect the algorithm running on GraphBolt. (e.g. "pagerank").
      */
@@ -304,7 +311,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             this.cacheDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.CACHE.toString());
         }
 
-
+        // Are we deleting edges?
+        this.deletingEdges = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.DELETING_EDGES.toString());
 
         GraphStreamHandler.singleton = this;
 
@@ -578,6 +586,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         this.resultsDirectory = resultsJoiner
                 .add(this.getCustomName())
+                
                 .toString()
                 .replace(',', '.');
 
@@ -831,7 +840,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         // Check edges to delete.
         if (!updates.edgesToRemove.isEmpty()) {
-            System.out.println("EDGES TO REMOVE");
         	this.graph = this.graph.removeEdges(new ArrayList<>(updates.edgesToRemove));
         }
 
@@ -866,7 +874,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     protected void registerEdgeDelete(final String[] split) {
         final Edge<Long, NullValue> edge = parseEdge(split);
-        //System.out.println("Deleting edge: " + edge.toString());
     	this.graphUpdateTracker.removeEdge(edge);
     }
 

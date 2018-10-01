@@ -22,9 +22,14 @@ __license__ = "Apache 2.0"
 ################################# IMPORTS #################################
 ###########################################################################
 
-import networkx as nx
+# PEP 8 Style Guide for imports: https://www.python.org/dev/peps/pep-0008/#imports
+# 1. standard library imports
 from collections import OrderedDict
 import os
+
+# 2. related third party imports
+import networkx as nx
+
 
 # Info on these different networkx implementations.
 # https://stackoverflow.com/questions/13040548/networkx-differences-between-pagerank-pagerank-numpy-and-pagerank-scipy
