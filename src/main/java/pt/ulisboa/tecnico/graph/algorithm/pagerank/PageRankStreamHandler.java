@@ -86,6 +86,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
                 .add(super.datasetName.replace(".tsv", ""))
                 .add(this.pageRankIterations.toString())
                 .add(this.pageRankSize.toString())
+                .add("P" + super.parallelism.toString())
                 .add(String.format("%02.2f", this.pageRankDampeningFactor).replace(',','.'));
 
         if(this.isRunningSummarizedMethod()) {
@@ -108,7 +109,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             nameJoiner.add("complete");
         }
 
-        nameJoiner.add("P" + super.env.getParallelism());
+
 
         if(super.deletingEdges) {
             nameJoiner.add("D");

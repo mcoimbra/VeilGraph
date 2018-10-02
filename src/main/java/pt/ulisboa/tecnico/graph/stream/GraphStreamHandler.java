@@ -48,6 +48,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     private boolean isRunningRemote;
     private String flinkJobManagerPort;
     private boolean runningLocalFlinkWebUI;
+    protected Integer parallelism = 1;
 
     /**
      * Check if we are saving Flink job information as JSON.
@@ -493,6 +494,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         final Integer parallelism = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PARALLELISM.toString());
         this.env.setParallelism(parallelism);
+        this.parallelism = parallelism;
 
         this.env.getConfig()
                 .enableClosureCleaner()
