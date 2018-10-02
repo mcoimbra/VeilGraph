@@ -447,8 +447,8 @@ graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -D
 print("{}\n".format(graphbolt_run_command))
 
 # Build path to output directory file.
-graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-P{KW_PARALLELISM}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}_complete.txt'.format(
-    KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations)
+graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_complete.txt'.format(
+    KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size)
 print("{}\n".format(graphbolt_output_file))
 
 # Save current iteration commands to shell file.
@@ -517,22 +517,21 @@ if args.list != None:
         print("{}\n".format(graphbolt_run_command))
 
         # Build path to output directory file.
-        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}-{KW_DAMPENING_FACTOR:.2f}-{KW_NUM_ITERATIONS}-{KW_r:.2f}-{KW_n}-{KW_delta:.2f}.txt'.format(
-            KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_DAMPENING_FACTOR = args.dampening,
-            KW_NUM_ITERATIONS = args.iterations, KW_r = r, KW_n = n, KW_delta = delta)
+        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.txt'.format(
+            KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening,
+            KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_r = r, KW_n = n, KW_delta = delta)
         print("{}\n".format(graphbolt_output_file))
 
-        summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
-    KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
-    KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
+    KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_PARALLELISM = args.parallelism, KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
         # Build summarized PageRank evaluation command (RBO evaluation code).
         graphbolt_eval_command = '{KW_PYTHON_PATH} -m evaluation.rbo.batch_rank_evaluator "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
             KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
 
         # Build path to RBO evaluation file.
-        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
-            KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
+            KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_PARALLELISM = args.parallelism, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
         # Save current iteration commands to shell file.
         with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
@@ -586,8 +585,8 @@ if args.list != None:
 
 
 
-                approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
-        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+                approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
 
                 print("> Statistics directory:\t{}".format(approx_stats_path))
                 print("> Eval file:\t{}".format(graphbolt_output_eval_path))
