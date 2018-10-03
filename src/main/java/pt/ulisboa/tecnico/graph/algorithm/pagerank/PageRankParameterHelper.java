@@ -60,7 +60,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 	}
 
 
-	private BigVertexParameterHelper bvph = new BigVertexParameterHelper();
+	private BigVertexParameterHelper bvph;
 
 	@Override
 	protected void parseValues(final String[] args) {
@@ -92,7 +92,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 		else {
 			super.argValues.put(PageRankArgumentName.PAGERANK_SIZE.toString(), new Integer(1000));
 		}
-
+/*
 		if(super.cmd.hasOption(PageRankArgumentName.PAGERANK_PERCENTAGE.toString())) {
 			final Float percentage = Float.parseFloat(super.cmd.getOptionValue(PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
 
@@ -104,7 +104,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 		else {
 			super.argValues.put(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), -1.0f);
 		}
-
+*/
 		// Default to PageRank dampening factor of 0.85.
 		if(super.cmd.hasOption(PageRankArgumentName.DAMPENING_FACTOR.toString())) {
 			final Double dampening = Double.parseDouble(super.cmd.getOptionValue(PageRankArgumentName.DAMPENING_FACTOR.toString()));

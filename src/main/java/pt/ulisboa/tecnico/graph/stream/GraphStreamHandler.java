@@ -324,10 +324,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.keepingTemporaryDirectory = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.KEEP_TEMP_DIR.toString());
         this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_PLANS.toString());
         this.dumpingModel = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DUMP_MODEL.toString());
-        this.saveFlinkJobOperatorStatistics = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
-        this.saveFlinkJobOperatorJSON = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
+        this.saveFlinkJobOperatorStatistics = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        this.saveFlinkJobOperatorJSON = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
 
-        this.checkingPeriodicFullAccuracy = (boolean) argValues.containsKey(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
+        this.checkingPeriodicFullAccuracy = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
+
+        final Integer parallelism = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PARALLELISM.toString());
+        this.parallelism = parallelism;
     }
 
     /**
@@ -492,9 +495,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             this.env = lenv;
         }
 
-        final Integer parallelism = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PARALLELISM.toString());
-        this.env.setParallelism(parallelism);
-        this.parallelism = parallelism;
+        this.env.setParallelism(this.parallelism);
 
         this.env.getConfig()
                 .enableClosureCleaner()
@@ -736,6 +737,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     }
 
     public void start() throws Exception {
+
 
         // Define values such as the root output directory, statistics directory, logging, etc.
         this.configureGraphBolt(this.argValues);

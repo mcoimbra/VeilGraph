@@ -46,7 +46,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     final private Integer pageRankIterations;
     final private Integer pageRankSize;
     final private Double pageRankDampeningFactor;
-    final protected Float pageRankPercentage;
+    //final protected Float pageRankPercentage;
 
 
     @Override
@@ -76,7 +76,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         this.pageRankIterations = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_ITERATIONS.toString()));
         this.pageRankSize = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_SIZE.toString()));
 
-        this.pageRankPercentage = ((Float)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
+        //this.pageRankPercentage = ((Float)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
 
         
 
@@ -223,6 +223,14 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
                 .output(super.outputFormat);
         }
         else {
+            System.out.println("> Ranking dump: " + this.pageRankSize);
+            ranks
+                //.partitionByRange(1)
+                .sortPartition(1, Order.DESCENDING)
+                //.setParallelism(1)
+                .first(this.pageRankSize)
+                .output(super.outputFormat);
+            /*
             if (this.pageRankPercentage > 0) {
                 try {
                     final Float rankNumber = this.pageRankPercentage * new Long(ranks.count()).intValue();
@@ -246,7 +254,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
                     //.setParallelism(1)
                     .first(this.pageRankSize)
                     .output(super.outputFormat);
-            }
+            } */
         }
     }
 

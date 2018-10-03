@@ -446,9 +446,13 @@ graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -D
 
 print("{}\n".format(graphbolt_run_command))
 
+DELETE_TOKEN = 'A'
+if args.delete_edges:
+    DELETE_TOKEN = 'D'
+
 # Build path to output directory file.
-graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_complete.txt'.format(
-    KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size)
+graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_DELETE_TOKEN}_complete.txt'.format(
+    KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_DELETE_TOKEN = DELETE_TOKEN)
 print("{}\n".format(graphbolt_output_file))
 
 # Save current iteration commands to shell file.
@@ -517,9 +521,9 @@ if args.list != None:
         print("{}\n".format(graphbolt_run_command))
 
         # Build path to output directory file.
-        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.txt'.format(
+        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}.txt'.format(
             KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening,
-            KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_r = r, KW_n = n, KW_delta = delta)
+            KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
         print("{}\n".format(graphbolt_output_file))
 
         summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}".format(
