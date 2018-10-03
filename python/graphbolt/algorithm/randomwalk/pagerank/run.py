@@ -379,7 +379,7 @@ with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "w") as shell_file
 ###########################################################################
 
 # Check if the complete computation results are present, run the complete computation version in case they aren't.
-complete_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_P{KW_PARALLELISM}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_complete_{KW_DELETE_TOKEN}".format(
+complete_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_complete_{KW_DELETE_TOKEN}".format(
     KW_RESULTS_DIR = RESULTS_DIR, KW_PARALLELISM=args.parallelism, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
     KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
