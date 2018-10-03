@@ -238,6 +238,10 @@ else:
     print("> Sorry {}, your operating system '{}' is not supported. Exiting.".format(current_user, os.name))
     exit(1)
 
+DELETE_TOKEN = 'A'
+if args.delete_edges:
+    DELETE_TOKEN = 'D'
+
 ###########################################################################
 ########################### CREATE DIRECTORIES ############################
 ###########################################################################
@@ -446,9 +450,7 @@ graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -D
 
 print("{}\n".format(graphbolt_run_command))
 
-DELETE_TOKEN = 'A'
-if args.delete_edges:
-    DELETE_TOKEN = 'D'
+
 
 # Build path to output directory file.
 graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_DELETE_TOKEN}_complete.txt'.format(
