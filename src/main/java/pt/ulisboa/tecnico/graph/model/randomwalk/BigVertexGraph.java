@@ -789,7 +789,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
 
         @Override
-        public Tuple3<Long, Double, Long> map(Tuple2<Long, GraphUpdateTracker.UpdateInfo> value) throws Exception {
+        public Tuple3<Long, Double, Long> map(Tuple2<Long, GraphUpdateTracker.UpdateInfo> value) {
             final GraphUpdateTracker.UpdateInfo u = value.f1;
             switch (direction) {
                 case IN:
@@ -819,7 +819,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
 
         @Override
-        public Tuple2<Long, Long> map(Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> tuple3Tuple2Tuple2) throws Exception {
+        public Tuple2<Long, Long> map(Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> tuple3Tuple2Tuple2) {
             Tuple3<Long, Double, Long> first = tuple3Tuple2Tuple2.f0;
             Tuple2<Long, Double> second = tuple3Tuple2Tuple2.f1;
 
@@ -834,8 +834,10 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 return Tuple2.of(first.f0, n.longValue());
             }
             else {
+                // If the second tuple is not null, then it means this node had a rank from the previous execution.
                 final long targetDegree = first.f2;
-                final double logArg = avgPrevDegree * (second.f1 / targetDegree) / delta;
+                final double nodeRank = second.f1;
+                final double logArg = avgPrevDegree * (nodeRank / targetDegree) / delta;
                 final long node_level = n + Math.round(Math.log(logArg) / Math.log(avgPrevDegree));
                 return Tuple2.of(first.f0, node_level < 0 ? 0 : node_level);
             }

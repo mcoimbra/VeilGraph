@@ -294,7 +294,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.rootDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.OUTPUT_DIR.toString());
 
 
-        this.debugging = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
+        this.debugging = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
 
         // Initial graph file path.
         this.inputPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.INPUT_FILE.toString());
@@ -313,7 +313,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
 
         // Are we deleting edges?
-        this.deletingEdges = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.DELETING_EDGES.toString());
+        this.deletingEdges = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DELETING_EDGES.toString());
 
         GraphStreamHandler.singleton = this;
 
@@ -324,10 +324,10 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.keepingTemporaryDirectory = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.KEEP_TEMP_DIR.toString());
         this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_PLANS.toString());
         this.dumpingModel = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DUMP_MODEL.toString());
-        this.saveFlinkJobOperatorStatistics = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
-        this.saveFlinkJobOperatorJSON = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
+        this.saveFlinkJobOperatorStatistics = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        this.saveFlinkJobOperatorJSON = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
 
-        this.checkingPeriodicFullAccuracy = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
+        this.checkingPeriodicFullAccuracy = (boolean)argValues.get(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
 
         final Integer parallelism = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PARALLELISM.toString());
         this.parallelism = parallelism;

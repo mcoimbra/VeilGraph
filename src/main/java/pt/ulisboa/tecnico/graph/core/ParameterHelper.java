@@ -238,7 +238,7 @@ public class ParameterHelper {
             throw new IllegalArgumentException(GraphBoltArgumentName.INPUT_FILE.toString() + " must be a valid file path.");
 
         argValues.put(GraphBoltArgumentName.INPUT_FILE.toString(), inputPath);
-
+/*
         if(cmd.hasOption(GraphBoltArgumentName.LEGACY.toString())) {
             final boolean runningLegacyMode = Boolean.parseBoolean(cmd.getOptionValue(GraphBoltArgumentName.LEGACY.toString()));
             argValues.put(GraphBoltArgumentName.LEGACY.toString(), runningLegacyMode);
@@ -246,22 +246,19 @@ public class ParameterHelper {
         else {
             argValues.put(GraphBoltArgumentName.LEGACY.toString(), false);
         }
+*/
 
+
+        // Check argument flags.
+        argValues.put(GraphBoltArgumentName.LEGACY.toString(), cmd.hasOption(GraphBoltArgumentName.LEGACY.toString()));
 
         argValues.put(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString()));
 
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString()));
 
-
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString()));
 
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString()));
-
-
-
-
-
-
 
         argValues.put(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString(), cmd.hasOption(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString()));
 
@@ -269,17 +266,15 @@ public class ParameterHelper {
 
         argValues.put(GraphBoltArgumentName.DELETING_EDGES.toString(), cmd.hasOption(GraphBoltArgumentName.DELETING_EDGES.toString()));
 
-        
-
         argValues.put(GraphBoltArgumentName.KEEP_LOGS.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_LOGS.toString()));
 
         argValues.put(GraphBoltArgumentName.KEEP_CACHE.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_CACHE.toString()));
 
         argValues.put(GraphBoltArgumentName.KEEP_TEMP_DIR.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_TEMP_DIR.toString()));
 
-
-
         argValues.put(GraphBoltArgumentName.DUMP_MODEL.toString(), cmd.hasOption(GraphBoltArgumentName.DUMP_MODEL.toString()));
+
+        argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
 
         if(cmd.hasOption(GraphBoltArgumentName.CACHE.toString())) {
             final String cachePath = cmd.getOptionValue(GraphBoltArgumentName.CACHE.toString());
@@ -291,6 +286,7 @@ public class ParameterHelper {
             argValues.put(GraphBoltArgumentName.CACHE.toString(), cachePath);
         }
 
+        argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
         if(cmd.hasOption(GraphBoltArgumentName.DEBUG.toString())) {
             for(Map.Entry<String, Object> param : argValues.entrySet()) {
                 System.out.println(param.getKey() + "\t" + param.getValue().toString());
@@ -371,6 +367,12 @@ public class ParameterHelper {
                 false, "should Flink job operator JSON be saved after execute() calls?");
         flinkSaveOperatorJSONOption.setRequired(false);
         options.addOption(flinkSaveOperatorJSONOption);
+
+
+        final Option edgeDeletionOption = new Option(GraphBoltArgumentName.DELETING_EDGES.toString(),
+                false, "are we deleting edges?");
+        edgeDeletionOption.setRequired(false);
+        options.addOption(edgeDeletionOption);
 
 
 

@@ -217,44 +217,20 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0) && super.iteration > 0) {
             System.out.println("> Full result dump.");
             ranks
-                //.partitionByRange(1)
+                .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
-                .setParallelism(1)
+                //.setParallelism(1)
                 .output(super.outputFormat);
         }
         else {
             System.out.println("> Ranking dump: " + this.pageRankSize);
             ranks
-                //.partitionByRange(1)
+                .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
-                //.setParallelism(1)
+                //.sortPartition(1, Order.ASCENDING)
+                .setParallelism(1)
                 .first(this.pageRankSize)
                 .output(super.outputFormat);
-            /*
-            if (this.pageRankPercentage > 0) {
-                try {
-                    final Float rankNumber = this.pageRankPercentage * new Long(ranks.count()).intValue();
-                    System.out.println("> Percentage dump: " + rankNumber);
-                    ranks
-                        //.partitionByRange(1)
-                        .sortPartition(1, Order.DESCENDING)
-                        .setParallelism(1)
-                        .first(rankNumber.intValue())
-                        .output(super.outputFormat);
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            else {
-                System.out.println("> Ranking dump: " + this.pageRankSize);
-                ranks
-                    //.partitionByRange(1)
-                    .sortPartition(1, Order.DESCENDING)
-                    //.setParallelism(1)
-                    .first(this.pageRankSize)
-                    .output(super.outputFormat);
-            } */
         }
     }
 

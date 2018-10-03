@@ -20,30 +20,57 @@ __license__ = "Apache 2.0"
 
 # PEP 8 Style Guide for imports: https://www.python.org/dev/peps/pep-0008/#imports
 # 1. standard library imports
+import os
 import sys
 
 # 2. related third party imports
 # 3. custom local imports
 from .RBO import score
 
-def evaluate(file1: str, file2: str, p_value: float = 0.98) -> float:
+def evaluate(fd1: str, fd2: str, p_value: float = 0.98, debugging = True) -> float:
 
-    with open(file1) as f1, open(file2) as f2:
-        list_to_evaluate = f1.readlines()
-        gold_list = f2.readlines()
+    list_to_evaluate_sans_rank = []
+    if os.path.isdir(fd1):
+        files = os.listdir(fd1)
+        files.sort(reverse=True)
+        if debugging:
+            print('> Test file list:\t{}'.format(files))
+        for f_path in files:
+            full_path = os.path.join(fd1, f_path)
+            with open(full_path, "r") as test_file:
+                list_to_evaluate = test_file.readlines()
+                for l in list_to_evaluate:
+                    node_id = l[0:l.rfind(";")]
+                    list_to_evaluate_sans_rank.append(node_id)
+    else:
+        with open(fd1, "r") as f1:
+            list_to_evaluate = f1.readlines()
+            for l in list_to_evaluate:
+                node_id = l[0:l.rfind(";")]
+                list_to_evaluate_sans_rank.append(node_id)
 
-        # In case the ranking files have semi-colon-separated values, assume the first value is the node id. Discard the rest for each line.
-        list_to_evaluate_sans_rank = []
-        for l in list_to_evaluate:
-            node_id = l[0:l.rfind(";")]
-            list_to_evaluate_sans_rank.append(node_id)
+    gold_list_sans_rank = []
+    if os.path.isdir(fd2):
+        files = os.listdir(fd2)
+        files.sort(reverse=True)
+        if debugging:
+            print('> Gold file list:\t{}'.format(files))
+        for f_path in files:
+            full_path = os.path.join(fd2, f_path)
+            with open(full_path, "r") as test_file:
+                list_to_evaluate = test_file.readlines()
+                for l in list_to_evaluate:
+                    node_id = l[0:l.rfind(";")]
+                    gold_list_sans_rank.append(node_id)
+    else:
+        with open(fd2, "r") as f2:
+            gold_list = f2.readlines()
+            # In case the ranking files have semi-colon-separated values, assume the first value is the node id. Discard the rest for each line.
+            for l in gold_list:
+                node_id = l[0:l.rfind(";")]
+                gold_list_sans_rank.append(node_id)
 
-        gold_list_sans_rank = []
-        for l in gold_list:
-            node_id = l[0:l.rfind(";")]
-            gold_list_sans_rank.append(node_id)
-
-        return score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
+    return score(list_to_evaluate_sans_rank, gold_list_sans_rank, p=p_value)
 
 
 if __name__ == "__main__":

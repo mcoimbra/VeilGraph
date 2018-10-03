@@ -48,7 +48,8 @@ if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
 dataset_name = args.data_dir[args.data_dir.rfind('/') + 1:]
 
 stream_edges = []
-with open("{}-stream.tsv".format(os.path.join(args.data_dir, dataset_name), 'r')) as stream:
+stream_file = "{}-stream.tsv".format(os.path.join(args.data_dir, dataset_name))
+with open(stream_file, 'r') as stream:
 	lines = stream.readlines()
 	for l in lines:
 		stream_edges.append(l.strip())
