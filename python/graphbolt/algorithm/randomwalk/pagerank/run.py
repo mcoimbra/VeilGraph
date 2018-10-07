@@ -426,14 +426,17 @@ else:
 
 JOB_MANAGER_WEB_PARAM = "-web"
 
+
+FLINK_JOB_STATS_FLAG = "-save_flink_operator_stats -save_flink_operator_json"
+
 if len(args.flink_address) > 0:
     FLINK_REMOTE_ADDRESS = "-address " + args.flink_address
     FLINK_REMOTE_PORT = "-port " + str(args.flink_port)
-    FLINK_JOB_STATS_FLAG = "-save_flink_operator_stats -save_flink_operator_json"
+    
 else:
     FLINK_REMOTE_ADDRESS = ""
     FLINK_REMOTE_PORT = ""
-    FLINK_JOB_STATS_FLAG = ""
+    #FLINK_JOB_STATS_FLAG = ""
 
 SIZE_STR = '-size ' + str(args.size)
 PERIODIC_DUMP_STR = ''
