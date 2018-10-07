@@ -249,7 +249,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
     /**
-     * Function created when trying to fix deltaExpansion's huge memory consumption.
+     * TODO DESCRIPTION.
      * @param expandedIds
      * @param graph
      * @param maxDeltaIterations
@@ -378,7 +378,12 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         // Make a DataSet with the vertices and their degree change ratio (degrees changed at least r in the specified direction).
         // Vertices with a previous degree of zero (0) will have Double.POSITIVE_INFINITY as degree change ratio.
         // returns Tuple3<VertexID, PageRank, InDegree>
-        final DataSet<Tuple3<Long, Double, Long>> kHotVertices = getKHotVertices(infoDataSet, this.updateRatioThreshold, direction);
+        //final DataSet<Tuple3<Long, Double, Long>> kHotVertices = getKHotVertices(infoDataSet, this.updateRatioThreshold, direction);
+
+        final DataSet<Tuple3<Long, Double, Long>> kHotVertices = infoDataSet
+                .filter(new FilterVertexDegreeChange(direction, this.updateRatioThreshold))
+                .map(new MapVertexDegreeChange(direction, this.updateRatioThreshold));
+
         if(this.dumpingModel) {
             kHotVertices.writeAsCsv(this.modelDirectory + "/kHotVertices_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }

@@ -118,6 +118,24 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
         return infoDataSet;
     }
 
+    public void registerEdgeDeletions(List<Tuple2<K, UpdateInfo>> deletedEdgeDegrees) {
+        for(Tuple2<K, UpdateInfo> v : deletedEdgeDegrees) {
+
+            final K key = v.f0;
+            final GraphUpdateTracker.UpdateInfo info = v.f1;
+
+            this.infoMap.put(key, info);
+
+            /*
+            if ( ! infoMap.containsKey(key)) {
+
+            }
+            */
+        }
+
+
+    }
+
     public class InDegreeToUpdateInfoMapper implements MapFunction<Tuple2<K, LongValue>, Tuple2<K, UpdateInfo>> {
 
 		@Override

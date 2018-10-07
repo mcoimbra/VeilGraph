@@ -106,7 +106,7 @@ if os.path.sep in out_file_name:
 else:
     out_file_name = out_file_name[args.input_file.rfind("/") + 1:]
 
-# Output directory will be the same as the input file's directory if not provided.
+# Output directory, if it doesn't exist, will be created based on the input file name.
 if args.out_dir is None:
     out_dir = os.path.dirname(args.input_file)
     out_file_name = out_file_name.replace('-original', '')
@@ -142,7 +142,7 @@ out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_na
 
 print("> Output directory:\t{}".format(out_dir))
 print("> Out file name base:\t{}".format(out_file_name))
-print("> Input file:\t{}".format(out_graph_path))
+print("> Input file:\t{}".format(args.input_file))
 print("> Input line count:\t{}".format(input_line_count))
 print("> Invalid line count:\t{}".format(bad_index_count))
 print("> Valid line count:\t{}".format(input_line_count - bad_index_count))
@@ -155,7 +155,7 @@ print("> Stream sampling probability:\t{}".format(p))
 print("\n")
 print("> Target deletions file:\t{}".format(out_deletions_path))
     
-    
+
     
 
 # Sample and write resulting base graph and edge stream files.
@@ -210,24 +210,23 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
     out_stream_file.flush()
 
     # Get the chunk properties for the generated stream.
-    chunk_size, chunk_sizes, _, edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
-    print("> Stream chunk size:{}".format(chunk_size))
-    print("> Stream chunk count:{}".format(len(chunk_sizes)))
-    print("> Stream edge size:{}".format(edge_count))
-
-    if args.debug:
-        print('> Stream size:\t{}'.format(len(stream_lines)))
-        print('\n')
+    chunk_size, chunk_sizes, _, stream_edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
+    print("> Stream chunk size:\t{}".format(chunk_size))
+    print("> Stream chunk count:\t{}".format(len(chunk_sizes)))
+    print("> Stream edge count:\t{}".format(stream_edge_count))
+    print('> Stream line count:\t{}'.format(len(stream_lines)))
+    print('\n')
 
     
 
     # Number of edges deletions sent each time a block of the update stream is sent.
     deletion_size = int(args.deletion_ratio * chunk_size)
-    deletions = []
+    
 
     # On what stream block are we?
     block_acc = 0
-    base_graph_index_limit = valid_ctr + bad_index_count
+    base_graph_index_limit = valid_ctr + bad_index_count - stream_edge_count
+    deletions = []
     for i in range(len(chunk_sizes)):
 
         if args.debug:
@@ -240,8 +239,13 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
 
         # Draw a sample from the original graph plus all the previous chunk blocks we've already iterated over.
         draw_interval_range = range(bad_index_count, base_graph_index_limit + block_acc)
+
+
+        # PROBLEM: since the stream was shuffled, for a base graph with 10000 edges and a stream of size 1000, it's possible that stream element 0015 (belonging to first stream chunk before shuffling) was shuffled into position 0859. This means there will be a deletion order for an edge that hasn't been added yet.
+        print("> Draw interval range:\t{}".format(draw_interval_range))
         
         # Keep drawing samples until there isn't a single repetition in 'deletions'.
+        
         while True:
             del_block = random.sample(draw_interval_range, deletion_size)
             repetitions = 0
@@ -273,6 +277,7 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
         if args.debug:
             print("> Current deletion:\t{}\t{}".format(i, deletions[i]))
 
+        # If current edge to delete is part of the base graph ('..-start.tsv')
         if deletions[i] < base_graph_index_limit:
             #base_deletion_indexes.append(deletions[i])
             base_deletion_indexes.add(deletions[i])
@@ -291,11 +296,13 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
             deletion_strings[i] = stream_lines[global_stream_index]
 
 # Reread the input file to write the deletions file.
-with open(args.input_file, 'r') as dataset, open(out_deletions_path, 'w') as out_deletions_file:
+
+#with open(args.input_file, 'r') as dataset, open(out_deletions_path, 'w') as out_deletions_file:
+with open(out_graph_path, 'r') as dataset, open(out_deletions_path, 'w') as out_deletions_file:
     for i, l in enumerate(dataset):
-        if (i % 20000 == 0):
-            print('> Input file line:\t{}'.format(i))
-            print('> {}'.format(l.strip()))
+        #if (i % 20000 == 0):
+        #    print('> Input file line:\t{}'.format(i))
+        #    print('> {}'.format(l.strip()))
         if i in base_deletion_indexes:
             deletion_strings[aux[i]] = l.strip()
     

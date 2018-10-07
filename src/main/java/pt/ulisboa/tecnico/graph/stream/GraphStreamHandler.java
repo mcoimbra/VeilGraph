@@ -1,23 +1,33 @@
 package pt.ulisboa.tecnico.graph.stream;
 
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.functions.*;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.LocalEnvironment;
+import org.apache.flink.api.java.Utils;
+import org.apache.flink.api.java.functions.FunctionAnnotation;
 import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
+import org.apache.flink.api.java.operators.JoinOperator;
+import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.*;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.Vertex;
+import org.apache.flink.types.LongValue;
 import org.apache.flink.types.NullValue;
+import org.apache.flink.util.AbstractID;
+import org.apache.flink.util.Collector;
 import org.apache.log4j.*;
 import pt.ulisboa.tecnico.graph.core.ParameterHelper;
 import pt.ulisboa.tecnico.graph.model.GraphModel;
 import pt.ulisboa.tecnico.graph.output.DiscardingGraphOutputFormat;
 import pt.ulisboa.tecnico.graph.output.GraphOutputFormat;
 import pt.ulisboa.tecnico.graph.util.GraphUtils;
+import scala.xml.Null;
 
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -810,6 +820,189 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         new Thread(this, "GraphBolt Main Loop").start();
     }
 
+    private DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> getEdgeAdditionUpdates(final DataSet<Edge<Long, NullValue>> edgesToBeAdded) {
+        // Sum the increase of out-neighbors for each added edge source.
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>>  affectedSources = edgesToBeAdded
+                .map(new MapFunction<Edge<Long, NullValue>, Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> map(Edge<Long, NullValue> value) {
+                        return Tuple2.of(value.f0, new LongValue(1));
+                    }
+                })
+                .reduce(new ReduceFunction<Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
+                        return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
+                    }
+                })
+                .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> value) throws Exception {
+                        GraphUpdateTracker.UpdateInfo info = new GraphUpdateTracker.UpdateInfo(0, value.f1.getValue());
+                        info.nUpdates = value.f1.getValue();
+                        return Tuple2.of(value.f0, info);
+                    }
+                });
+
+        // Reduce-sum the increase of in-neighbors for each added edge target.
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> affectedTargets = edgesToBeAdded
+                .map(new MapFunction<Edge<Long, NullValue>, Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> map(Edge<Long, NullValue> value) {
+                        return Tuple2.of(value.f1, new LongValue(1));
+                    }
+                })
+                .reduce(new ReduceFunction<Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
+                        return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
+                    }
+                })
+                .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> value) throws Exception {
+                        GraphUpdateTracker.UpdateInfo info = new GraphUpdateTracker.UpdateInfo(value.f1.getValue(), 0);
+                        info.nUpdates = value.f1.getValue();
+                        return Tuple2.of(value.f0, info);
+                    }
+                });
+
+        // Unite the two source UpdateInfo and target UpdateInfo.
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> mergedUpdateInfos = affectedSources
+                .union(affectedTargets)
+                .reduce(new ReduceFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> reduce(Tuple2<Long, GraphUpdateTracker.UpdateInfo> s, Tuple2<Long, GraphUpdateTracker.UpdateInfo> t) {
+                        GraphUpdateTracker.UpdateInfo sourceUpdate = s.f1;
+                        GraphUpdateTracker.UpdateInfo targetUpdate = t.f1;
+                        sourceUpdate.currInDegree = targetUpdate.currInDegree;
+                        sourceUpdate.prevInDegree = targetUpdate.prevInDegree;
+                        sourceUpdate.nUpdates += targetUpdate.nUpdates;
+                        return s;
+                    }
+                });
+
+
+
+        return mergedUpdateInfos;
+    }
+
+    private DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> getEdgeRemovalUpdates(final DataSet<Edge<Long, NullValue>> edgesToBeRemoved) {
+        // Sum the loss of out-neighbors for each removed edge source.
+        final DataSet<Tuple2<Long, LongValue>> affectedSources = edgesToBeRemoved
+                .map(new MapFunction<Edge<Long, NullValue>, Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> map(Edge<Long, NullValue> value) {
+                        return Tuple2.of(value.f0, new LongValue(1));
+                    }
+                })
+                .reduce(new ReduceFunction<Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
+                        return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
+                    }
+                });
+
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> sourceUpdateInfos = affectedSources
+                .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> outDeg) {
+                        return Tuple2.of(outDeg.f0, new GraphUpdateTracker.UpdateInfo(0, outDeg.f1.getValue()));
+                    }
+                })
+                .joinWithHuge(this.graph.outDegrees())
+                .where(0).equalTo(0)
+                .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
+                        first.f1.nUpdates = first.f1.prevOutDegree;
+                        first.f1.currOutDegree = second.f1.getValue() - first.f1.nUpdates;
+                        first.f1.prevOutDegree = second.f1.getValue();
+
+
+                        return first;
+                    }
+                })
+                .joinWithHuge(this.graph.inDegrees())
+                .where(0).equalTo(0)
+                .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
+                        first.f1.currInDegree = second.f1.getValue();
+                        first.f1.prevInDegree = second.f1.getValue();
+                        return first;
+                    }
+                });
+
+        ///////////////////////
+
+        // Reduce-sum the loss of in-neighbors for each removed edge target.
+        final DataSet<Tuple2<Long, LongValue>> affectedTargets = edgesToBeRemoved
+                .map(new MapFunction<Edge<Long, NullValue>, Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> map(Edge<Long, NullValue> value) {
+                        return Tuple2.of(value.f1, new LongValue(1));
+                    }
+                })
+                .reduce(new ReduceFunction<Tuple2<Long, LongValue>>() {
+                    @Override
+                    public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
+                        return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
+                    }
+                });
+
+        // Convert to UpdateInfo structure.
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> targetUpdateInfos = affectedTargets
+                .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> inDeg) {
+                        return Tuple2.of(inDeg.f0, new GraphUpdateTracker.UpdateInfo(inDeg.f1.getValue(), 0));
+                    }
+                })
+                .joinWithHuge(this.graph.inDegrees())
+                .where(0).equalTo(0)
+                .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>> () {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) {
+
+                        first.f1.nUpdates = first.f1.prevInDegree;
+                        first.f1.currInDegree = second.f1.getValue() - first.f1.nUpdates;
+                        first.f1.prevInDegree = second.f1.getValue();
+
+                        return first;
+                    }
+                })
+                .joinWithHuge(this.graph.outDegrees())
+                .where(0).equalTo(0)
+                .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
+                        first.f1.currOutDegree = second.f1.getValue();
+                        first.f1.prevOutDegree = second.f1.getValue();
+
+                        return first;
+                    }
+                });
+
+        // Unite the two source UpdateInfo and target UpdateInfo.
+        final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> mergedUpdateInfos = sourceUpdateInfos
+                .union(targetUpdateInfos)
+                .reduce(new ReduceFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                    @Override
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> reduce(Tuple2<Long, GraphUpdateTracker.UpdateInfo> sources, Tuple2<Long, GraphUpdateTracker.UpdateInfo> targets) {
+                        // The prevOutDegree and currOutDegree values in 'sources' are already the correct ones.
+                        sources.f1.currInDegree = targets.f1.currInDegree;
+                        sources.f1.prevInDegree = targets.f1.prevInDegree;
+                        sources.f1.nUpdates += targets.f1.nUpdates;
+
+                        return sources;
+                    }
+                });
+
+        return mergedUpdateInfos;
+
+    }
+
     protected Long applyUpdates() throws Exception {
 
     	// Must copy the added edges into the DataSet degreeDataset
@@ -829,23 +1022,79 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
 
         // Check new edges.
-        if (!updates.edgesToAdd.isEmpty()) {
+        if ( ! updates.edgesToAdd.isEmpty()) {
             ArrayList<Edge<Long, NullValue>> edgesToAdd = new ArrayList<>(updates.edgesToAdd);//updates.edgesToAdd);
         	this.graph = this.graph.addEdges(edgesToAdd);
         }
 
         // Check vertices to be deleted.
+        /*
         if (!updates.verticesToRemove.isEmpty()) {
         	this.graph = this.graph.removeVertices(updates.verticesToRemove.stream()
                     .map(id -> new Vertex<>(id, NullValue.getInstance()))
                     .distinct()
                     .collect(Collectors.toList()));
         }
+        */
 
         // Check edges to delete.
-        if (!updates.edgesToRemove.isEmpty()) {
-        	this.graph = this.graph.removeEdges(new ArrayList<>(updates.edgesToRemove));
+        if ( ! updates.edgesToRemove.isEmpty()) {
+        	//this.graph = this.graph.removeEdges(new ArrayList<>(updates.edgesToRemove));
+
+            // Convert edge removals to DataSet.
+            final DataSet<Edge<Long, NullValue>> edgesToBeRemoved = this.env.fromCollection(updates.edgesToRemove);
+            final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> deletionUpdateInfos = this.getEdgeRemovalUpdates(edgesToBeRemoved);
+
+
+            DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> mergedUpdateInfos = deletionUpdateInfos;
+
+
+            if (!updates.verticesToAdd.isEmpty()) {
+
+                // Convert edge additions to DataSet.
+                final DataSet<Edge<Long, NullValue>> edgesToBeAdded = this.env.fromCollection(updates.edgesToRemove);
+
+                final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> additionUpdateInfos = this.getEdgeAdditionUpdates(edgesToBeAdded);
+
+                mergedUpdateInfos = mergedUpdateInfos
+                        .union(additionUpdateInfos)
+                        .reduce(new ReduceFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
+                            @Override
+                            public Tuple2<Long, GraphUpdateTracker.UpdateInfo> reduce(Tuple2<Long, GraphUpdateTracker.UpdateInfo> t1, Tuple2<Long, GraphUpdateTracker.UpdateInfo> t2) throws Exception {
+                                GraphUpdateTracker.UpdateInfo deletionUpdateInfo = t1.f1;
+                                GraphUpdateTracker.UpdateInfo additionUpdateInfo = t2.f1;
+
+                                deletionUpdateInfo.currInDegree += additionUpdateInfo.currInDegree;
+                                deletionUpdateInfo.currOutDegree += additionUpdateInfo.currOutDegree;
+                                deletionUpdateInfo.nUpdates += additionUpdateInfo.nUpdates;
+
+                                return t1;
+                            }
+                        });
+            }
+
+            final List<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> deletedEdgeDegrees = mergedUpdateInfos.collect();
+
+            this.graphUpdateTracker.registerEdgeDeletions(deletedEdgeDegrees);
+
+
+            // Build the new edge DataSet after removals.
+            final DataSet<Edge<Long, NullValue>> newEdges = this.graph
+                    .getEdges()
+                    .coGroup(edgesToBeRemoved)
+                    .where(0, 1).equalTo(0, 1)
+                    .with(new EdgeRemovalCoGroup<>()).name("Remove edges");
+
+            // Create a new graph.
+            this.graph = Graph.fromDataSet(this.graph.getVertices(), newEdges, this.env);
+
+
+
+
+
         }
+
+        // TODO: need to join edgesToBeRemoved with inDegree and outDegrees, collect those and store appropriately in GraphUpdateTracker's infoMap.
 
 
         this.edgeOutputFormat.setOutputFilePath(new Path(this.cacheDirectory + "/edges" + (this.iteration % this.storedIterations)));
@@ -855,11 +1104,24 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 .name("GraphStreamHandler - write updated graph to disk.");
 
         // Trigger Flink execution for the graph update and disk cache edge spill.
-        final Long numberOfVertices = this.graph.numberOfVertices();
-        final Long numberOfEdges = this.graph.numberOfEdges();
-        final JobExecutionResult r = env.getLastJobExecutionResult();
+        //final Long numberOfVertices = this.graph.numberOfVertices();
+        //final Long numberOfEdges = this.graph.numberOfEdges();
 
 
+        final String vid = new AbstractID().toString();
+        this.graph.getVertices().output(new Utils.CountHelper<Vertex<Long, NullValue>>(vid)).name("count()");
+
+        final String eid = new AbstractID().toString();
+        this.graph.getEdges().output(new Utils.CountHelper<Edge<Long, NullValue>>(eid)).name("count()");
+
+        //return res.<Long> getAccumulatorResult(id);
+
+
+
+        JobExecutionResult r = this.env.execute("Update Procesing Job");
+
+        final Long numberOfVertices = r.<Long> getAccumulatorResult(vid);
+        final Long numberOfEdges = r.<Long> getAccumulatorResult(eid);
 
 
         statisticsMap.get(StatisticKeys.TOTAL_VERTEX_COUNT.toString()).add(numberOfVertices);
@@ -874,6 +1136,19 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         return r.getNetRuntime(TimeUnit.MILLISECONDS);
 
+    }
+
+    private static final class EdgeRemovalCoGroup<K, EV> implements CoGroupFunction<Edge<K, EV>, Edge<K, EV>, Edge<K, EV>> {
+
+        @Override
+        public void coGroup(Iterable<Edge<K, EV>> edge, Iterable<Edge<K, EV>> edgeToBeRemoved,
+                            Collector<Edge<K, EV>> out) throws Exception {
+            if (!edgeToBeRemoved.iterator().hasNext()) {
+                for (Edge<K, EV> next : edge) {
+                    out.collect(next);
+                }
+            }
+        }
     }
 
     protected void registerEdgeDelete(final String[] split) {
