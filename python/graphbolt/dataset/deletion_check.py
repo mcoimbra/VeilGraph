@@ -8,6 +8,9 @@ import sys
 ############################# READ ARGUMENTS ##############################
 ###########################################################################
 
+#TODO: write description text.
+#TODO: change arguments to be equal to sample_edges.py
+
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
 DESCRIPTION_TEXT = "GraphBolt TODO"
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
@@ -34,8 +37,8 @@ for file in os.listdir(args.data_dir):
     elif file.endswith("-deletions.tsv"):
         deletion_path = os.path.join(args.data_dir, file)
 
-print("> Start path:\t{}".format(graph_path))
-print("> Stream path:\t{}".format(stream_path))
+print("> Start path:\t\t{}".format(graph_path))
+print("> Stream path:\t\t{}".format(stream_path))
 print("> Deletions path:\t{}".format(deletion_path))
 
 
@@ -58,9 +61,9 @@ for e in base_edges:
     v_set.add(s)
     v_set.add(t)
 
-print("> #Vertices:\t{}".format(len(v_set)))
-print("> #Edges:\t{}".format(edge_ctr))
-print("> #Sources:\t{}".format(len(base_edge_dic)))
+print("> #Vertices:\t\t{}".format(len(v_set)))
+print("> #Edges:\t\t{}".format(edge_ctr))
+print("> #Sources:\t\t{}".format(len(base_edge_dic)))
 
 stream_chunk_count = int(len(stream_edges) / args.stream_chunk)
 prev_i = 0

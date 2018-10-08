@@ -140,18 +140,18 @@ out_deletions_path = os.path.join(out_dir, "{}-deletions.tsv".format(out_file_na
 
 
 
-print("> Output directory:\t{}".format(out_dir))
-print("> Out file name base:\t{}".format(out_file_name))
-print("> Input file:\t{}".format(args.input_file))
-print("> Input line count:\t{}".format(input_line_count))
-print("> Invalid line count:\t{}".format(bad_index_count))
-print("> Valid line count:\t{}".format(input_line_count - bad_index_count))
+print("> Output directory:\t\t{}".format(out_dir))
+print("> Out file name base:\t\t{}".format(out_file_name))
+print("> Input file:\t\t\t{}".format(args.input_file))
+print("> Input line count:\t\t{}".format(input_line_count))
+print("> Invalid line count:\t\t{}".format(bad_index_count))
+print("> Valid line count:\t\t{}".format(input_line_count - bad_index_count))
 print("\n")
 print("> Bad indexes:\t{}".format(bad_indexes))
 print("\n")
-print("> Target stream file:\t{}".format(out_stream_path))
-print("> Target stream size:\t{}".format(stream_size))
-print("> Stream sampling probability:\t{}".format(p))
+print("> Target stream file:\t\t{}".format(out_stream_path))
+print("> Target stream size:\t\t{}".format(stream_size))
+print("> Stream sampling probability:\t\t{}".format(p))
 print("\n")
 print("> Target deletions file:\t{}".format(out_deletions_path))
     
@@ -211,10 +211,10 @@ with open(args.input_file, 'r') as dataset, open(out_graph_path, 'w') as out_gra
 
     # Get the chunk properties for the generated stream.
     chunk_size, chunk_sizes, _, stream_edge_count, _ = localutil.prepare_stream(out_stream_path, args.query_count)
-    print("> Stream chunk size:\t{}".format(chunk_size))
-    print("> Stream chunk count:\t{}".format(len(chunk_sizes)))
-    print("> Stream edge count:\t{}".format(stream_edge_count))
-    print('> Stream line count:\t{}'.format(len(stream_lines)))
+    print("> Stream chunk size:\t\t{}".format(chunk_size))
+    print("> Stream chunk count:\t\t{}".format(len(chunk_sizes)))
+    print("> Stream edge count:\t\t{}".format(stream_edge_count))
+    print('> Stream line count:\t\t{}'.format(len(stream_lines)))
     print('\n')
 
     
