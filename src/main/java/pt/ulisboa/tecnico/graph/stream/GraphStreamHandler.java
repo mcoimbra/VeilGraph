@@ -901,7 +901,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                     public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
-                });
+                })
+                .name("affectedSources: map->reduce");
 
         final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> sourceUpdateInfos = affectedSources
                 .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
@@ -910,29 +911,33 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(outDeg.f0, new GraphUpdateTracker.UpdateInfo(0, outDeg.f1.getValue()));
                     }
                 })
+                .name("sourceUpdateInfos: new UpdateInfo")
                 .joinWithHuge(this.graph.outDegrees())
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
                     @Override
-                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> outDegree) throws Exception {
+                        // first.f1.prevOutDegree here is equal to first.f1.currOutDegree which is the number of out-edges removed from the source vertex with id first.f0.
                         first.f1.nUpdates = first.f1.prevOutDegree;
-                        first.f1.currOutDegree = second.f1.getValue() - first.f1.nUpdates;
-                        first.f1.prevOutDegree = second.f1.getValue();
+                        first.f1.currOutDegree = outDegree.f1.getValue() - first.f1.nUpdates;
+                        first.f1.prevOutDegree = outDegree.f1.getValue();
 
 
                         return first;
                     }
                 })
+                .name("sourceUpdateInfos: join out degrees")
                 .joinWithHuge(this.graph.inDegrees())
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
                     @Override
-                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
-                        first.f1.currInDegree = second.f1.getValue();
-                        first.f1.prevInDegree = second.f1.getValue();
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> inDegree) throws Exception {
+                        first.f1.currInDegree = inDegree.f1.getValue();
+                        first.f1.prevInDegree = inDegree.f1.getValue();
                         return first;
                     }
-                });
+                })
+                .name("sourceUpdateInfos: join in degrees");
 
         ///////////////////////
 
@@ -949,7 +954,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                     public Tuple2<Long, LongValue> reduce(Tuple2<Long, LongValue> value1, Tuple2<Long, LongValue> value2) {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
-                });
+                })
+                .name("affectedTargets: map->reduce");
 
         // Convert to UpdateInfo structure.
         final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> targetUpdateInfos = affectedTargets
@@ -959,30 +965,33 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(inDeg.f0, new GraphUpdateTracker.UpdateInfo(inDeg.f1.getValue(), 0));
                     }
                 })
+                .name("targetUpdateInfos: new UpdateInfo")
                 .joinWithHuge(this.graph.inDegrees())
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>> () {
                     @Override
-                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) {
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> inDegree) {
 
                         first.f1.nUpdates = first.f1.prevInDegree;
-                        first.f1.currInDegree = second.f1.getValue() - first.f1.nUpdates;
-                        first.f1.prevInDegree = second.f1.getValue();
+                        first.f1.currInDegree = inDegree.f1.getValue() - first.f1.nUpdates;
+                        first.f1.prevInDegree = inDegree.f1.getValue();
 
                         return first;
                     }
                 })
+                .name("targetUpdateInfos: join in degrees")
                 .joinWithHuge(this.graph.outDegrees())
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
                     @Override
-                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> second) throws Exception {
-                        first.f1.currOutDegree = second.f1.getValue();
-                        first.f1.prevOutDegree = second.f1.getValue();
+                    public Tuple2<Long, GraphUpdateTracker.UpdateInfo> join(Tuple2<Long, GraphUpdateTracker.UpdateInfo> first, Tuple2<Long, LongValue> outDegree) throws Exception {
+                        first.f1.currOutDegree = outDegree.f1.getValue();
+                        first.f1.prevOutDegree = outDegree.f1.getValue();
 
                         return first;
                     }
-                });
+                })
+                .name("targetUpdateInfos: join out degrees");
 
         // Unite the two source UpdateInfo and target UpdateInfo.
         final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> mergedUpdateInfos = sourceUpdateInfos
@@ -997,7 +1006,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
                         return sources;
                     }
-                });
+                })
+                .name("mergedUpdateInfos: union->reduce");
 
         return mergedUpdateInfos;
 
@@ -1083,7 +1093,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                     .getEdges()
                     .coGroup(edgesToBeRemoved)
                     .where(0, 1).equalTo(0, 1)
-                    .with(new EdgeRemovalCoGroup<>()).name("Remove edges");
+                    .with(new EdgeRemovalCoGroup<>())
+                    .name("Remove edges");
 
             // Create a new graph.
             this.graph = Graph.fromDataSet(this.graph.getVertices(), newEdges, this.env);
