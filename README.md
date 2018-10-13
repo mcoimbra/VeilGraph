@@ -61,6 +61,8 @@ The values provided for parameters 'r', 'n' and '\Delta' in these example calls 
 
 This is configured to run with a parallelism of 2 in Apache Flink (either a single TaskManager with two parallel pipelines, or two TaskManager instances with a single pipeline each).
 
+**NOTE:** to reproduce our use-case presented in the paper, delete the flags '-deletion-ratio' and '-delete_edges'.
+
 # cnr-2000: http://law.di.unimi.it/webdata/cnr-2000/
 
 	cd $HOME
