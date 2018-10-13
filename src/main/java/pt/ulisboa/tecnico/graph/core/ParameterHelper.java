@@ -9,46 +9,120 @@ import java.util.Map;
 
 public class ParameterHelper {
 
-
-
-
     public enum GraphBoltArgumentName {
+        /**
+         * Should GraphBolt's license be printed when running?
+         */
         LICENSE("license"),
 
+        /**
+         * Set debug mode.
+         */
         DEBUG_SHORT("dbg"), DEBUG("debug"),
+
+        /**
+         * Number of algorithm executions performed by GraphBolt.
+         * Should match the number of chunks sent by the graph update stream.
+         */
+        EXECUTION_LIMIT("execution_limit"),
+
+        /**
+         * Dumping graph summarization model structures to disk?
+         */
         DUMP_MODEL("dump"),
 
+        /**
+         * Base input graph over which a complete execution is initially executed (does not count towards @link{pt.ulisboa.tecnico.graph.core.ParameterHelper.GraphBoltArgumentName.EXECUTION_LIMIT}).
+         */
         INPUT_FILE_SHORT("i"), INPUT_FILE("input-graph"),
+
+        /**
+         * Directory where GraphBolt sub-directories will be created ("Statistics", "Results").
+         */
         OUTPUT_DIR_SHORT("o"), OUTPUT_DIR("output-directory"),
+
+        /**
+         * Level of parallelism passed on from GraphBolt to the Flink JobManager.
+         */
         PARALLELISM_SHORT("para"), PARALLELISM("parallelism"),
+
+        /**
+         * Port to listen for the graph update stream.
+         */
         STREAM_PORT_SHORT("sp"), STREAM_PORT("stream-port"),
-        LEGACY_SHORT("l"), LEGACY("legacy"),
 
-        CACHE("cache"),
-
-        KEEP_LOGS("keep_logs"),
-
-        FLINK_PRINT_SYSOUT("print_flink_sysout"),
-        FLINK_SAVE_PLANS("save_flink_plans"),
-        FLINK_SAVE_OPERATOR_STATS("save_flink_operator_stats"),
-        FLINK_SAVE_OPERATOR_JSON("save_flink_operator_json"),
-
-        KEEP_CACHE("keep_cache"),
-
-        KEEP_TEMP_DIR("keep_temp_dir"),
-
-        SERVER_PORT_SHORT("p"), SERVER_PORT("port"),
-        SERVER_ADDRESS_SHORT("ip"), SERVER_ADDRESS("address"),
-
-        DELETING_EDGES("with_deletions"),
-
+        /**
+         * Should Flink load the WebManager when running as a MiniCluster?
+         */
         LOADING_WEB_MANAGER("web"),
 
-        PERIODIC_FULL_ACCURACY_SET("periodic_full_accuracy"),
+        /**
+         * Port for the Flink cluster JobManager.
+         * Used to connect to a remote cluster or to define the port of a local Flink MiniCluster instance.
+         */
+        SERVER_PORT_SHORT("p"), SERVER_PORT("port"),
 
+        /**
+         * Address for the Flink cluster JobManager.
+         * Used to connect to a remote cluster or to define the address of a local Flink MiniCluster instance.
+         */
+        SERVER_ADDRESS_SHORT("ip"), SERVER_ADDRESS("address"),
+
+        /**
+         * Keeping Flink logs?
+         */
+        KEEP_LOGS("keep_logs"),
+
+        /**
+         * Should Flink's internal dataflow execution information be printed to stdout?
+         */
+        FLINK_PRINT_SYSOUT("print_flink_sysout"),
+
+        /**
+         * Saving Flink execution plans as JSON?
+         */
+        FLINK_SAVE_PLANS("save_flink_plans"),
+
+        /**
+         * Saving the operator stats?
+         */
+        FLINK_SAVE_OPERATOR_STATS("save_flink_operator_stats"),
+
+        /**
+         * Saving Flink dataflow operator statistics to disk?
+         */
+        FLINK_SAVE_OPERATOR_JSON("save_flink_operator_json"),
+
+        /**
+         * Directory for intermediate DataSet dumps in between executions.
+         */
+        CACHE("cache"),
+
+        /**
+         * Should we keep the cache directory after finishing?
+         */
+        KEEP_CACHE("keep_cache"),
+
+        /**
+         * Directory for Flink internal temporary files.
+         */
         TEMP_DIR("temp"),
-        STREAM_PATH("stream_path"),
-        EXECUTION_LIMIT("execution_limit");
+
+        /**
+         * Should we keep the temporary directory after finishing?
+         */
+        KEEP_TEMP_DIR("keep_temp_dir"),
+
+        /**
+         * Are we simulating with a stream containing edge deletions?
+         */
+        DELETING_EDGES("with_deletions"),
+
+        /**
+         * Should the graph algorithm (chosen by the user) results be periodically written to disk in their totality?
+         * For example, with PageRankStreamHandler, only the top PAGERANK_SIZE_SHORT/PAGERANK_SIZE vertex ranks are written (see {@link pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankParameterHelper}).
+         */
+        PERIODIC_FULL_ACCURACY_SET("periodic_full_accuracy");
 
         private final String text;
         GraphBoltArgumentName(final String text) {
@@ -163,18 +237,6 @@ public class ParameterHelper {
             argValues.put(GraphBoltArgumentName.EXECUTION_LIMIT.toString(), -1);
         }
 
-
-        if(	 cmd.hasOption(GraphBoltArgumentName.STREAM_PATH.toString()))  {
-            final String streamPath = cmd.getOptionValue(GraphBoltArgumentName.STREAM_PATH.toString());
-
-            final File file = new File(streamPath);
-            if (! file.exists() || file.isDirectory())
-                throw new IllegalArgumentException(GraphBoltArgumentName.STREAM_PATH.toString() + " must be a valid file path.");
-
-            argValues.put(GraphBoltArgumentName.STREAM_PATH.toString(), streamPath);
-        }
-
-
         if(	 cmd.hasOption(GraphBoltArgumentName.TEMP_DIR.toString()))  {
             final String tempDir = cmd.getOptionValue(GraphBoltArgumentName.TEMP_DIR.toString());
 
@@ -224,10 +286,6 @@ public class ParameterHelper {
 
         if(cmd.hasOption(GraphBoltArgumentName.SERVER_ADDRESS.toString())) {
             final String flinkServerAddress = cmd.getOptionValue(GraphBoltArgumentName.SERVER_ADDRESS.toString());
-
-            //if(flinkServerPort <= 0)
-             //   throw new IllegalArgumentException(GraphBoltArgumentName.SERVER_ADDRESS.toString() + " must be a positive integer.");
-
             argValues.put(GraphBoltArgumentName.SERVER_ADDRESS.toString(), flinkServerAddress);
         }
 
@@ -238,20 +296,8 @@ public class ParameterHelper {
             throw new IllegalArgumentException(GraphBoltArgumentName.INPUT_FILE.toString() + " must be a valid file path.");
 
         argValues.put(GraphBoltArgumentName.INPUT_FILE.toString(), inputPath);
-/*
-        if(cmd.hasOption(GraphBoltArgumentName.LEGACY.toString())) {
-            final boolean runningLegacyMode = Boolean.parseBoolean(cmd.getOptionValue(GraphBoltArgumentName.LEGACY.toString()));
-            argValues.put(GraphBoltArgumentName.LEGACY.toString(), runningLegacyMode);
-        }
-        else {
-            argValues.put(GraphBoltArgumentName.LEGACY.toString(), false);
-        }
-*/
-
 
         // Check argument flags.
-        argValues.put(GraphBoltArgumentName.LEGACY.toString(), cmd.hasOption(GraphBoltArgumentName.LEGACY.toString()));
-
         argValues.put(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString()));
 
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString()));

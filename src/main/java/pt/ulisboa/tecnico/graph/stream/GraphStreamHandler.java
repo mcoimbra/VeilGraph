@@ -6,11 +6,8 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.LocalEnvironment;
 import org.apache.flink.api.java.Utils;
-import org.apache.flink.api.java.functions.FunctionAnnotation;
 import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
-import org.apache.flink.api.java.operators.JoinOperator;
-import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.*;
 import org.apache.flink.core.fs.Path;
@@ -27,7 +24,6 @@ import pt.ulisboa.tecnico.graph.model.GraphModel;
 import pt.ulisboa.tecnico.graph.output.DiscardingGraphOutputFormat;
 import pt.ulisboa.tecnico.graph.output.GraphOutputFormat;
 import pt.ulisboa.tecnico.graph.util.GraphUtils;
-import scala.xml.Null;
 
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -41,23 +37,46 @@ import java.util.stream.Collectors;
 
 /**
  * Abstract class to handle updates to a graph coming as a stream.
+ * This class articulates the GraphBolt engine logic.
  *
  * @param <R>
  * @author Miguel E. Coimbra
  */
+@SuppressWarnings("serial")
 public abstract class GraphStreamHandler<R> implements Runnable {
 
 
     private static GraphStreamHandler singleton;
 
     /**
-     * Are we saving Flink jobs' information from the Web Manager as JSON files?
+     * Are we saving Flink jobs' information from the WebManager as JSON files?
      */
     private final boolean saveFlinkJobOperatorJSON;
+
+    /**
+     * Provided address of the Flink JobManager.
+     */
     private String flinkJobManagerAddress;
-    private boolean isRunningRemote;
+
+    /**
+     * Provided port of the Flink JobManager.
+     */
     private String flinkJobManagerPort;
+
+    /**
+     * Are we running in a real Flink cluster (JobManager and TaskManager instances are different processes, likely in different computational nodes in a real physical cluster) or are we using a MiniCluster with JobManager and TaskManager instances all in the same Java Virtual Machine?
+     */
+    private boolean isRunningRemote;
+
+    /**
+     * If using a local Flink MiniCluster instance, should the WebManager be launched?
+     */
     private boolean runningLocalFlinkWebUI;
+
+    /**
+     * Flink operator parallelism to request from the JobManager.
+     * Defaults to 1.
+     */
     protected Integer parallelism = 1;
 
     /**
@@ -83,11 +102,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         return this.flinkJobManagerAddress;
     }
 
+    /**
+     * Singleton getter.
+     * @return
+     */
     public static GraphStreamHandler getInstance() {
         return GraphStreamHandler.singleton;
     }
-
-
 
     /** 
      * Are we deleting edges in this execution? Used to create the name of the result directories.
@@ -110,8 +131,15 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      * Parameters provided by the user.
      */
     protected final Map<String, Object> argValues;
-    // Statistics representing time are always stored in milliseconds.
+
+    /**
+     * Names and values of GraphBolt and algorithm statistics.
+     */
     protected final HashMap<String, ArrayList<Long>> statisticsMap = new HashMap<>();
+
+    /**
+     * Order by which statistics should be written in the .tsv file.
+     */
     protected final ArrayList<String> statOrder = new ArrayList<String>();
     /**
      * Should GraphBolt delete the directories and files created in the temporary directory?
@@ -186,9 +214,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      */
     protected GraphModel model = null;
     /**
-     * Current Apache Flink Gelly graph.
+     * Current Apache Flink Gelly graph reference.
      */
     protected Graph<Long, NullValue, NullValue> graph;
+    /**
+     * Output format to write the user algorithm results.
+     * Should be instantiated in a sub-class of {@link GraphStreamHandler}.
+     */
     protected GraphOutputFormat<R> outputFormat;
     /**
      * Stored updates with associated vertex degree changes and a register of additions/deletions of vertices/edges.
@@ -238,7 +270,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     // Current execution strategy - starting default is exact computation.
     protected Action executionStrategy;
     /**
-     * How many executions should GraphBolt wait to write the graph model to disk?
+     * Write GraphBolt's graph model to disk every snapshotFrequency executions?
+     * Defaults to 1.
      */
     private Integer snapshotFrequency = 1;
     /**
@@ -249,26 +282,40 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      * Directory to store Apache Flink logging outputs.
      */
     private String loggingDirectory = null;
+    /**
+     * Default value for the graph update stream port.
+     */
     private Integer streamPort = -1;
     /**
      * Directory where Flink execution plans will be stored.
      */
     private String plansDirectory;
+    /**
+     * Object abstracting the receival of graph stream updates.
+     */
     private StreamProvider<String> updateStream;
     /**
      * Statistics are written to this file located in {@link GraphStreamHandler#statisticsDirectory}
      */
     private transient PrintStream statisticsPrintStream;
-
-
     /**
      * Should we periodically store the total of all algorithm results?
      */
     protected boolean checkingPeriodicFullAccuracy;
 
-
+    /**
+     * Number tokens in graph stream update messages.
+     */
     private short ELEMENT_COUNT_PER_UPDATE_MSG = 3;
+
+    /**
+     * The source vertex index in the graph update message tokens.
+     */
     private short UPDATE_SOURCE_VERTEX_INDEX = 1;
+
+    /**
+     * The target vertex index in the graph update message tokens.
+     */
     private short UPDATE_TARGET_VERTEX_INDEX = 2;
 
 
@@ -302,8 +349,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         // Directory where GraphBolt will create directories for statistics, results, etc.
         this.rootDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.OUTPUT_DIR.toString());
-
-
         this.debugging = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
 
         // Initial graph file path.
@@ -358,6 +403,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     /**
      * See attribute: {@link GraphStreamHandler#debugging}
+     * @return A custom name to distinguish this GraphBolt session's output files from other sessions.
      */
     protected String getCustomName() {
         return this.customName;
@@ -443,27 +489,9 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
         else {
             System.out.println(String.format("Flink ExecutionEnvironment connecting locally."));
-
-
-            Configuration conf = new Configuration();
-
+            final Configuration conf = new Configuration();
             final boolean loadWebManager = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.LOADING_WEB_MANAGER.toString());
-
             this.runningLocalFlinkWebUI = loadWebManager;
-
-
-        /*
-        conf.setString("web.log.path", this.loggingDirectory);
-        conf.setString("jobmanager.rpc.address", "127.0.0.1");
-        conf.setString("jobmanager.web.port", "8081-9000");
-        conf.setString("query.server.ports", "30000-35000");
-        conf.setString("query.proxy.ports", "35001-40000");
-        conf.setString("jobmanager.rpc.port", "40001-45000");
-        conf.setString("taskmanager.rpc.port", "45001-50000");
-        conf.setString("taskmanager.data.port", "50001-55000");
-        conf.setString("blob.server.port", "55001-60000");
-        conf.setString("historyserver.web.port", "60001-62000");
-*/
 
             this.flinkJobManagerAddress = "127.0.0.1";
             conf.setString(WebOptions.LOG_PATH.key(), this.loggingDirectory);
@@ -523,6 +551,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     /**
      * Configure GraphBolt's properties from the provided arguments.
+     * Create GraphBolt output directories, output argument information.
      * @param argValues The user-provided program arguments.
      */
     private void configureGraphBolt(final Map<String, Object> argValues) {
@@ -723,11 +752,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             System.out.println(String.format("Results:\t%s", this.resultsDirectory));
 
             // Create models directory if it does not exist and it is necessary.
-            //if(dumpingModel) {
             Files.createDirectories(Paths.get(this.modelDirectory));
             System.out.println(String.format("Models:\t\t%s", this.modelDirectory));
-            //}
-
 
             java.nio.file.Path file = dirs.resolve(this.datasetName + ".tsv"); //placed in the statistics directory
             if (!Files.exists(file)) {
@@ -1114,23 +1140,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 .output(this.edgeOutputFormat)
                 .name("GraphStreamHandler - write updated graph to disk.");
 
-        // Trigger Flink execution for the graph update and disk cache edge spill.
-        //final Long numberOfVertices = this.graph.numberOfVertices();
-        //final Long numberOfEdges = this.graph.numberOfEdges();
-
-
         final String vid = new AbstractID().toString();
         this.graph.getVertices().output(new Utils.CountHelper<Vertex<Long, NullValue>>(vid)).name("count()");
 
         final String eid = new AbstractID().toString();
         this.graph.getEdges().output(new Utils.CountHelper<Edge<Long, NullValue>>(eid)).name("count()");
 
-        //return res.<Long> getAccumulatorResult(id);
-
-
-
-        JobExecutionResult r = this.env.execute("Update Procesing Job");
-
+        final JobExecutionResult r = this.env.execute("Update Procesing Job");
         final Long numberOfVertices = r.<Long> getAccumulatorResult(vid);
         final Long numberOfEdges = r.<Long> getAccumulatorResult(eid);
 
@@ -1250,7 +1266,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         final GraphUpdates<Long, NullValue> graphUpdates = this.graphUpdateTracker.getGraphUpdates();
                         final GraphUpdateStatistics statistics = this.graphUpdateTracker.getUpdateStatistics();
 
-                        final boolean needToApplyUpdates = this.beforeUpdates(graphUpdates, statistics);
+                        final boolean needToApplyUpdates = this.checkUpdateState(graphUpdates, statistics);
 
                         if (needToApplyUpdates) {
                             // Incorporate added/removed graph elements into the current Gelly graph.
@@ -1266,7 +1282,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                             this.graphUpdateTracker.resetUpdates();
                         }
 
-                        final Action action = this.onQuery(this.iteration, updateString, this.graph, graphUpdates, statistics, this.graphUpdateTracker.getUpdateInfos());
+                        final Action action = this.defineQueryStrategy(this.iteration, updateString, this.graph, graphUpdates, statistics, this.graphUpdateTracker.getUpdateInfos());
 
                         this.executionStrategy = action;
 
@@ -1320,88 +1336,130 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         this.statisticsPrintStream.println(statLine);
                         this.statisticsPrintStream.flush();
 
-
-
-
                         if(this.timeToSnapshot()) {
                             this.snapshotCtr = 0;
                         }
 
-
                         this.graphUpdateTracker.resetAll();
-
                         break;
                     }
 
                 }
-
-
-
-
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
             }
         }
-
-
     }
 
+    /**
+     * Check if it is appropriate to output a snapshot of the graph summary model structures.
+     * @return
+     */
     protected Boolean timeToSnapshot() {
         return this.dumpingModel && (this.snapshotCtr == this.snapshotFrequency);
     }
 
+    /**
+     * Get current GraphBolt execution iteration.
+     * @return
+     */
     public Long getIteration() {
         return this.iteration;
     }
 
-    public ExecutionEnvironment getExecutionEnvironment() {
-        return this.env;
-    }
+    /**
+     * Check if it is necessary to integrate updates.
+     * @param updates received updates.
+     * @param statistics update statistics.
+     * @return
+     */
+    protected abstract boolean checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics);
 
-    // GraphBolt stream UDFs.
-    protected abstract boolean beforeUpdates(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics);
+    /**
+     * Compute appropriate strategy to deal with current query request.
+     * @param id unique query identifier.
+     * @param query type of query.
+     * @param graph current graph.
+     * @param updates received updates.
+     * @param statistics update statistics.
+     * @param updateInfos vertex degree update information.
+     * @return
+     */
+    protected abstract Action defineQueryStrategy(final Long id, final String query, final Graph<Long, NullValue, NullValue> graph,
+                                                  final GraphUpdates<Long, NullValue> updates,
+                                                  final GraphUpdateStatistics statistics,
+                                                  final Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos);
 
-    protected abstract Action onQuery(final Long id, final String query, final Graph<Long, NullValue, NullValue> graph,
-                                      final GraphUpdates<Long, NullValue> updates,
-                                      final GraphUpdateStatistics statistics,
-                                      final Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos);
-
+    /**
+     * Extrapolate and store job statistics.
+     * @param id unique query identifier.
+     * @param query type of query.
+     * @param action execution strategy.
+     * @param graph current graph.
+     */
     protected abstract void onQueryResult(
             final Long id,
             final String query,
             final Action action,
             final Graph<Long, NullValue, NullValue> graph);
 
-    // GraphBolt execution strategy UDFs.
+    /**
+     * Algorithm-specific initialization.
+     * It is abstract in this class and supposed to be implemented in a sub-class (e.g. {@link pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankStreamHandler#init()}).
+     * @throws Exception
+     */
     public abstract void init() throws Exception;
 
     //TODO: LV sugeriu incorporar estas UDFs numa interface GraphModel
+    /**
+     * Perform a complete (without graph summary models) execution of the graph algorithm.
+     * @return Time taken to perform the computation.
+     * @throws Exception
+     */
     protected abstract Long executeExact() throws Exception;
 
+    /**
+     * Perform an approximate execution of the graph algorithm.
+     * @return Time taken to perform the computation.
+     * @throws Exception
+     */
     protected abstract Long executeApproximate() throws Exception;
 
+    /**
+     * Perform an automatic execution of the graph algorithm.
+     * GraphBolt will analyze the statistics to decide the appropriate course of action automatically.
+     * @return Time taken to perform the computation.
+     * @throws Exception
+     */
     protected abstract Long executeAutomatic() throws Exception;
 
     /**
-     *
-     * @return Get the current directory for storing plans.
+     * @return The current directory for storing plans.
      */
     public String getPlansDirectory() {
         return this.plansDirectory;
     }
 
     /**
-     * Get the current Flink JobManager port as a String.
+     * @return The current Flink JobManager port as a String.
      */
     public String getFlinkJobManagerPort() {
         return this.flinkJobManagerPort;
     }
 
+    /**
+     * Should the Flink WebManager REST GUI be launched for a local MiniCluster instance?
+     * @return
+     */
     public boolean runningLocalFlinkWebUI() {
         return this.runningLocalFlinkWebUI;
     };
 
+
+    /**
+     * Statistic key names for the statistics files (stored in {@link this#statisticsDirectory}).
+     */
     public enum StatisticKeys {
         // Number of executions since the stream started.
         EXECUTION_COUNTER("execution_count"),
@@ -1437,9 +1495,9 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             return text;
         }
     }
+
     // Possible algorithm execution strategies.
     public enum Action {
-        //REPEAT_LAST_ANSWER,
         COMPUTE_APPROXIMATE,
         COMPUTE_EXACT,
         AUTOMATIC

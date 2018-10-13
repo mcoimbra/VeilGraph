@@ -80,7 +80,7 @@ public class GraphSequenceTest {
 //		pageRankOutputSize = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PAGERANK_SIZE.toString());
 //		pageRankDampeningFactor = (Double) argValues.get(ParameterHelper.GraphBoltArgumentName.DAMPENING_FACTOR.toString());
 		executionLimit = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.EXECUTION_LIMIT.toString());
-		streamPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.STREAM_PATH.toString());
+		//streamPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.STREAM_PATH.toString());
 		//debugging = (Boolean) argValues.get(PageRankParameterHelper.GraphBoltArgumentName.DEBUG.toString());
 		debugging = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
 		outputBase = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.OUTPUT_DIR.toString());

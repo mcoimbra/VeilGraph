@@ -12,10 +12,20 @@ public class PageRankParameterHelper extends ParameterHelper {
 	
 	public enum PageRankArgumentName {
 
-	    PAGERANK_ITERATIONS_SHORT("iter"), PAGERANK_ITERATIONS("iterations"), 
-		PAGERANK_SIZE_SHORT("s"), PAGERANK_SIZE("size"), 
-		PAGERANK_PERCENTAGE("percentage"),
-	    DAMPENING_FACTOR_SHORT("damp"), DAMPENING_FACTOR("dampening");
+		/**
+		 * Number of PageRank power method iterations.
+		 */
+	    PAGERANK_ITERATIONS_SHORT("iter"), PAGERANK_ITERATIONS("iterations"),
+
+		/**
+		 * Size of top PageRank values to write to disk.
+		 */
+		PAGERANK_SIZE_SHORT("s"), PAGERANK_SIZE("size"),
+
+		/**
+		 * PageRank power method dampening factor.
+		 */
+		DAMPENING_FACTOR_SHORT("damp"), DAMPENING_FACTOR("dampening");
 		
 		private final String text;
 	    PageRankArgumentName(final String text) {
@@ -46,13 +56,6 @@ public class PageRankParameterHelper extends ParameterHelper {
 				true, "number of rank elements produced. Default to 1000 if not provided. Accepts a percentage as well: '-size 10%'.");
 		rankOutputSizeOption.setRequired(false);
 		super.options.addOption(rankOutputSizeOption);
-
-		final Option rankPercentageOption = new Option(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), PageRankArgumentName.PAGERANK_SIZE.toString(),
-				true, "percentage of rank elements produced. Default to -1%.");
-				rankPercentageOption.setRequired(false);
-		super.options.addOption(rankPercentageOption);
-
-
 
 		final Option pageRankDampeningFactorOption = new Option(PageRankArgumentName.DAMPENING_FACTOR_SHORT.toString(), PageRankArgumentName.DAMPENING_FACTOR.toString(), true, "pagerank dampening factor (default 0.85).");
 		pageRankDampeningFactorOption.setRequired(false);
@@ -92,19 +95,7 @@ public class PageRankParameterHelper extends ParameterHelper {
 		else {
 			super.argValues.put(PageRankArgumentName.PAGERANK_SIZE.toString(), new Integer(1000));
 		}
-/*
-		if(super.cmd.hasOption(PageRankArgumentName.PAGERANK_PERCENTAGE.toString())) {
-			final Float percentage = Float.parseFloat(super.cmd.getOptionValue(PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
 
-			if(percentage <= 0)
-				throw new IllegalArgumentException(PageRankArgumentName.PAGERANK_PERCENTAGE.toString() + " must be a positive integer.");
-
-			super.argValues.put(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), percentage);
-		}
-		else {
-			super.argValues.put(PageRankArgumentName.PAGERANK_PERCENTAGE.toString(), -1.0f);
-		}
-*/
 		// Default to PageRank dampening factor of 0.85.
 		if(super.cmd.hasOption(PageRankArgumentName.DAMPENING_FACTOR.toString())) {
 			final Double dampening = Double.parseDouble(super.cmd.getOptionValue(PageRankArgumentName.DAMPENING_FACTOR.toString()));

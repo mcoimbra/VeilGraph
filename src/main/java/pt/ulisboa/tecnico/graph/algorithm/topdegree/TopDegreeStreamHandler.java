@@ -75,12 +75,12 @@ public class TopDegreeStreamHandler extends GraphStreamHandler<Tuple2<Long, Long
     }
 
     @Override
-    protected boolean beforeUpdates(GraphUpdates<Long, NullValue> updates, GraphUpdateStatistics statistics) {
+    protected boolean checkUpdateState(GraphUpdates<Long, NullValue> updates, GraphUpdateStatistics statistics) {
         return false;
     }
 
     @Override
-    protected Action onQuery(final Long id, String query, Graph<Long, NullValue, NullValue> graph, GraphUpdates<Long, NullValue> updates, GraphUpdateStatistics statistics, Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos) {
+    protected Action defineQueryStrategy(final Long id, String query, Graph<Long, NullValue, NullValue> graph, GraphUpdates<Long, NullValue> updates, GraphUpdateStatistics statistics, Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos) {
         return null;
     }
 

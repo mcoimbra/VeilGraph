@@ -34,11 +34,9 @@ import java.util.stream.Collectors;
  * @param <EV>
  * @author Renato Rosa
  */
+@SuppressWarnings("serial")
 public class GraphUpdateTracker<K, VV, EV> implements Serializable {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 7046134030072228371L;
+
 	private final Set<K> verticesToAdd = new HashSet<>();
     private final Set<K> verticesToRemove = new HashSet<>();
     private final Set<Edge<K, EV>> edgesToAdd = new HashSet<>();
@@ -51,8 +49,6 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
 
     // Accounts for the time user-code (non-Flink) runs to add edges.
     private long accumulatedTime;
-
-//    private DataSet<Tuple2<Long, UpdateInfo>> degreeDataset = null;
 
     private DataSet<Tuple2<K, GraphUpdateTracker.UpdateInfo>> infoMapToDataSet(Map<K, UpdateInfo> infos, ExecutionEnvironment env) {
         final List<Tuple2<K, GraphUpdateTracker.UpdateInfo>> infoList = infos
@@ -293,11 +289,6 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
                 this.currentNumberOfEdges + this.edgesToAdd.size() - this.edgesToRemove.size());
     }
 
-    /*
-    public DataSet<Tuple2<Long, UpdateInfo>> getUpdateDataset() {
-    	return this.degreeDataset;
-    }
-    */
     public Map<K, UpdateInfo> getUpdateInfos() {
         return Collections.unmodifiableMap(this.infoMap);
     }
@@ -365,24 +356,10 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
     	this.accumulatedTime = 0;
     }
 
-
-    
     public void reset(final Collection<K> ids) {
         ids.forEach(id -> this.infoMap.get(id).reset());
     }
 
-    
-    /*
-    @ForwardedFields("f0->f0")
-	private class InfoDataSetReseter implements MapFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>,Tuple2<Long,GraphUpdateTracker.UpdateInfo>> {
-		@Override
-		public Tuple2<Long, UpdateInfo> map(Tuple2<Long, UpdateInfo> value) throws Exception {
-			value.f1.reset();
-			return value;
-		}
-    }
-    */
-    
     public void resetAll() {
     	this.infoMap.values().forEach(UpdateInfo::reset);
     	this.accumulatedTime = 0;
@@ -428,6 +405,4 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
     		return "nUpdates: " + nUpdates + "\tcurrInDegree: " + this.currInDegree + "\tprevInDegree: " + this.prevInDegree;
         }
     }
-
-	
 }

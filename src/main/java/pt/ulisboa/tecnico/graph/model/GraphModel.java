@@ -22,8 +22,6 @@ public interface GraphModel<K, VV, EV, R> {
      * Implement PageRank again to understand how much could be harnessed.
      * See effort to implement additional model.
      *
-     *
-     * Place GraphBolt on arXiv around September. Ideally, change paper to include two examples over the big vertex model.
      */
 
 
@@ -38,7 +36,7 @@ public interface GraphModel<K, VV, EV, R> {
 
     void cleanup();
 
-    //  protected abstract boolean beforeUpdates(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics);
+    //  protected abstract boolean checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics);
 
 
     Graph<K, Double, Double> getGraph(final ExecutionEnvironment env, Graph<K, NullValue, NullValue> graph, final DataSet<Tuple2<K, GraphUpdateTracker.UpdateInfo>> infoDataSet, DataSet<R> previousResults) throws Exception;

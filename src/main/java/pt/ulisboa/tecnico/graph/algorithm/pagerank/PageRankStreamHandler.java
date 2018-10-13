@@ -36,26 +36,54 @@ import java.util.function.Function;
 @SuppressWarnings("serial")
 public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Double>> {
 
+    /**
+     * Concrete reference to graph summarization model.
+     */
     private BigVertexGraph concreteModel;
+
+    /**
+     * Reference to a Flink operator to read the previous ranks from disk.
+     */
     private DataSet<Tuple2<Long, Double>> previousRanks;
 
+    /**
+     * Format for reading ranks from disk into a Flink DataSet.
+     */
     private TypeSerializerInputFormat<Tuple2<Long, Double>> rankInputFormat;
+
+    /**
+     * Format for writing ranks from Flink DataSet to disk.
+     */
     private TypeSerializerOutputFormat<Tuple2<Long, Double>> rankOutputFormat;
+
+    /**
+     * Flink data type helper.
+     */
     private TypeInformation<Tuple2<Long, Double>> rankTypeInfo;
 
+    /**
+     * Number of iterations of the PageRank power method.
+     */
     final private Integer pageRankIterations;
-    final private Integer pageRankSize;
-    final private Double pageRankDampeningFactor;
-    //final protected Float pageRankPercentage;
 
+    /**
+     * Number of top-ranks to store.
+     */
+    final private Integer pageRankSize;
+
+    /**
+     * Dampening factor to use for the PageRank algorithm.
+     */
+    final private Double pageRankDampeningFactor;
 
     @Override
     protected String getCustomName() {
         return super.customName;
     }
 
-
-
+    /**
+     * Check if the big vertex parameters were provided to know if summary execution is taking place.
+     */
     private boolean isRunningSummarizedMethod() {
         return argValues.containsKey(BigVertexParameterHelper.BigVertexArgumentName.RATIO_PARAM.toString()) &&
                 argValues.containsKey(BigVertexParameterHelper.BigVertexArgumentName.NEIGHBORHOOD_PARAM.toString()) &&
@@ -67,18 +95,12 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         this(Action.COMPUTE_EXACT, argValues, f);
     }
 
-
-
     public PageRankStreamHandler(GraphStreamHandler.Action executionStrategy, final Map<String, Object> argValues, final Function<String, Long> f) {
         super(executionStrategy, argValues, f, "pagerank");
         super.algorithmName = "pagerank";
 
         this.pageRankIterations = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_ITERATIONS.toString()));
         this.pageRankSize = ((Integer)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_SIZE.toString()));
-
-        //this.pageRankPercentage = ((Float)argValues.get(PageRankParameterHelper.PageRankArgumentName.PAGERANK_PERCENTAGE.toString()));
-
-        
 
         this.pageRankDampeningFactor = ((Double)argValues.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR.toString()));
 
@@ -126,24 +148,22 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     @Override
     public void init() throws Exception {
 
-        this.outputFormat = new PageRankCsvOutputFormat(super.resultsDirectory, System.lineSeparator(), ";", true, true);
+        super.outputFormat = new PageRankCsvOutputFormat(super.resultsDirectory, System.lineSeparator(), ";", true, true);
 
 
 
         if (! this.isRunningSummarizedMethod()) {
-            this.outputFormat.setName("complete_PR");
+            super.outputFormat.setName("complete_PR");
             System.out.println("Running complete version of PageRank.");
         }
         else {
-            this.outputFormat.setName("summary_PR");
+            super.outputFormat.setName("summary_PR");
 
             System.out.println("Running summarized version of PageRank.");
         }
 
         // Generic PageRank statistic.
         super.statisticsMap.put(BigVertexGraph.RandomWalkStatisticKeys.ITERATION_COUNT.toString(), new ArrayList<>());
-
-
 
         // Trigger the first PageRank execution.
         final TypeInformation<Tuple2<Long, Long>> edgeTypeInfo = super.graph.getEdgeIds().getType();
@@ -207,19 +227,21 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         }
     }
 
-
+    /**
+     * Output algorithm results to disk.
+     * @param date Optional tag prefix for the result files.
+     * @param ranks The calculated PageRanks.
+     */
     private void outputResult(final String date, final DataSet<Tuple2<Long, Double>> ranks) {
         super.outputFormat.setIteration(super.iteration);
         super.outputFormat.setTags(date);
 
         // https://ci.apache.org/projects/flink/flink-docs-master/api/java/org/apache/flink/api/java/DataSet.html#writeAsText-java.lang.String-
-
         if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0) && super.iteration > 0) {
             System.out.println("> Full result dump.");
             ranks
                 .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
-                //.setParallelism(1)
                 .output(super.outputFormat);
         }
         else {
@@ -227,30 +249,25 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             ranks
                 .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
-                //.sortPartition(1, Order.ASCENDING)
                 .setParallelism(1)
                 .first(this.pageRankSize)
                 .output(super.outputFormat);
         }
     }
 
-    // GraphBolt stream UDFs.
-
-
     @Override
-    protected boolean beforeUpdates(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics) {
-        //TODO: logic - beforeUpdates(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics)
+    protected boolean checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics) {
+        //TODO: logic - checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics)
 	    return true;
     }
 
     @Override
-    protected GraphStreamHandler.Action onQuery(final Long id,
-                                                final String query,
-                                                final Graph<Long, NullValue, NullValue> graph,
-                                                final GraphUpdates<Long, NullValue> updates,
-                                                final GraphUpdateStatistics statistics,
-                                                final Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos) {
-
+    protected GraphStreamHandler.Action defineQueryStrategy(final Long id,
+                                                            final String query,
+                                                            final Graph<Long, NullValue, NullValue> graph,
+                                                            final GraphUpdates<Long, NullValue> updates,
+                                                            final GraphUpdateStatistics statistics,
+                                                            final Map<Long, GraphUpdateTracker.UpdateInfo> updateInfos) {
 
         this.rankInputFormat.setFilePath(this.cacheDirectory + "/ranks" + ((iteration - 1) % super.storedIterations));
         this.previousRanks = super.env.createInput(this.rankInputFormat, rankTypeInfo).name("PageRank - read previous ranks.");
@@ -260,27 +277,19 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             this.concreteModel.setModelDirectory(super.modelDirectory);
             return Action.COMPUTE_APPROXIMATE;
         }
-        else
+        else {
             return Action.COMPUTE_EXACT;
-
+        }
     }
+
     @Override
     protected void onQueryResult(
             final Long id,
             final String query,
             final GraphStreamHandler.Action action,
-            final Graph<Long, NullValue, NullValue> graph) {
-
-
-
-
-    }
-
-
+            final Graph<Long, NullValue, NullValue> graph) {}
 
     //TODO: executeExact and executeApproximate should be moved to GraphModel interface. Need to see what that change would imply wrt GraphBolt's UDF time measurements inside run()
-
-    // GraphBolt execution strategy UDFs.
     @Override
     protected Long executeExact() throws Exception {
 

@@ -27,7 +27,7 @@ public interface StreamObserver<K, EV> {
      * @param statistics
      * @return
      */
-    //boolean beforeUpdates(final GraphUpdates<K, EV> updates, final GraphUpdateStatistics statistics);
+    //boolean checkUpdateState(final GraphUpdates<K, EV> updates, final GraphUpdateStatistics statistics);
 
 
     /**

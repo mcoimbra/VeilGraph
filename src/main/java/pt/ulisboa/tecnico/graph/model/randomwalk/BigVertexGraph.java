@@ -50,6 +50,7 @@ import pt.ulisboa.tecnico.graph.util.GraphUtils;
  * @param <EV> edge value type
  * @author Miguel E. Coimbra
  */
+@SuppressWarnings("serial")
 public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tuple2<Long, Double>> {
 	private static final long serialVersionUID = -8025093176176897258L;
 
@@ -166,8 +167,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
     public static class NeighborhoodHopper implements FlatJoinFunction<Tuple2<Long, Long>, Edge<Long, NullValue>, Tuple2<Long, Long>> {
-
-        private static final long serialVersionUID = 3722155887582921943L;
 
         @Override
         public void join(Tuple2<Long, Long> first, Edge<Long, NullValue> second, Collector<Tuple2<Long, Long>> out) {
@@ -430,7 +429,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
     public static class BigGraphVertexInitializer implements MapFunction<Vertex<Long, NullValue>, Double> {
-        private static final long serialVersionUID = 6228622180581553177L;
 
         @Override
         public Double map(final Vertex<Long, NullValue> longVVVertex) throws Exception {
@@ -439,7 +437,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
     public static class BigGraphEdgeInitializer implements MapFunction<Edge<Long, NullValue>, Double> {
-        private static final long serialVersionUID = -3136747804238249570L;
 
         @Override
         public Double map(final Edge<Long, NullValue> longEVEdge) {
@@ -647,7 +644,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
     private static class KernelVertexJoinFunction extends RichJoinFunction<Long, Tuple2<Long, Double>, Vertex<Long, Double>> {
-		private static final long serialVersionUID = -2848339358409410177L;
 		double initRank;
         private final LongCounter vertexCounter = new LongCounter();
 
@@ -669,7 +665,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
     private static class VertexKeySelector<Long> implements KeySelector<Long, Long>, ResultTypeQueryable<Long> {
-		private static final long serialVersionUID = -3727985314737050288L;
 		TypeInformation<Long> type;
 
 
@@ -691,8 +686,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
     public static class VertexIdExtractor implements MapFunction<Tuple2<Long, Long>, Long> {
 
-        private static final long serialVersionUID = 6945802500658455013L;
-
         @Override
         public Long map(Tuple2<Long, Long> value) {
             return value.f0;
@@ -703,8 +696,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
     public static class RepeatedExpansionNormalizer implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
-
-        private static final long serialVersionUID = -546715299234474371L;
 
         @Override
         public void join(Tuple2<Long, Long> first, Tuple2<Long, Long> second, Collector<Tuple2<Long, Long>> out) {
@@ -718,8 +709,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
     public static class RepeatedVertexReducer implements ReduceFunction<Tuple2<Long, Long>> {
-
-        private static final long serialVersionUID = 2290591544270777362L;
 
         @Override
         public Tuple2<Long, Long> reduce(Tuple2<Long, Long> value1, Tuple2<Long, Long> value2) {
@@ -736,8 +725,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
     public static class HopNormalizer implements ReduceFunction<Tuple2<Long, Long>> {
 
-        private static final long serialVersionUID = -7201784987151557960L;
-
         @Override
         public Tuple2<Long, Long> reduce(Tuple2<Long, Long> value1, Tuple2<Long, Long> value2) {
             return value1.f1 > value2.f1 ? value1 : value2;
@@ -748,8 +735,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
     public static class KeepRanksAbove implements FilterFunction<Tuple2<Long, Long>> {
-
-        private static final long serialVersionUID = -6439591892818989163L;
         private Long limit;
 
         KeepRanksAbove(Long limit) {
@@ -764,7 +749,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
     private static class FilterVertexDegreeChange implements FilterFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>> {
 
-        private static final long serialVersionUID = 3037252863535344407L;
         private EdgeDirection direction;
         private Double r;
 
@@ -784,7 +768,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     @FunctionAnnotation.ForwardedFields("f0->f0")
     private static class MapVertexDegreeChange implements MapFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>,Tuple3<Long, Double, Long>> {
 
-        private static final long serialVersionUID = -7574018577220563673L;
         private EdgeDirection direction;
         private Double r;
 
@@ -812,7 +795,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
     public static class ExpansionMapper implements MapFunction<Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>>, Tuple2<Long, Long>> {
 
-        private static final long serialVersionUID = 4560009301115395785L;
         private final Integer n;
         private final double avgPrevDegree;
         private final double delta;
@@ -851,8 +833,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
     private static class MapUpdateTupleToDouble implements MapFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Long> {
-
-        private static final long serialVersionUID = 8930887145382772011L;
         private EdgeDirection direction;
 
         MapUpdateTupleToDouble(EdgeDirection direction) {

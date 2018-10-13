@@ -15,11 +15,25 @@ Note: the uncompressed versions of the graphs consume considerably more space.
 
 We assume GraphBolt-master is located on the same directory as WebGraph-master on the user $HOME.
 
+GraphBolt was developed and tested using:
+- Windows 7 (64-bit), Ubuntu 18.04 (64-bit), Slackware 14.2 (64-bit)
+- Java 8 (64-bit)
+- Python 3.6 (64-bit)
+- Python packages (installed using 'pip install PACKAGE_NAME'):
+	- 'networkx'
+	- 'pathlib'
+	- 'psutil'
+	- 'pytz'
+	- 'matplotlib'
+	- 'numpy'
+
+It should work on Windows 10, albeit untested.
+
 # Prepare GraphBolt.
-cd $HOME/GraphBolt-master
-mvn clean install -D=skipTests
-mkdir -p testing/Temp
-mkdir cache
+	cd $HOME/GraphBolt-master
+	mvn clean install -D=skipTests
+	mkdir -p testing/Temp
+	mkdir cache
 
 # Obtain WebGraph.
 cd $HOME
