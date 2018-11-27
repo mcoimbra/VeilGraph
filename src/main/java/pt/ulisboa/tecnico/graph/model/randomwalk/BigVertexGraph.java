@@ -208,6 +208,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
      * @param direction in-degree, out-degree or both
      * @return a list of vertices whose specified type of degree had a delta of at least r since the last update
      */
+    /*
     public static List<Tuple2<Long, Double>> getKHotVertices(final Map<Long, GraphUpdateTracker.UpdateInfo> infos, final Double r, final EdgeDirection direction) {
 
         return infos
@@ -234,6 +235,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 }})
                 .collect(Collectors.toList());
     }
+    */
 
     private static boolean checkVertexDirectionDegreeRatio(Double r, EdgeDirection direction, GraphUpdateTracker.UpdateInfo i) {
         switch (direction) {
@@ -327,13 +329,13 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .map(new VertexIdExtractor())
                 .name("DeltaIteration result VertexIdExtractor");
     }
-
+/*
     public DataSet<Tuple3<Long, Double, Long>> getKHotVertices(final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> infos, final Double r, final EdgeDirection direction) {
         return infos
                 .filter(new FilterVertexDegreeChange(direction, r))
                 .map(new MapVertexDegreeChange(direction, r));
     }
-
+*/
     public DataSet<Tuple2<Long, Long>> expandKHotVertices(DataSet<Tuple3<Long, Double, Long>> kHotVertices, DataSet<Tuple2<Long, Double>> previousRanks, Integer n, Double delta, double avgPrevDegree) {
 
         // kHotVertices is Tuple3<VERTEX ID, DEGREE UPDATE RATIO, PREVIOUS IN DEGREE>
@@ -387,9 +389,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
             kHotVertices.writeAsCsv(this.modelDirectory + "/kHotVertices_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
 
-
-
-
         final double avgPrevDegree = getPreviousAvgInDegree(infoDataSet);
 
         System.out.println("expand() - average degree: " + avgPrevDegree);
@@ -398,7 +397,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         if(this.dumpingModel) {
             expandedIds.writeAsCsv(this.modelDirectory + "/expandedIds_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
-
 
         // Calculating the delta iteration limit will trigger a Flink job.
         this.deltaExpansionLimit = expandedIds.max(1).collect().get(0).f1;
