@@ -166,10 +166,16 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
 
+    @FunctionAnnotation.NonForwardedFields("f1.f0; f1.f2")
+    @FunctionAnnotation.ForwardedFields("f1.f1->f0")
+    @FunctionAnnotation.ReadFields("f0.f1; f1")
     public static class NeighborhoodHopper implements FlatJoinFunction<Tuple2<Long, Long>, Edge<Long, NullValue>, Tuple2<Long, Long>> {
 
         @Override
-        public void join(Tuple2<Long, Long> first, Edge<Long, NullValue> second, Collector<Tuple2<Long, Long>> out) {
+        public void join(
+                Tuple2<Long, Long> first,
+                Edge<Long, NullValue> second,
+                Collector<Tuple2<Long, Long>> out) {
             if(second != null) {
                 // Store the out-vertex with a score equal to the current vertex minus 1.
                 Tuple2<Long, Long> wsNewElement = Tuple2.of(second.f1, first.f1 - 1);
@@ -344,7 +350,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Tuple3<Long,Double,Long>, Tuple2<Long, Double>, Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>>>() {
                     @Override
-                    public Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> join(Tuple3<Long, Double, Long> longDoubleTuple2, Tuple2<Long, Double> longDoubleTuple22) {
+                    public Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> join(
+                            Tuple3<Long, Double, Long> longDoubleTuple2,
+                            Tuple2<Long, Double> longDoubleTuple22) {
                         if(longDoubleTuple22 == null) {
                             // If the vertex coming from kHotVertices had no match for the leftOuterJoin with previousRanks (had no previous known rank), set the second tuple here as null.
                             return Tuple2.of(longDoubleTuple2, null);
@@ -354,6 +362,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                         }
                     }
                 })
+                .withForwardedFieldsFirst("*->f0")
                 .map(new ExpansionMapper(n, delta, avgPrevDegree));
     }
 
@@ -424,15 +433,16 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         return expandedVertices;
     }
 
-
+    @FunctionAnnotation.NonForwardedFields("*")
     public static class BigGraphVertexInitializer implements MapFunction<Vertex<Long, NullValue>, Double> {
 
         @Override
-        public Double map(final Vertex<Long, NullValue> longVVVertex) throws Exception {
+        public Double map(final Vertex<Long, NullValue> longVVVertex) {
             return 0.0d;
         }
     }
 
+    @FunctionAnnotation.NonForwardedFields("*")
     public static class BigGraphEdgeInitializer implements MapFunction<Edge<Long, NullValue>, Double> {
 
         @Override
@@ -473,7 +483,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                     assert degree.f1.getValue() > 0; //since there is an edge, out degree of edge source must be at least 1
                     edge.setValue(1.0 / degree.f1.getValue());
                     return edge;
-                }).returns(edgeTypeInfo);
+                })
+                .withForwardedFieldsFirst("f0->f0; f2->f2")
+                .returns(edgeTypeInfo);
 
         this.internalEdgeCount = (new AbstractID()).toString();
         internalEdges.output(new Utils.CountHelper(this.internalEdgeCount)).name(RandomWalkStatisticKeys.INTERNAL_EDGE_COUNT.toString());
@@ -498,11 +510,12 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 		degree.f1.getValue() > 0 ?
                         Tuple2.of(rank.f0, rank.f1 / degree.f1.getValue()) : 
                         Tuple2.of(rank.f0, 0.0))
+                .withForwardedFieldsFirst("f0->f0")
                 .returns(tuple2TypeInfo);
 
         this.ranksToSendCount = (new AbstractID()).toString();
         ranksToSend.output(new Utils.CountHelper(this.ranksToSendCount)).name(RandomWalkStatisticKeys.VALUES_TO_SEND.toString());
-    	
+
         // For each edge, the rank sent is (rank of original vertex)/(out degree of original vertex).
     	// edgesToInside holds the out-edges of the bigVertex.
     	// edgesToInside as in "edges whose target is inside the hot vertex set".
@@ -517,7 +530,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                     edge.setSource(-1L); // its source id will be that of the big vertex
                     edge.setValue(rank.f1); // and the edge value is the previously calculated rank to send.
                     return edge;
-                }).returns(edgeTypeInfo)
+                })
+                .withForwardedFieldsSecond("f1->f2")
+                .returns(edgeTypeInfo)
                 .groupBy(0, 1) // if we have (A->B), (C->B) and A and B are part of big vertex, then (bigVertex->B) = (A->B)+(C->B)
                 .aggregate(Aggregations.SUM, 2);
 
@@ -640,6 +655,8 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
+    @FunctionAnnotation.ReadFields("f1; f1.f1")
+    @FunctionAnnotation.ForwardedFieldsFirst("*->f0")
     private static class KernelVertexJoinFunction extends RichJoinFunction<Long, Tuple2<Long, Double>, Vertex<Long, Double>> {
 		double initRank;
         private final LongCounter vertexCounter = new LongCounter();
@@ -655,7 +672,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
 
         @Override
-        public Vertex<Long, Double> join(Long id, Tuple2<Long, Double> rank) {
+        public Vertex<Long, Double> join(
+                Long id,
+                Tuple2<Long, Double> rank) {
             this.vertexCounter.add(1);
             return new Vertex<>(id, rank != null ? rank.f1 : this.initRank);
         }
@@ -680,7 +699,8 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-
+    @FunctionAnnotation.ForwardedFields("f0->f0")
+    @FunctionAnnotation.NonForwardedFields("f1")
     public static class VertexIdExtractor implements MapFunction<Tuple2<Long, Long>, Long> {
 
         @Override
@@ -691,46 +711,50 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
 
-
+    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
     public static class RepeatedExpansionNormalizer implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
 
         @Override
-        public void join(Tuple2<Long, Long> first, Tuple2<Long, Long> second, Collector<Tuple2<Long, Long>> out) {
-            if(second.f1 > first.f1) {
-                out.collect(second);
+        public void join(
+                Tuple2<Long, Long> f0,
+                Tuple2<Long, Long> f1,
+                Collector<Tuple2<Long, Long>> out) {
+            if(f1.f1 > f0.f1) {
+                out.collect(f1);
             }
             else {
-                out.collect(Tuple2.of(second.f0, -1L));
+                out.collect(Tuple2.of(f1.f0, -1L));
             }
         }
     }
 
+    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
+    @FunctionAnnotation.NonForwardedFieldsFirst("f0")
+    @FunctionAnnotation.NonForwardedFieldsSecond("f1")
     public static class RepeatedVertexReducer implements ReduceFunction<Tuple2<Long, Long>> {
 
         @Override
-        public Tuple2<Long, Long> reduce(Tuple2<Long, Long> value1, Tuple2<Long, Long> value2) {
+        public Tuple2<Long, Long> reduce(Tuple2<Long, Long> f0, Tuple2<Long, Long> f1) {
 
-            if(value1.f1 == -1L)
-                return value1;
-            else if (value2.f1 == -1L)
-                return value2;
+            if(f0.f1 == -1L)
+                return f0;
+            else if (f1.f1 == -1L)
+                return f1;
             else
-                return value1.f1 > value2.f1 ? value1 : value2;
+                return f0.f1 > f1.f1 ? f0 : f1;
         }
     }
 
-
+    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
     public static class HopNormalizer implements ReduceFunction<Tuple2<Long, Long>> {
 
         @Override
-        public Tuple2<Long, Long> reduce(Tuple2<Long, Long> value1, Tuple2<Long, Long> value2) {
-            return value1.f1 > value2.f1 ? value1 : value2;
+        public Tuple2<Long, Long> reduce(Tuple2<Long, Long> f0, Tuple2<Long, Long> f1) {
+            return f0.f1 > f1.f1 ? f0 : f1;
         }
     }
 
-
-
-
+    @FunctionAnnotation.ReadFields("f1")
     public static class KeepRanksAbove implements FilterFunction<Tuple2<Long, Long>> {
         private Long limit;
 
@@ -744,6 +768,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
+    @FunctionAnnotation.ReadFields("f1")
     private static class FilterVertexDegreeChange implements FilterFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>> {
 
         private EdgeDirection direction;
@@ -756,13 +781,12 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
         @Override
         public boolean filter(Tuple2<Long, GraphUpdateTracker.UpdateInfo> value) {
-            final GraphUpdateTracker.UpdateInfo i = value.f1;
-            return checkVertexDirectionDegreeRatio(r, direction, i);
+            return checkVertexDirectionDegreeRatio(r, direction, value.f1);
         }
-
     }
 
     @FunctionAnnotation.ForwardedFields("f0->f0")
+    @FunctionAnnotation.ReadFields("f1")
     private static class MapVertexDegreeChange implements MapFunction<Tuple2<Long,GraphUpdateTracker.UpdateInfo>,Tuple3<Long, Double, Long>> {
 
         private EdgeDirection direction;
@@ -790,6 +814,8 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
+    @FunctionAnnotation.ReadFields("f0.f1; f0.f2; f1; f1.f1")
+    @FunctionAnnotation.ForwardedFields("f0.f0->f0")
     public static class ExpansionMapper implements MapFunction<Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>>, Tuple2<Long, Long>> {
 
         private final Integer n;
@@ -803,9 +829,12 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
 
         @Override
-        public Tuple2<Long, Long> map(Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>> tuple3Tuple2Tuple2) {
-            Tuple3<Long, Double, Long> first = tuple3Tuple2Tuple2.f0;
-            Tuple2<Long, Double> second = tuple3Tuple2Tuple2.f1;
+        public Tuple2<Long, Long> map(
+                    Tuple2<
+                        Tuple3<Long, Double, Long>,
+                        Tuple2<Long, Double>> value) {
+            Tuple3<Long, Double, Long> first = value.f0;
+            Tuple2<Long, Double> second = value.f1;
 
 //            if(first.f1.isInfinite()) {
             if(first.f1.isInfinite() || first.f2 == 0) {
@@ -828,7 +857,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-
+    @FunctionAnnotation.NonForwardedFields("f0")
     private static class MapUpdateTupleToDouble implements MapFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Long> {
         private EdgeDirection direction;
 
