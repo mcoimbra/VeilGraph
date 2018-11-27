@@ -202,7 +202,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
      *
      * @see org.apache.flink.graph.EdgeDirection
      *
-     * @author Miguel E. Coimbra
      * @param infos accumulated updates
      * @param r minimum vertex degree change
      * @param direction in-degree, out-degree or both
