@@ -196,7 +196,7 @@ public class ParameterHelper {
         // If no output directory was given, set it to the system's temporary Java directory.
         String outDirPath = System.getProperty("java.io.tmpdir");
         if(cmd.hasOption(GraphBoltArgumentName.OUTPUT_DIR.toString())) {
-            outDirPath = cmd.getOptionValue(GraphBoltArgumentName.OUTPUT_DIR.toString());
+            outDirPath = cmd.getOptionValue(GraphBoltArgumentName.OUTPUT_DIR.toString()).replace("'", "");
             File outDirHandle = new File(outDirPath).getAbsoluteFile();
             if(!outDirHandle.exists()) {
                 boolean result = false;
@@ -210,6 +210,9 @@ public class ParameterHelper {
                 }
                 if(result) {
                     System.out.println("Created output directory:\t" + outDirPath);
+                }
+                else if (outDirHandle.exists()) {
+                    System.out.println("Output directory already existed:\t" + outDirPath);
                 }
                 else {
                     System.out.println("Create directory failed:\t " + outDirPath);
@@ -238,7 +241,7 @@ public class ParameterHelper {
         }
 
         if(	 cmd.hasOption(GraphBoltArgumentName.TEMP_DIR.toString()))  {
-            final String tempDir = cmd.getOptionValue(GraphBoltArgumentName.TEMP_DIR.toString());
+            final String tempDir = cmd.getOptionValue(GraphBoltArgumentName.TEMP_DIR.toString()).replace("'", "");
 
             final File file = new File(tempDir);
             if (! file.exists() || ! file.isDirectory())
@@ -289,7 +292,7 @@ public class ParameterHelper {
             argValues.put(GraphBoltArgumentName.SERVER_ADDRESS.toString(), flinkServerAddress);
         }
 
-        final String inputPath = cmd.getOptionValue(GraphBoltArgumentName.INPUT_FILE.toString());
+        final String inputPath = cmd.getOptionValue(GraphBoltArgumentName.INPUT_FILE.toString()).replace("'", "");
 
         final File file = new File(inputPath);
         if (! file.exists() || file.isDirectory())
@@ -302,7 +305,15 @@ public class ParameterHelper {
 
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString()));
 
+
+        String asd = cmd.getOptionValue(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        Boolean lol = cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+
+        System.out.println(asd);
+        System.out.println("has option: " + lol);
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString()));
+
+
 
         argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString()));
 
@@ -323,7 +334,7 @@ public class ParameterHelper {
         argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
 
         if(cmd.hasOption(GraphBoltArgumentName.CACHE.toString())) {
-            final String cachePath = cmd.getOptionValue(GraphBoltArgumentName.CACHE.toString());
+            final String cachePath = cmd.getOptionValue(GraphBoltArgumentName.CACHE.toString()).replace("'", "");
 
             final File cacheFile = new File(cachePath);
             if (! cacheFile.exists() || ! cacheFile.isDirectory())

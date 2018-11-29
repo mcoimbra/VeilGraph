@@ -277,6 +277,9 @@ public class GraphBoltTest
 	@DisplayName("testStep1ParameterExpansionN0")
 	void testStep1ParameterExpansionN0(final TestInfo testInfo) {
 		try {
+
+			/*
+
 			final GraphBoltTest instance = getInstance();
 			final Double vertexDegreeMininumChangeRatio = new Double(0.05);
 			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
@@ -312,7 +315,7 @@ public class GraphBoltTest
 			
 			final long n = 0;
 			final Double delta = new Double(0.0400d);
-
+*/
 /*
 			
 			final DataSet<Tuple2<Long, Long>> expandedIds = kHotVertices
@@ -735,7 +738,7 @@ public class GraphBoltTest
 			final Double r = new Double(0.05);
 			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
 			final DataSet<Tuple2<Long, Double>> previousRanks = instance.getOfflineResults().get(0);
-
+/*
 			// Get vertices where the previous in-degree was 0 or it changed enough so that abs((curr-degree / prev-degree) - 1) > vertexDegreeMininumChangeRatio
 			final List<Tuple2<Long, Double>> changedVertices = BigVertexGraph.getKHotVertices(infos, r, EdgeDirection.IN);
 
@@ -766,6 +769,7 @@ public class GraphBoltTest
 
 			final long n = 1;
 			final Double delta = new Double(0.0400d);
+			*/
 /*
 
 

@@ -105,7 +105,7 @@ public aspect ExecutionEnvironmentAspect {
 
         final boolean savingFlinkJobOperatorStatistics = GraphStreamHandler.getInstance().savingFlinkJobOperatorStatistics();
         final boolean savingFlinkJobOperatorJSON = GraphStreamHandler.getInstance().savingFlinkJobOperatorJSON();
-        System.out.println("Saving Flink Job operator statistics:\t" + savingFlinkJobOperatorStatistics);
+        //System.out.println("Saving Flink Job operator statistics:\t" + savingFlinkJobOperatorStatistics);
 
         //System.out.println("Is Flink W:\t" + isFlinkWebUIAvailable);
 
@@ -119,6 +119,7 @@ public aspect ExecutionEnvironmentAspect {
             final URLConnection flinkRestConnection = flinkRestURL.openConnection();
             final Long iteration = GraphStreamHandler.getInstance().getIteration();
             final StringBuilder sb = new StringBuilder();
+
 
             String inputLine;
             final BufferedReader in = new BufferedReader(new InputStreamReader(flinkRestConnection.getInputStream()));
@@ -140,6 +141,9 @@ public aspect ExecutionEnvironmentAspect {
                 out.close();
                 */
             }
+        }
+        catch(java.net.ConnectException e) {
+
         }
         catch(Exception e){
             e.printStackTrace();
