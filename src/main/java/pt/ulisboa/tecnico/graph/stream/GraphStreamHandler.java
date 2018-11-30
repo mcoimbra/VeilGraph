@@ -862,7 +862,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
                 })
-                .withForwardedFields("f0.f0->f0")
                 .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
                     @Override
                     public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> value) throws Exception {
@@ -888,7 +887,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
                 })
-                .withForwardedFields("f0.f0->f0")
                 .map(new MapFunction<Tuple2<Long, LongValue>, Tuple2<Long, GraphUpdateTracker.UpdateInfo>>() {
                     @Override
                     public Tuple2<Long, GraphUpdateTracker.UpdateInfo> map(Tuple2<Long, LongValue> value) throws Exception {
@@ -935,7 +933,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
                 })
-                .withForwardedFields("f0.f0->f0")
                 .name("affectedSources: map->reduce");
 
         final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> sourceUpdateInfos = affectedSources
@@ -991,7 +988,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         return Tuple2.of(value1.f0, new LongValue(value1.f1.getValue() + value2.f1.getValue()));
                     }
                 })
-                .withForwardedFields("f0.f0->f0")
                 .name("affectedTargets: map->reduce");
 
         // Convert to UpdateInfo structure.
