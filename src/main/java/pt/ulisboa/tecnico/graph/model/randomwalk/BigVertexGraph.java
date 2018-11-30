@@ -178,12 +178,12 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 // Store the out-vertex with a score equal to the current vertex minus 1.
                 Tuple2<Long, Long> wsNewElement = Tuple2.of(f1.f1, f0.f1 - 1);
                 out.collect(wsNewElement);
-            } /*
+            }
 			else { // 2018-03-29 ADDED FOR TESTING
 				// This is for the case of expanding on a sink vertex (has no out-neighbors)
-				Tuple2<Long, Long> wsNewElement = Tuple2.of(first.f0, 0L);
+				Tuple2<Long, Long> wsNewElement = Tuple2.of(f0.f0, 0L);
 				out.collect(wsNewElement);
-			} */
+			}
         }
     }
 
