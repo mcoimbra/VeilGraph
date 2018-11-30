@@ -1301,6 +1301,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
                         statisticsMap.get(StatisticKeys.TIME_TO_APPLY_UPDATES_TOTAL.toString()).add(TimeUnit.MILLISECONDS.convert(querySetupTotalTime, TimeUnit.NANOSECONDS));
 
+                        /*
                         System.out.println(String.format("Update integration (%d-ith) execution time: %d.%d",
                                 this.iteration,
                                 TimeUnit.SECONDS.convert(querySetupTotalTime, TimeUnit.NANOSECONDS),
@@ -1308,7 +1309,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
 
                         System.out.println("Computation #" + this.iteration + " - " + action.toString());
-
+*/
                         Long executionTime = -1L;
 
                         switch (action) {

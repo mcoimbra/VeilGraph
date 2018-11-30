@@ -168,7 +168,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
     //@FunctionAnnotation.NonForwardedFields("f1.f0; f1.f2")
     @FunctionAnnotation.ForwardedFields("f1.f1->f0")
-    @FunctionAnnotation.ReadFields("f0.f1; f1")
+    //@FunctionAnnotation.ReadFields("f0.f1; f1")
     public static class NeighborhoodHopper implements FlatJoinFunction<Tuple2<Long, Long>, Edge<Long, NullValue>, Tuple2<Long, Long>> {
 
         @Override
@@ -736,7 +736,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
 
-    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
+    //@FunctionAnnotation.ReadFields("f0.f1; f1.f1")
     public static class RepeatedExpansionNormalizer implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
 
         @Override
@@ -753,7 +753,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
+    //@FunctionAnnotation.ReadFields("f0.f1; f1.f1")
 //    @FunctionAnnotation.NonForwardedFieldsFirst("f0")
 //    @FunctionAnnotation.NonForwardedFieldsSecond("f1")
     public static class RepeatedVertexReducer implements ReduceFunction<Tuple2<Long, Long>> {
@@ -770,7 +770,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-    @FunctionAnnotation.ReadFields("f0.f1; f1.f1")
+    //@FunctionAnnotation.ReadFields("f0.f1; f1.f1")
     public static class HopNormalizer implements ReduceFunction<Tuple2<Long, Long>> {
 
         @Override
@@ -839,7 +839,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-    @FunctionAnnotation.ReadFields("f0.f1; f0.f2; f1; f1.f1")
+    //@FunctionAnnotation.ReadFields("f0.f1; f0.f2; f1; f1.f1")
     @FunctionAnnotation.ForwardedFields("f0.f0->f0")
     public static class ExpansionMapper implements MapFunction<Tuple2<Tuple3<Long, Double, Long>, Tuple2<Long, Double>>, Tuple2<Long, Long>> {
 
