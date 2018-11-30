@@ -166,9 +166,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
 
-    //@FunctionAnnotation.NonForwardedFields("f1.f0; f1.f2")
-    @FunctionAnnotation.ForwardedFields("f1.f1->f0")
-    //@FunctionAnnotation.ReadFields("f0.f1; f1")
+    //@FunctionAnnotation.ForwardedFields("f1.f1->f0")
     public static class NeighborhoodHopper implements FlatJoinFunction<Tuple2<Long, Long>, Edge<Long, NullValue>, Tuple2<Long, Long>> {
 
         @Override
@@ -482,7 +480,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .with(new JoinFunction<Edge<Long, Double>, Tuple2<Long, LongValue>, Edge<Long, Double>>() {
                     @Override
                     public Edge<Long, Double> join(Edge<Long, Double> edge, Tuple2<Long, LongValue> degree) {
-                        return new Edge<Long, Double>(edge.f0, edge.f1, 1.0 / degree.f1.getValue());
+                        return new Edge<>(edge.f0, edge.f1, 1.0 / degree.f1.getValue());
                     }
                 })
                 /*.with((edge, degree) -> {
@@ -543,8 +541,8 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .where(0).equalTo(0)
                 .with(new JoinFunction<Edge<Long, Double>, Tuple2<Long, Double>, Edge<Long, Double>>() {
                     @Override
-                    public Edge<Long, Double> join(Edge<Long, Double> edge, Tuple2<Long, Double> rank) throws Exception {
-                        return new Edge<Long, Double>(-1L, edge.f1, rank.f1);
+                    public Edge<Long, Double> join(Edge<Long, Double> edge, Tuple2<Long, Double> rank) {
+                        return new Edge<>(-1L, edge.f1, rank.f1);
                     }
                 })
                 /*
@@ -562,7 +560,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .aggregate(Aggregations.SUM, 2);
 
         this.edgesToInsideCount = (new AbstractID()).toString();
-        edgesToInside.output(new Utils.CountHelper(this.edgesToInsideCount)).name(RandomWalkStatisticKeys.EDGES_TO_INSIDE.toString());
+        edgesToInside
+                .output(new Utils.CountHelper(this.edgesToInsideCount))
+                .name(RandomWalkStatisticKeys.EDGES_TO_INSIDE.toString());
     	
         // Add the big vertex to the set
         final Vertex<Long, Double> bigVertex = new Vertex(-1L, 1.0d);
@@ -680,7 +680,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-    @FunctionAnnotation.ReadFields("f1; f1.f1")
+    @FunctionAnnotation.ReadFields("f1")
     //@FunctionAnnotation.ForwardedFieldsFirst("*->f0")
     private static class KernelVertexJoinFunction extends RichJoinFunction<Long, Tuple2<Long, Double>, Vertex<Long, Double>> {
 		double initRank;
