@@ -238,14 +238,14 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
 
         // https://ci.apache.org/projects/flink/flink-docs-master/api/java/org/apache/flink/api/java/DataSet.html#writeAsText-java.lang.String-
         if(super.checkingPeriodicFullAccuracy && (super.iteration % 10 == 0) && super.iteration > 0) {
-            System.out.println("> Full result dump.");
+            //System.out.println("> Full result dump.");
             ranks
                 .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
                 .output(super.outputFormat);
         }
         else {
-            System.out.println("> Ranking dump: " + this.pageRankSize);
+            //System.out.println("> Ranking dump: " + this.pageRankSize);
             ranks
                 .partitionByRange(1)
                 .sortPartition(1, Order.DESCENDING)
