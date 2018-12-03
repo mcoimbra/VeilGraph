@@ -200,46 +200,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         this.delta = delta;
     }
 
-    /**
-     * Get all vertices whose degree changed at least r as a consequence of the last applied update.
-     * The user specifies if the target is the in-degree (EdgeDirection.IN), out-degree (EdgeDirection.OUT) or either of them (EdgeDirection.ALL).
-     *
-     * @see org.apache.flink.graph.EdgeDirection
-     *
-     * @param infos accumulated updates
-     * @param r minimum vertex degree change
-     * @param direction in-degree, out-degree or both
-     * @return a list of vertices whose specified type of degree had a delta of at least r since the last update
-     */
-    /*
-    public static List<Tuple2<Long, Double>> getKHotVertices(final Map<Long, GraphUpdateTracker.UpdateInfo> infos, final Double r, final EdgeDirection direction) {
-
-        return infos
-                .entrySet()
-                .stream() // this filter + map chain could be replaced by a single operator which filters and collects if update ratio > r
-                .filter((Map.Entry<Long, GraphUpdateTracker.UpdateInfo> e) -> {
-                    final GraphUpdateTracker.UpdateInfo i = e.getValue();
-                    return checkVertexDirectionDegreeRatio(r, direction, i);
-                })
-                .map(new Function<Map.Entry<Long, GraphUpdateTracker.UpdateInfo>, Tuple2<Long, Double>>() {
-                    public Tuple2<Long, Double> apply(Map.Entry<Long, GraphUpdateTracker.UpdateInfo> e) {
-                        final GraphUpdateTracker.UpdateInfo u = e.getValue();
-                        switch (direction) {
-                            case IN:
-                                return Tuple2.of(e.getKey(), GraphUpdateTracker.degreeUpdateRatio(u.prevInDegree, u.currInDegree));
-                            case OUT:
-                                return Tuple2.of(e.getKey(), GraphUpdateTracker.degreeUpdateRatio(u.prevOutDegree, u.currOutDegree));
-                            default:
-                                return GraphUpdateTracker.degreeUpdateRatio(u.prevInDegree, u.currInDegree) > r ?
-                                        Tuple2.of(e.getKey(), GraphUpdateTracker.degreeUpdateRatio(u.prevInDegree, u.currInDegree)) :
-                                        Tuple2.of(e.getKey(), GraphUpdateTracker.degreeUpdateRatio(u.prevOutDegree, u.currOutDegree));
-                        }
-
-                }})
-                .collect(Collectors.toList());
-    }
-    */
-
     private static boolean checkVertexDirectionDegreeRatio(Double r, EdgeDirection direction, GraphUpdateTracker.UpdateInfo i) {
         switch (direction) {
             case IN:
@@ -397,7 +357,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
         System.out.println("expand() - average degree: " + avgPrevDegree);
 
-        final DataSet<Tuple2<Long, Long>> expandedIds = expandKHotVertices(kHotVertices, previousResults, this.neighborhoodSize, this.delta, avgPrevDegree);
+        DataSet<Tuple2<Long, Long>> expandedIds = expandKHotVertices(kHotVertices, previousResults, this.neighborhoodSize, this.delta, avgPrevDegree);
         if(this.dumpingModel) {
             expandedIds.writeAsCsv(this.modelDirectory + "/expandedIds_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
@@ -410,6 +370,14 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
         System.out.println("Delta iteration limit: " + this.deltaExpansionLimit);
+
+        expandedIds = env
+                .readCsvFile(this.modelDirectory + "/expandedIds_" + this.iteration + ".csv")
+                .lineDelimiter("\n")
+                .fieldDelimiter("\t")
+                .types(Long.class, Long.class);
+                //.tupleType();
+
 
 
         System.out.println("AYY LMAO FILTER > 0");
