@@ -537,8 +537,9 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         this.env.getConfig()
                 .enableClosureCleaner()
+                .enableSysoutLogging();
                 //.disableObjectReuse();
-                .enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
+                //.enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
 
         // See: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
         if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString())) {

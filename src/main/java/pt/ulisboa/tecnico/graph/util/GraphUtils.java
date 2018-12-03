@@ -402,7 +402,9 @@ public class GraphUtils {
     }
 
     public static <K, VV, EV> DataSet<Edge<K, EV>> externalEdges(final Graph<K, VV, EV> originalGraph, final DataSet<Edge<K, EV>> edgesToBeRemoved) {
-        return originalGraph.getEdges().coGroup(edgesToBeRemoved)
+        return originalGraph
+				.getEdges()
+				.coGroup(edgesToBeRemoved)
                 .where(0, 1).equalTo(0, 1)
                 .with((Iterable<Edge<K, EV>> edge, Iterable<Edge<K, EV>> edgeToBeRemoved, Collector<Edge<K, EV>> out) -> {
                     if (!edgeToBeRemoved.iterator().hasNext()) {

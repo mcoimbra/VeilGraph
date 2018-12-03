@@ -402,7 +402,7 @@ public class GraphUpdateTracker<K, VV, EV> implements Serializable {
         
         @Override
         public String toString() {
-    		return "nUpdates: " + nUpdates + "\tcurrInDegree: " + this.currInDegree + "\tprevInDegree: " + this.prevInDegree;
+    		return "nUpdates: " + this.nUpdates + "\tcurrInDegree: " + this.currInDegree + "\tprevInDegree: " + this.prevInDegree + "\tcurrOutDegree: " + this.currOutDegree + "\tprevOutDegree: " + this.prevOutDegree;
         }
     }
 }

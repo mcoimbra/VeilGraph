@@ -294,7 +294,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
 
 
-        new RepeatedExpansionNormalizer();
+
 
         // If a vertex in the current working set was reached in the expansion and its new expansion limit is bigger, store it.
         // repeatedExpansionVertices could be empty.
@@ -332,13 +332,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .map(new VertexIdExtractor())
                 .name("DeltaIteration result VertexIdExtractor");
     }
-/*
-    public DataSet<Tuple3<Long, Double, Long>> getKHotVertices(final DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> infos, final Double r, final EdgeDirection direction) {
-        return infos
-                .filter(new FilterVertexDegreeChange(direction, r))
-                .map(new MapVertexDegreeChange(direction, r));
-    }
-*/
+
     public DataSet<Tuple2<Long, Long>> expandKHotVertices(DataSet<Tuple3<Long, Double, Long>> kHotVertices, DataSet<Tuple2<Long, Double>> previousRanks, Integer n, Double delta, double avgPrevDegree) {
 
         // kHotVertices is Tuple3<VERTEX ID, DEGREE UPDATE RATIO, PREVIOUS IN DEGREE>
@@ -387,17 +381,21 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         // returns Tuple3<VertexID, PageRank, InDegree>
         //final DataSet<Tuple3<Long, Double, Long>> kHotVertices = getKHotVertices(infoDataSet, this.updateRatioThreshold, direction);
 
+        // MapVertexDegreeChange is returning vertices with degree change ratio = INFINITY and prev degree = 0, those are vertices that have just been added.
         final DataSet<Tuple3<Long, Double, Long>> kHotVertices = infoDataSet
                 .filter(new FilterVertexDegreeChange(direction, this.updateRatioThreshold))
                 .map(new MapVertexDegreeChange(direction, this.updateRatioThreshold));
 
         if(this.dumpingModel) {
+
+            infoDataSet.writeAsCsv(this.modelDirectory + "/infoDataSet" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
+
             kHotVertices.writeAsCsv(this.modelDirectory + "/kHotVertices_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
 
         final double avgPrevDegree = getPreviousAvgInDegree(infoDataSet);
 
-        //System.out.println("expand() - average degree: " + avgPrevDegree);
+        System.out.println("expand() - average degree: " + avgPrevDegree);
 
         final DataSet<Tuple2<Long, Long>> expandedIds = expandKHotVertices(kHotVertices, previousResults, this.neighborhoodSize, this.delta, avgPrevDegree);
         if(this.dumpingModel) {
@@ -411,10 +409,69 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         this.paramSetup = env.getLastJobExecutionResult().getNetRuntime(TimeUnit.MILLISECONDS);
 
 
-        //System.out.println("Delta iteration limit: " + this.deltaExpansionLimit);
+        System.out.println("Delta iteration limit: " + this.deltaExpansionLimit);
+
+
+        System.out.println("AYY LMAO FILTER > 0");
+        DataSet<Tuple2<Long, Long>> positiveHops = expandedIds.filter(new KeepRanksAbove(0L));
+        System.out.println("positiveHops - START ");
+        //positiveHops.print();
+        System.out.println("positiveHops - STOP ");
+
+
+        final DataSet<Tuple2<Long, Long>> outVertices = positiveHops
+                //.leftOuterJoin(Graph.fromTuple2DataSet(env.createInput(this.edgeInputType), env).getEdges())
+                .leftOuterJoin(graph.getEdges()) // get out-edges
+                .where(0)
+                .equalTo(0)
+                .with(new NeighborhoodHopper()) // move score to out-neighbors
+                .groupBy(0)
+                .reduce(new HopNormalizer()); // if an out-neighbor is reached by more than one vertex, keep the highest hops remaining
+
+
+
+
+        System.out.println("outVertices - START ");
+        //outVertices.print();
+        System.out.println("outVertices - STOP ");
+
+
+        final DataSet<Tuple2<Long, Long>> repeatedExpansionVertices = positiveHops
+                //expandedIds
+                .leftOuterJoin(outVertices)
+                .where(0)
+                .equalTo(0)
+                .with(new RepeatedExpansionNormalizer()) // repeated vertices with a lower score than original will have score set to -1
+                .name("DeltaIteration positiveHops RepeatedExpansionNormalizer");
+
+
+
+        System.out.println("repeatexExpansionVertices - START ");
+
+        //System.out.println("# " + repeatedExpansionVertices.count());
+        //repeatedExpansionVertices.print();
+        System.out.println("repeatexExpansionVertices - STOP ");
+
+        // nextWorkset contains new vertices included in the expansion and old vertices whose propagated expansion hop value is greater than the original value in the current workset.
+        final DataSet<Tuple2<Long, Long>> nextWorkset = outVertices // outVertices has no repeated keys
+                .union(repeatedExpansionVertices) // repeatedExpansionVertices has no repeated keys
+                .groupBy(0)
+                .reduce(new RepeatedVertexReducer())  // if a group of 2 repeated vertices has a vertex with score -1L, we retain the -1L score
+                .filter(new KeepRanksAbove(-1L)) //remove negative scores.
+                .name("DeltaIteration outVertices RepeatedVertexReducer");
+
+        System.out.println("nextWorkSet - START ");
+        //nextWorkset.print();
+        System.out.println("nextWorkSet - STOP ");
+
 
 
         final DataSet<Long> expandedVertices = deltaExpansion(expandedIds, graph, this.deltaExpansionLimit.intValue());
+
+
+
+        //expandedVertices.print();
+
 
         if(this.dumpingModel) {
             expandedVertices
@@ -426,6 +483,9 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                         }
                     })
                     .writeAsCsv(this.modelDirectory + "/expandedVertices_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
+
+            System.out.println("EXPANDED VERTICES PRINT");
+
         }
 
         return expandedVertices;
@@ -498,10 +558,21 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         // Select all the other edges, converted to the correct type.
     	// These are edges whose source and target do not belong to the hot vertex set.
         if(this.dumpingModel) {
+
+            selectedEdges.writeAsCsv(this.modelDirectory + "/selectedEdges_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
+/*
+            try {
+                internalEdges.print();
+            }
+            catch(Exception e) {
+                System.out.println(e);
+            } */
             internalEdges.writeAsCsv(this.modelDirectory + "/internalEdges_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
 
             doubleGraph.getEdges().writeAsCsv(this.modelDirectory + "/doubleGraph_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
+
+
 
 
     	final DataSet<Edge<Long, Double>> externalEdges = GraphUtils.externalEdges(doubleGraph, internalEdges);
@@ -528,6 +599,10 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
         this.ranksToSendCount = (new AbstractID()).toString();
         ranksToSend.output(new Utils.CountHelper(this.ranksToSendCount)).name(RandomWalkStatisticKeys.VALUES_TO_SEND.toString());
+
+        if(this.dumpingModel) {
+            externalEdges.writeAsCsv(this.modelDirectory + "/externalEdges_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
+        }
 
         // For each edge, the rank sent is (rank of original vertex)/(out degree of original vertex).
     	// edgesToInside holds the out-edges of the bigVertex.
@@ -559,10 +634,16 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 .groupBy(0, 1) // if we have (A->B), (C->B) and A and B are part of big vertex, then (bigVertex->B) = (A->B)+(C->B)
                 .aggregate(Aggregations.SUM, 2);
 
+
         this.edgesToInsideCount = (new AbstractID()).toString();
         edgesToInside
                 .output(new Utils.CountHelper(this.edgesToInsideCount))
                 .name(RandomWalkStatisticKeys.EDGES_TO_INSIDE.toString());
+
+        if(this.dumpingModel) {
+
+            edgesToInside.writeAsCsv(this.modelDirectory + "/edgesToInside_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
+        }
     	
         // Add the big vertex to the set
         final Vertex<Long, Double> bigVertex = new Vertex(-1L, 1.0d);
@@ -735,6 +816,23 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     }
 
 
+    public static class NonFlatRepeatedExpansionNormalizer implements JoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
+
+
+        @Override
+        public Tuple2<Long, Long> join(Tuple2<Long, Long> f0, Tuple2<Long, Long> f1) throws Exception {
+            if (f1 == null) {
+                return f0;
+            }
+            else if (f1.f1 > f0.f1) {
+                return f1;
+            } else {
+                return Tuple2.of(f1.f0, -1L);
+
+            }
+        }
+    }
+
 
     //@FunctionAnnotation.ReadFields("f0.f1; f1.f1")
     public static class RepeatedExpansionNormalizer implements FlatJoinFunction<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>> {
@@ -744,12 +842,25 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 Tuple2<Long, Long> f0,
                 Tuple2<Long, Long> f1,
                 Collector<Tuple2<Long, Long>> out) {
-            if(f1.f1 > f0.f1) {
-                out.collect(f1);
+            //if(f0 != null && f1 != null) {
+            if (f1 == null) {
+                if (f0.f1 > 0) {
+                    out.collect(f0);
+                }
+                else {
+                    out.collect(Tuple2.of(f1.f0, -1L));
+                }
             }
-            else {
+            else if (f1.f1 > f0.f1) {
+                out.collect(f1);
+            } else {
                 out.collect(Tuple2.of(f1.f0, -1L));
             }
+            //}
+            /*
+            else {
+                System.out.println("RepeatedExpansionNormalizer - COMPLETELY EMPTY");
+            } */
         }
     }
 
