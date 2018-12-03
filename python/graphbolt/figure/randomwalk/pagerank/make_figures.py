@@ -143,7 +143,7 @@ parser.add_argument("-pdf", help="output .pdf files too", required=False, action
 # GraphBolt/PageRank-specific parameters.
 parser.add_argument("-skip-flink-job-stats", help="skip Flink job operator statistics figure generation.", required=False, action="store_true") # if ommited default value is false
 
-
+parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-dataset-name", help="dataset name.", required=True, type=str, default="")
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
 parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
@@ -153,6 +153,8 @@ parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 
 parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
+
+parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManager parallelism.", required=False, type=int, default=1)
 
 args = parser.parse_args()
 
@@ -183,6 +185,13 @@ if args.out_dir.startswith('~'):
 if not (os.path.exists(args.out_dir) and os.path.isdir(args.out_dir)):
     print("> '-out-dir' must be a non-empty string. Exiting")
     sys.exit(1)
+if args.parallelism <= 0 or not isinstance(args.parallelism, int):
+    print("> '-parallelism' must be a positive integer. Exiting.")
+    sys.exit(1)
+
+DELETE_TOKEN = '_A'
+if args.delete_edges:
+    DELETE_TOKEN = '_D'
 
 print("\n> Arguments: {}".format(args))
 
@@ -240,8 +249,8 @@ result_statistic_matrices = {}
 # Dictionary to store PageRank RBO values for each parameter combination that was found.
 result_rbo_matrices = {}
 
-complete_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_complete/{KW_DATASET_NAME}-start.tsv'.format(
-            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+complete_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_complete{KW_DELETE_TOKEN}/{KW_DATASET_NAME}-start.tsv'.format(
+            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DELETE_TOKEN = DELETE_TOKEN, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening)
 complete_pagerank_stats_matrix = read_statistics_into_dic([complete_pagerank_stats_path], args.chunk_count)
 
 stream_file_path = "{KW_DATA_DIR}/{KW_DATASET_NAME}/{KW_DATASET_NAME}-stream.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_NAME = args.dataset_name)
@@ -251,14 +260,14 @@ stream_file_path = "{KW_DATA_DIR}/{KW_DATASET_NAME}/{KW_DATASET_NAME}-stream.tsv
 #     for n in n_values:
 #         for delta in delta_values:
 if args.list != None:
-    i = 0
+    arg_indexes = 0
     print("Iterating summarized PageRank parameters...")
-    while i < len(args.list):
-        r = float(args.list[i])
-        n = int(args.list[i+1])
-        delta = float(args.list[i+2])
+    while arg_indexes < len(args.list):
+        r = float(args.list[arg_indexes])
+        n = int(args.list[arg_indexes+1])
+        delta = float(args.list[arg_indexes+2])
 
-        i = i + 3
+        arg_indexes = arg_indexes + 3
             
         indexes = []
         rbos = []
@@ -267,8 +276,8 @@ if args.list != None:
         key_label = r'\textit{r} = KW_r, \textit{n} = KW_n, $\Delta$ = KW_delta'.replace("KW_r", "{KW_r:.2f}".format(KW_r = r)).replace("KW_n", "{KW_n}".format(KW_n = n)).replace("KW_delta", "{KW_delta:.2f}".format(KW_delta = delta)) 
 
 
-        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.csv'.format(
-        KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}.csv'.format(
+        KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
         ##### Make RBO figure.
         print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path))
@@ -288,7 +297,7 @@ if args.list != None:
                     indexes.append(int(i))
 
             # Create a dedicated directory for the current dataset and PageRank parameters.
-            figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+            figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
             # Single-plot figures will be crowded together in a specific 'singles' directory.
             figure_singles_new_dir_path = '{KW_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}/singles'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_FIGURE_BASE_NAME = figure_base_name)
@@ -329,11 +338,11 @@ if args.list != None:
 
         
         # Read the statistics file for the current parameter combination.
-        summary_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/{KW_DATASET_NAME}-start.tsv'.format(
-        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        summary_pagerank_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}/{KW_DATASET_NAME}-start.tsv'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
-        big_vertex_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}/model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.tsv'.format(
-        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+        big_vertex_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}/model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}.tsv'.format(
+        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
 
         pagerank_file_ok = os.path.isfile(summary_pagerank_stats_path) and os.stat(summary_pagerank_stats_path).st_size > 0 and localutil.file_len(summary_pagerank_stats_path) == args.chunk_count + 1
@@ -351,7 +360,7 @@ if args.list != None:
             stat_files = [summary_pagerank_stats_path, big_vertex_stats_path]
             summary_pagerank_stats_matrix = read_statistics_into_dic(stat_files, args.chunk_count)
 
-            print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+            #print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
             #print(summary_pagerank_stats_matrix)
 
             # Programmatically store the speedup values.
@@ -455,11 +464,13 @@ if args.list != None:
 
                 plt.close(fig)
 
+                #print(summary_pagerank_stats_matrix)
+
                     
 
 # Create a directory for the figures of the (current dataset, iteration count, RBO length, dampening factor) combination.
-figure_path_dir = '{KW_FIGURES_ROOT}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
-            KW_FIGURES_ROOT = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+figure_path_dir = '{KW_FIGURES_ROOT}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(
+            KW_FIGURES_ROOT = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
 pathlib.Path(figure_path_dir).mkdir(parents=True, exist_ok=True)
 
