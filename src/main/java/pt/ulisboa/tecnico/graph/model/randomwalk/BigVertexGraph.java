@@ -358,9 +358,14 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         System.out.println("expand() - average degree: " + avgPrevDegree);
 
         DataSet<Tuple2<Long, Long>> expandedIds = expandKHotVertices(kHotVertices, previousResults, this.neighborhoodSize, this.delta, avgPrevDegree);
+
+        /*
         if(this.dumpingModel) {
             expandedIds.writeAsCsv(this.modelDirectory + "/expandedIds_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
         }
+        */
+
+        expandedIds.writeAsCsv(this.modelDirectory + "/expandedIds_" + this.iteration + ".csv", "\n", "\t", FileSystem.WriteMode.OVERWRITE);
 
         // Calculating the delta iteration limit will trigger a Flink job.
         this.deltaExpansionLimit = expandedIds.max(1).collect().get(0).f1;
