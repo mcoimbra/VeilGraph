@@ -920,22 +920,22 @@ with open(latex_code_path, 'w') as latex_file:
             KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
 
     tex_code_str = """\\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} best three and worst three average vertex ratios.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_VERTEX_SAVINGS}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} best three and worst three average edge ratios.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_EDGE_SAVINGS}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} best three and worst three average RBOs.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_RBO}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} best three and worst three average speedups.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_SPEEDUPS}}}
 \\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_3_bottom_3_rbo, KW_TOP_EDGE_SAVINGS = top_3_bottom_3_edge_savings, KW_TOP_VERTEX_SAVINGS = top_3_bottom3_vertex_savings, KW_TOP_SPEEDUPS = top_3_bottom_3_speedups, KW_STREAM_SIZE = stream_size, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
