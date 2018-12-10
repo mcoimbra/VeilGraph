@@ -318,7 +318,6 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             this.dampening = dampening;
         }
 
-
         @Override
         public Double apply(Double rankSum) {
             return (this.dampening * rankSum) + (1 - this.dampening);
