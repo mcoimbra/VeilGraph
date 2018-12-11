@@ -406,12 +406,23 @@ else:
         # Do they all have data?
         for [path, sz] in sizes:
             if sz == 0:
-                found_zeros = True
-                break
+                if os.path.isdir(path):
+                    subnames = os.listdir(path)
+                    subpaths = [os.path.join(path, name).replace('\\\\', '/') for name in subnames]
+                    subsizes = [(s_path, os.stat(s_path).st_size) for s_path in subpaths]
+
+                    if not len(subsizes) == args.parallelism: 
+                        found_zeros = True
+                        break
+
+                else:
+                    found_zeros = True
+                    break
         if found_zeros:
             print("> Found complete PageRank results with value of zero at {}.".format(path))
             print("> Need to run complete PageRank")
             need_to_run_complete_pagerank = True
+            sys.exit(0)
 
 
 if args.keep_cache:
@@ -578,9 +589,19 @@ if args.list != None:
 
                 # Do they all have data?
                 for [path, sz] in sizes:
-                    if sz == 0:
-                        found_zeros = True
-                        break
+                    if os.path.isdir(path):
+                        subnames = os.listdir(path)
+                        subpaths = [os.path.join(path, name).replace('\\\\', '/') for name in subnames]
+                        subsizes = [(s_path, os.stat(s_path).st_size) for s_path in subpaths]
+
+                        if not len(subsizes) == args.parallelism: 
+                            found_zeros = True
+                            break
+
+                    else:
+                        if sz == 0:
+                            found_zeros = True
+                            break
                 if found_zeros:
                     print("> Found summarized PageRank results with value of zero at {}.".format(summarized_pagerank_result_path))
                     print("> Need to run summarized PageRank")

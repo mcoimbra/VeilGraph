@@ -462,6 +462,10 @@ if args.list != None:
                 
                 save_figure(figure_path_name + '-Speedup', fig_file_types)
 
+                
+
+                
+
                 plt.close(fig)
 
                 #print(summary_pagerank_stats_matrix)
@@ -615,6 +619,9 @@ top_3_bottom_3_speedups = "-Time-vs-exact-speedup-top-{}-bottom-{}".format(CATEG
 
 save_figure(figure_path_name + top_3_bottom_3_speedups, fig_file_types)
 
+plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+save_figure(figure_path_name + top_3_bottom_3_speedups + '_nolabels', fig_file_types)
+
 plt.close(fig)
 
 ##### PLOT the five lowest summarized fraction of vertices.
@@ -711,6 +718,8 @@ top_5_edge_savings = "-Savings-edge-top-{}".format(PLOT_LIMIT)
 
 save_figure(figure_path_name + top_5_edge_savings, fig_file_types)
 
+
+
 plt.close(fig)
 
 ##### PLOT the three lowest and three highest summarized fraction of edges.
@@ -786,6 +795,9 @@ plt.legend()
 
 top_5_rbo = "-RBO-top-{}".format(PLOT_LIMIT)
 save_figure(figure_path_name + top_5_rbo, fig_file_types)
+
+plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+save_figure(figure_path_name + top_5_rbo + '_nolabels', fig_file_types)
 
 plt.close(fig)
 
