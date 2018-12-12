@@ -462,10 +462,6 @@ if args.list != None:
                 
                 save_figure(figure_path_name + '-Speedup', fig_file_types)
 
-                
-
-                
-
                 plt.close(fig)
 
                 #print(summary_pagerank_stats_matrix)
@@ -478,8 +474,8 @@ figure_path_dir = '{KW_FIGURES_ROOT}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_R
 
 pathlib.Path(figure_path_dir).mkdir(parents=True, exist_ok=True)
 
-figure_path_name = '{KW_FIGURES_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
-            KW_FIGURES_DIR = figure_path_dir, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
+figure_path_name = '{KW_FIGURES_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(
+            KW_FIGURES_DIR = figure_path_dir, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism,  KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
 sorted_matrices = sorted(list(result_statistic_matrices.items()), key=lambda m: np.mean(m[1]["computation_time"]))
 time_ordered_matrices = OrderedDict(sorted_matrices)
@@ -619,7 +615,7 @@ top_3_bottom_3_speedups = "-Time-vs-exact-speedup-top-{}-bottom-{}".format(CATEG
 
 save_figure(figure_path_name + top_3_bottom_3_speedups, fig_file_types)
 
-plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+plt.gca().axes.get_xaxis().set_ticks([])
 save_figure(figure_path_name + top_3_bottom_3_speedups + '_nolabels', fig_file_types)
 
 plt.close(fig)
@@ -718,8 +714,6 @@ top_5_edge_savings = "-Savings-edge-top-{}".format(PLOT_LIMIT)
 
 save_figure(figure_path_name + top_5_edge_savings, fig_file_types)
 
-
-
 plt.close(fig)
 
 ##### PLOT the three lowest and three highest summarized fraction of edges.
@@ -751,6 +745,9 @@ plt.legend()
 
 top_3_bottom_3_edge_savings = "-Savings-edge-top-{}-bottom-{}".format(CATEGORY_BEST_PLOT_COUNT, CATEGORY_WORST_PLOT_COUNT)
 save_figure(figure_path_name + top_3_bottom_3_edge_savings, fig_file_types)
+
+#plt.gca().axes.get_xaxis().set_ticks([])
+#save_figure(figure_path_name + top_3_bottom_3_edge_savings + '_nolabels', fig_file_types)
 
 plt.close(fig)
 
@@ -795,9 +792,6 @@ plt.legend()
 
 top_5_rbo = "-RBO-top-{}".format(PLOT_LIMIT)
 save_figure(figure_path_name + top_5_rbo, fig_file_types)
-
-plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
-save_figure(figure_path_name + top_5_rbo + '_nolabels', fig_file_types)
 
 plt.close(fig)
 
@@ -850,6 +844,9 @@ plt.legend()
 top_3_bottom_3_rbo = "-RBO-top-{}-bottom-{}".format(CATEGORY_BEST_PLOT_COUNT, CATEGORY_WORST_PLOT_COUNT)
 save_figure(figure_path_name + top_3_bottom_3_rbo, fig_file_types)
 
+plt.gca().axes.get_xaxis().set_ticks([])
+save_figure(figure_path_name + top_3_bottom_3_rbo + '_nolabels', fig_file_types)
+
 plt.close(fig)
 
 
@@ -866,6 +863,9 @@ if not args.skip_flink_job_stats:
 ########################### LaTeX IMPORT CODE #############################
 ###########################################################################
 
+latex_fig_dir = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(
+            KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
+
 stream_idx = stream_file_path.rfind('-stream')
 stream_last_sep = stream_file_path.rfind('/')
 stream_hyph_idx = stream_last_sep + 1 + stream_file_path[stream_last_sep + 1:stream_idx].rfind('-')
@@ -876,17 +876,12 @@ dataset_name = stream_file_path[stream_last_sep + 1: stream_hyph_idx]
 latex_code_path = figure_path_name + "-LaTeX-1-fig-4-graphs.tex"
 with open(latex_code_path, 'w') as latex_file:
 
-    latex_fig_dir = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
-            KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
-
-
-
     tex_code_str = """\\begin{{figure*}}
-    \\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
-    \\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}\\\\
+    \\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
+    \\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}\\\\
     \\vskip-0.70cm
-    \\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
-    \\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
+    \\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
+    \\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
     \\caption{{\\texttt{{{KW_LATEX_FIG_LABEL}}} dataset statistics for randomized $|S| = {KW_STREAM_SIZE}$. Upper left and right are the summary graph's vertex and edge counts as a fraction of the complete graph's (best five savings). Bottom left and right are the best five RBOs and speedups respectively.}}
     \\label{{fig:{KW_LATEX_FIG_LABEL}}}
 \\end{{figure*}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_5_rbo, KW_TOP_EDGE_SAVINGS = top_5_edge_savings, KW_TOP_VERTEX_SAVINGS = top_5_vertex_savings, KW_TOP_SPEEDUPS = top_5_speedups, KW_STREAM_SIZE = stream_size, KW_LATEX_FIG_LABEL = dataset_name)
@@ -898,26 +893,24 @@ with open(latex_code_path, 'w') as latex_file:
 # Create GraphBolt LaTeX image-including code (4 graphs, 1 figure for each).
 latex_code_path = figure_path_name + "-LaTeX-4-fig-1-graph.tex"
 with open(latex_code_path, 'w') as latex_file:
-    latex_fig_dir = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
-            KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
 
     tex_code_str = """\\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} lowest five average vertex ratios.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_VERTEX_SAVINGS}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} lowest five average edge ratios.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_EDGE_SAVINGS}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} top five average RBOs.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_RBO}}}
 \\end{{figure}}
 \\begin{{figure}}
-\\subfloat{{\\scalebox{{0.445}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
+\\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}.pgf}}}}}}
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} top five average speedups.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_SPEEDUPS}}}
 \\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_5_rbo, KW_TOP_EDGE_SAVINGS = top_5_edge_savings, KW_TOP_VERTEX_SAVINGS = top_5_vertex_savings, KW_TOP_SPEEDUPS = top_5_speedups, KW_STREAM_SIZE = stream_size, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
@@ -928,8 +921,6 @@ with open(latex_code_path, 'w') as latex_file:
 # Create GraphBolt LaTeX image-including code (4 graphs, 1 figure for each) for best-3 and worst-3 results.
 latex_code_path = figure_path_name + "-LaTeX-4-fig-1-graph-best-3-worst-3.tex"
 with open(latex_code_path, 'w') as latex_file:
-    latex_fig_dir = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_{KW_DAMPENING_FACTOR:.2f}'.format(
-            KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening)
 
     tex_code_str = """\\begin{{figure}}
 \\subfloat{{\\scalebox{{\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_VERTEX_SAVINGS}.pgf}}}}}}
@@ -951,5 +942,23 @@ with open(latex_code_path, 'w') as latex_file:
 \\caption{{\\texttt{{{KW_CAPTION_NAME}}} best three and worst three average speedups.}}
 \\label{{fig:{KW_LATEX_FIG_LABEL}-{KW_TOP_SPEEDUPS}}}
 \\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_3_bottom_3_rbo, KW_TOP_EDGE_SAVINGS = top_3_bottom_3_edge_savings, KW_TOP_VERTEX_SAVINGS = top_3_bottom3_vertex_savings, KW_TOP_SPEEDUPS = top_3_bottom_3_speedups, KW_STREAM_SIZE = stream_size, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
+
+    latex_file.write(tex_code_str)
+
+
+# Create GraphBolt LaTeX image-including code (3 graphs in a column).
+latex_code_path = figure_path_name + "-LaTeX-3-fig-1-graph-column.tex"
+with open(latex_code_path, 'w') as latex_file:
+
+    tex_code_str = """\\begin{{figure}}
+    \\subfloat{{\\scalebox{{\\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_SPEEDUPS}_nolabels.pgf}}}}}}
+    \\newline
+    \\vskip-1.74cm
+    \\subfloat{{\\scalebox{{\\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_RBO}_nolabels.pgf}}}}}}
+    \\newline
+    \\vskip-1.74cm
+    \\subfloat{{\\scalebox{{\\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
+    \\caption{{\\texttt{{{KW_CAPTION_NAME}}}. Top-3/Bottom-3 speedups (upper section). Top-3/Bottom-3 RBO results (middle section). Top-3/Bottom-3 summary graph edge savings (botom section).}}
+\\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_3_bottom_3_rbo, KW_TOP_EDGE_SAVINGS = top_3_bottom_3_edge_savings, KW_TOP_SPEEDUPS = top_3_bottom_3_speedups, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
 
     latex_file.write(tex_code_str)
