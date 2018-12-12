@@ -958,7 +958,7 @@ with open(latex_code_path, 'w') as latex_file:
     \\newline
     \\vskip-1.74cm
     \\subfloat{{\\scalebox{{\\figlen}}{{\\input{{img/{KW_FIGURE}/{KW_FIGURE}-{KW_TOP_EDGE_SAVINGS}.pgf}}}}}}
-    \\caption{{\\texttt{{{KW_CAPTION_NAME}}}. Top-3/Bottom-3 speedups (upper section). Top-3/Bottom-3 RBO results (middle section). Top-3/Bottom-3 summary graph edge savings (botom section).}}
+    \\caption{{\\texttt{{{KW_CAPTION_NAME}}}. Top-3/Bottom-3 speedups (upper). Top-3/Bottom-3 RBO results (middle). Top-3/Bottom-3 summary graph edge savings (bottom).}}
 \\end{{figure}}""".format(KW_FIGURE = latex_fig_dir, KW_TOP_RBO = top_3_bottom_3_rbo, KW_TOP_EDGE_SAVINGS = top_3_bottom_3_edge_savings, KW_TOP_SPEEDUPS = top_3_bottom_3_speedups, KW_LATEX_FIG_LABEL = dataset_name, KW_CAPTION_NAME = dataset_name[:dataset_name.rfind('-')])
 
     latex_file.write(tex_code_str)
