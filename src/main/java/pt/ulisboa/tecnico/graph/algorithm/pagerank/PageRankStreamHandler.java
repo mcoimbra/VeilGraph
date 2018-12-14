@@ -14,6 +14,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.GraphAlgorithm;
+import org.apache.flink.graph.spargel.MessageIterator;
 import org.apache.flink.types.NullValue;
 import org.apache.flink.util.Collector;
 
@@ -310,7 +311,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
     }
 
 
-    public static class PageRankFunction implements Function<Double, Double>, Serializable {
+    public static class PageRankFunction implements Function<MessageIterator<Double>, Double>, Serializable {
 
         private final Double dampening;
 
@@ -319,7 +320,12 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
         }
 
         @Override
-        public Double apply(Double rankSum) {
+        public Double apply(final MessageIterator<Double> inMessages) {
+
+            double rankSum = 0.0;
+            for (double msg : inMessages) {
+                rankSum += msg;
+            }
             return (this.dampening * rankSum) + (1 - this.dampening);
         }
     }

@@ -16,10 +16,10 @@ public class VertexCentricAlgorithm implements GraphAlgorithm<Long, Double, Doub
 
     private static final long serialVersionUID = 1015118158273884539L;
     private final Integer iterations;
-    private final Function<Double, Double> userFunction;
+    private final Function<MessageIterator<Double>, Double> userFunction;
     private final Long bigVertexId;
 
-    public VertexCentricAlgorithm(final Integer iterations, final Function<Double, Double> userFunction) {
+    public VertexCentricAlgorithm(final Integer iterations, final Function<MessageIterator<Double>, Double> userFunction) {
         this.iterations = iterations;
         this.userFunction = userFunction;
         this.bigVertexId = null;
@@ -71,15 +71,9 @@ public class VertexCentricAlgorithm implements GraphAlgorithm<Long, Double, Doub
                 return;
             }
 
-            double rankSum = 0.0;
-            for (double msg : inMessages) {
-                rankSum += msg;
-            }
+            double newValue = userFunction.apply(inMessages);
 
-            // apply the dampening factor / random jump
-            double newRank = userFunction.apply(rankSum);
-
-            setNewVertexValue(newRank);
+            setNewVertexValue(newValue);
         }
     }
 
