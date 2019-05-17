@@ -46,7 +46,7 @@ Below are sequences of commands to convert the graph files to .tsv files and to 
 With these commands, for each dataset, the last 20000 edges are removed and shuffled into a "-stream.tsv" file.
 The stream is divided into 50 chunks (400 edge additions per chunk)
 A deletions stream is also generated, consisting of 50 edge removal chunks.
-Each chunk with edge removals has the size of 20% of the "-stream.tsv" file chunk: 0.2 * 400 = 80 edge removals.
+Each chunk with edge removals has the size of 20% of the "-stream.tsv" file chunk: 0.2 . 400 = 80 edge removals.
 An edge removal chunk only removes edges that already existed in the original graph or were added in a previous stream chunk.
 
 For 1 <= i <= 50:
@@ -61,7 +61,7 @@ The values provided for parameters 'r', 'n' and '\Delta' in these example calls 
 
 This is configured to run with a parallelism of 2 in Apache Flink (either a single TaskManager with two parallel pipelines, or two TaskManager instances with a single pipeline each).
 
-**NOTE:** to reproduce our use-case presented in the paper, delete the flags '-deletion-ratio' and '-delete_edges'.
+**NOTE:** to test only with edge additions, delete the flags '-deletion-ratio' and '-delete_edges'.
 
 # cnr-2000: http://law.di.unimi.it/webdata/cnr-2000/
 
