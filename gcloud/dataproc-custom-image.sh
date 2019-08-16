@@ -22,6 +22,8 @@ pip3 install numpy
 apt install openjdk-8-jdk
 apt install maven
 
+## Install git
+apt install git
 
 ## Create the GraphBolt dataset directories.
 GRAPHBOLT_ROOT="/home/GraphBolt"
