@@ -86,7 +86,7 @@ def prepare_stream(stream_file_path: str, query_count: int, deletions_file_path:
 
     # If deletions path is empty, we are not considering an edge deletions file.
     if len(deletions_file_path) > 0:
-        print("> Deletions file path:\t{}".format(stream_file_path))
+        print("> Deletions file path:\t{}".format(deletions_file_path))
         with open(deletions_file_path, 'r') as deletions_file:
             deletion_lines = deletions_file.readlines()
     else:

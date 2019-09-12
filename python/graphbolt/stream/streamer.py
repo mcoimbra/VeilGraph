@@ -105,7 +105,7 @@ class DatasetStreamHandler(socketserver.BaseRequestHandler):
 
 
 # If deletion_lines is an empty list, it means we are only testing with edge additions.
-def make_server(edge_lines: List, chunk_sizes: List, query_count: int, deletion_lines: List = [], listening_host: str = "localhost", listening_port: int = 2345, out: io.TextIOWrapper = sys.stdout) -> socketserver.ThreadingTCPServer:
+def make_server(edge_lines: List, chunk_sizes: List, query_count: int, deletion_lines: List = [], listening_host: str = "localhost", listening_port:python3 -m graphbolt.algorithm.randomwalk.pagerank.run -delete-edges -i amazon-2008-40000-random -chunks 50 -out-dir "~/Documents/Projects/GraphBolt/testing" -data-dir "~/Documents/datasets/social" -cache "~/Documents/Projects/GraphBolt/cache" -p 1 -size 5000 -periodic-full-dump -temp "~/Documents/Projects/GraphBolt/testing/Temp" -flink-address 127.0.0.1 -flink-port 8081 -l 0.05 2 0.50 int = 2345, out: io.TextIOWrapper = sys.stdout) -> socketserver.ThreadingTCPServer:
 
     server = socketserver.ThreadingTCPServer((listening_host, listening_port), DatasetStreamHandler)
     server.edge_lines = edge_lines

@@ -84,7 +84,9 @@ function install_flink_snapshot() {
   local work_dir
   work_dir="$(mktemp -d)"
   local flink_url
-  flink_url="$(/usr/share/google/get_metadata_value "attributes/${FLINK_SNAPSHOT_URL_METADATA_KEY}")"
+  #flink_url="$(/usr/share/google/get_metadata_value "attributes/${FLINK_SNAPSHOT_URL_METADATA_KEY}")"
+  #flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
+  flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
   local flink_local="${work_dir}/flink.tgz"
   local flink_toplevel_pattern="${work_dir}/flink-*"
 
