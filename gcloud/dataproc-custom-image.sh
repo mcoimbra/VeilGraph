@@ -28,11 +28,13 @@ gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* /hom
 
 ## Create and copy the GraphBolt code directories.
 GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
+#GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/
 mkdir -p $GRAPHBOLT_CODE_DIR
 mkdir -p $GRAPHBOLT_CODE_DIR/testing/Temp
 mkdir -p $GRAPHBOLT_CODE_DIR/cache
 
-GS_BUCKET_CODE_DIR="$GS_BUCKET/GraphBolt"
+#GS_BUCKET_CODE_DIR="$GS_BUCKET/GraphBolt"
+GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
 GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
 gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
 cd $GRAPHBOLT_CODE_DIR
