@@ -33,6 +33,7 @@ readonly FLINK_WORKING_DIR='/var/lib/flink'
 readonly FLINK_YARN_SCRIPT='/usr/bin/flink-yarn-daemon'
 readonly FLINK_WORKING_USER='yarn'
 readonly HADOOP_CONF_DIR='/etc/hadoop/conf'
+readonly FLINK_LOG_DIR='/var/log/flink'
 
 # The number of buffers for the network stack.
 # Flink config entry: taskmanager.network.numberOfBuffers.
@@ -125,7 +126,8 @@ function configure_flink() {
       tail -n1 |
       cut -d'=' -f2
   )
-  local flink_taskmanager_slots="$((spark_executor_cores * 2))"
+  #local flink_taskmanager_slots="$((spark_executor_cores * 2))"
+  local flink_taskmanager_slots="$((spark_executor_cores))"
 
   # Determine the default parallelism.
   local flink_parallelism
@@ -160,6 +162,7 @@ taskmanager.numberOfTaskSlots: ${flink_taskmanager_slots}
 parallelism.default: ${flink_parallelism}
 taskmanager.network.numberOfBuffers: ${FLINK_NETWORK_NUM_BUFFERS}
 fs.hdfs.hadoopconf: ${HADOOP_CONF_DIR}
+env.log.dir: "${FLINK_LOG_DIR}"
 EOF
 
   cat >"${FLINK_YARN_SCRIPT}" <<EOF
@@ -177,11 +180,16 @@ HADOOP_CONF_DIR=${HADOOP_CONF_DIR} \
 EOF
   chmod +x "${FLINK_YARN_SCRIPT}"
 
+  # Only leave log4j log configuration files.
+  rm ${FLINK_INSTALL_DIR}/conf/logback*
+
 }
 
 function start_flink_master() {
   local master_hostname
   master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
+
+  echo "master_hostname: ${master_hostname}"
   local start_yarn_session
   start_yarn_session="$(/usr/share/google/get_metadata_value \
     "attributes/${START_FLINK_YARN_SESSION_METADATA_KEY}" ||
@@ -199,6 +207,9 @@ function main() {
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
+  sudo mkdir -p "${FLINK_LOG_DIR}"
+  chmod -R 0777 "${FLINK_LOG_DIR}"
+
   install_flink_snapshot || err "Unable to install Flink"
 
   # check if a flink snapshot URL is specified
@@ -213,6 +224,23 @@ function main() {
   if [[ "${role}" == 'Master' ]]; then
     start_flink_master || err "Unable to start Flink master"
   fi
+
+  # Prepare GraphBolt code.
+  GRAPHBOLT_CODE_DIR=/home/GraphBolt/Documents/Projects/GraphBolt
+  GS_BUCKET="graphbolt-bucket"
+  GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
+  GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
+  gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
+  cd $GRAPHBOLT_CODE_DIR
+  unzip -o $GS_GRAPHBOLT_ZIP_NAME
+  mv $GS_GRAPHBOLT_ZIP_NAME ..
+  chmod -R 0777 *
+
+  # Prepare SSH agent and inter-machine keys.
+  ssh-agent bash
+
+  # TODO: copy the same key (passwordless) to allow every machine in the cluster to connect to eachother
+
 }
 
 main
