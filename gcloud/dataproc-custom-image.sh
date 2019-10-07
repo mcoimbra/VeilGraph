@@ -12,11 +12,31 @@ apt-get -y install git
 
 
 ################################################
-################################################ Setup GraphBolt directories.
+################################################ Setup GraphBolt user and directories.
 ################################################
 
+
+GRAPHBOLT_USER="graphbolt"
+
+# Create Debian user only allowing .ssh public key access.
+# See: https://askubuntu.com/questions/94060/run-adduser-non-interactively
+adduser --disabled-password --gecos "First Last,RoomNumber,WorkPhone,HomePhone" $GRAPHBOLT_USER
+
+# Add to sudo group.
+usermod -aG sudo $GRAPHBOLT_USER
+
+# Generate SSH private/public keys.
+# Info: https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1604
+# ssh-keygen is run as user $GRAPHBOLT_USER
+sudo -i -u graphbolt bash << EOF
+  ssh-keygen -t rsa -f ~/.ssh/cluster -N "" -C "Flink Dataproc Access"
+  touch ~/.ssh/authorized_keys
+  cat ~/.ssh/cluster > ~/.ssh/authorized_keys
+  chmod -R go= ~/.ssh
+EOF
+
 # Create the GraphBolt dataset directories.
-GRAPHBOLT_ROOT="/home/GraphBolt"
+GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/
 
@@ -24,10 +44,10 @@ GS_BUCKET="graphbolt-bucket"
 GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
 
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random
-gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* /home/GraphBolt/Documents/datasets/web/eu-2005-40000-random/
+gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/
 
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random
-gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* /home/GraphBolt/Documents/datasets/social/amazon-2008-40000-random/
+gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/
 
 # Create and copy the GraphBolt code directories.
 GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt

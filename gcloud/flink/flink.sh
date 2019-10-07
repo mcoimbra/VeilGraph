@@ -33,7 +33,13 @@ readonly FLINK_WORKING_DIR='/var/lib/flink'
 readonly FLINK_YARN_SCRIPT='/usr/bin/flink-yarn-daemon'
 readonly FLINK_WORKING_USER='yarn'
 readonly HADOOP_CONF_DIR='/etc/hadoop/conf'
-readonly FLINK_LOG_DIR='/var/log/flink'
+#readonly FLINK_LOG_DIR='/var/log/flink'
+
+readonly FLINK_LOG_DIR='/usr/lib/flink/log'
+
+
+readonly FLINK_SLAVES_FILE="$FLINK_INSTALL_DIR/conf/slaves"
+readonly FLINK_MASTERS_FILE="$FLINK_INSTALL_DIR/conf/masters"
 
 # The number of buffers for the network stack.
 # Flink config entry: taskmanager.network.numberOfBuffers.
@@ -53,7 +59,7 @@ readonly START_FLINK_YARN_SESSION_METADATA_KEY='flink-start-yarn-session'
 readonly START_FLINK_YARN_SESSION_DEFAULT=false
 
 # Set this to install flink from a snapshot URL instead of apt
-readonly FLINK_SNAPSHOT_URL_METADATA_KEY='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
+#readonly FLINK_SNAPSHOT_URL_METADATA_KEY='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
 
 
 function err() {
@@ -166,6 +172,8 @@ fs.hdfs.hadoopconf: ${HADOOP_CONF_DIR}
 env.log.dir: "${FLINK_LOG_DIR}"
 EOF
 
+  # See 'here-documents' to know what this is doing:
+  # https://wiki.bash-hackers.org/syntax/redirection#here_documents
   cat >"${FLINK_YARN_SCRIPT}" <<EOF
 #!/bin/bash
 set -exuo pipefail
@@ -184,6 +192,25 @@ EOF
   # Only leave log4j log configuration files.
   rm ${FLINK_INSTALL_DIR}/conf/logback*
 
+  # Set the Flink slaves file
+  local cluster_name
+  cluster_name=$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)
+
+  echo "Writing to slaves file."
+  echo "$FLINK_SLAVES_FILE"
+  truncate -s 0 $FLINK_SLAVES_FILE
+
+  for (( i = 0; i < num_workers; ++i )); do
+    echo "Adding: $cluster_name-w-$i"
+    echo "$cluster_name-w-$i" >> $FLINK_SLAVES_FILE
+  done
+
+
+  # Set the Flink masters file
+  echo "Writing to masters file."
+  echo "$FLINK_MASTERS_FILE"
+  truncate -s 0 $FLINK_MASTERS_FILE
+  echo "$cluster_name-m" >> $FLINK_MASTERS_FILE
 }
 
 function start_flink_master() {
@@ -240,7 +267,8 @@ function main() {
   configure_flink || err "Flink configuration failed"
   if [[ "${role}" == 'Master' ]]; then
     #start_flink_master || err "Unable to start Flink master"
-	
+
+
 	start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   fi
 
@@ -257,8 +285,6 @@ function main() {
 
   # Prepare SSH agent and inter-machine keys.
   ssh-agent bash
-
-  # TODO: copy the same key (passwordless) to allow every machine in the cluster to connect to eachother
 
 }
 
