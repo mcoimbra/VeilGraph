@@ -48,11 +48,11 @@ readonly FLINK_JOBMANAGER_MEMORY_FRACTION='1.0'
 readonly FLINK_TASKMANAGER_MEMORY_FRACTION='1.0'
 
 readonly START_FLINK_YARN_SESSION_METADATA_KEY='flink-start-yarn-session'
+
 # Set this to true to start a flink yarn session at initialization time.
-readonly START_FLINK_YARN_SESSION_DEFAULT=true
+readonly START_FLINK_YARN_SESSION_DEFAULT=false
 
 # Set this to install flink from a snapshot URL instead of apt
-#readonly FLINK_SNAPSHOT_URL_METADATA_KEY='flink-snapshot-url'
 readonly FLINK_SNAPSHOT_URL_METADATA_KEY='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
 
 
@@ -85,8 +85,9 @@ function install_flink_snapshot() {
   local work_dir
   work_dir="$(mktemp -d)"
   local flink_url
+  
   #flink_url="$(/usr/share/google/get_metadata_value "attributes/${FLINK_SNAPSHOT_URL_METADATA_KEY}")"
-  #flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
+  
   flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
   local flink_local="${work_dir}/flink.tgz"
   local flink_toplevel_pattern="${work_dir}/flink-*"
@@ -203,6 +204,22 @@ function start_flink_master() {
   fi
 }
 
+function start_flink_standalone() {
+  local master_hostname
+  master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
+
+  echo "master_hostname: ${master_hostname}"
+#  local start_yarn_session
+#  start_yarn_session="$(/usr/share/google/get_metadata_value "attributes/${START_FLINK_YARN_SESSION_METADATA_KEY}" || echo "${START_FLINK_YARN_SESSION_DEFAULT}")"
+
+  # Start Flink master only on the master node ("0"-master in HA mode)
+  if [[ "${start_yarn_session}" == "true" && "${HOSTNAME}" == "${master_hostname}" ]]; then
+    "${FLINK_YARN_SCRIPT}"
+  else
+    echo "Doing nothing"
+  fi
+}
+
 function main() {
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
@@ -222,7 +239,9 @@ function main() {
 
   configure_flink || err "Flink configuration failed"
   if [[ "${role}" == 'Master' ]]; then
-    start_flink_master || err "Unable to start Flink master"
+    #start_flink_master || err "Unable to start Flink master"
+	
+	start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   fi
 
   # Prepare GraphBolt code.
