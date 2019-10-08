@@ -31,8 +31,9 @@ usermod -aG sudo $GRAPHBOLT_USER
 sudo -i -u graphbolt bash << EOF
   ssh-keygen -t rsa -f ~/.ssh/cluster -N "" -C "Flink Dataproc Access"
   touch ~/.ssh/authorized_keys
-  cat ~/.ssh/cluster > ~/.ssh/authorized_keys
+  cat ~/.ssh/cluster.pub > ~/.ssh/authorized_keys
   chmod -R go= ~/.ssh
+  chmod 600 ~/.ssh/cluster
 EOF
 
 # Create the GraphBolt dataset directories.
@@ -65,6 +66,31 @@ unzip $GS_GRAPHBOLT_ZIP_NAME
 # Make the files readable and writable by everyone.
 chmod -R 777 $GRAPHBOLT_ROOT
 
+sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
+sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+    echo "Initialising new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "$SSH_ENV"
+    echo succeeded
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add;
+}
+
+# Source SSH settings, if applicable
+
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    #ps ${SSH_AGENT_PID} doesn't work under cywgin
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
+EOF
 
 ################################################
 ################################################ Download and compile Python 3.6.9
@@ -116,25 +142,38 @@ pip3 install datetime
 readonly FLINK_INSTALL_DIR='/usr/lib/flink'
 readonly FLINK_LOG_DIR='/usr/lib/flink/log'
 
-local work_dir
-work_dir="$(mktemp -d)"
-local flink_url
-flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
-local flink_local="${work_dir}/flink.tgz"
-local flink_toplevel_pattern="${work_dir}/flink-*"
 
-pushd "${work_dir}"
+readonly WORK_DIR="$(mktemp -d)"
+readonly FLINK_URL='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
+readonly FLINK_LOCAL="${WORK_DIR}/flink.tgz"
+readonly FLINK_TOPLEVEL_PATTERN="${WORK_DIR}/flink-*"
 
-curl -o "${flink_local}" "${flink_url}"
-tar -xzvf "${flink_local}"
-rm "${flink_local}"
+pushd "${WORK_DIR}"
+
+curl -o "${FLINK_LOCAL}" "${FLINK_URL}"
+tar -xzvf "${FLINK_LOCAL}"
+rm "${FLINK_LOCAL}"
 
 # only the first match of the flink toplevel pattern is used
-local flink_toplevel
-flink_toplevel=$(compgen -G "${flink_toplevel_pattern}" | head -n1)
-mv "${flink_toplevel}" "${FLINK_INSTALL_DIR}"
+readonly FLINK_TOPLEVEL=$(compgen -G "${FLINK_TOPLEVEL_PATTERN}" | head -n1)
+mv "${FLINK_TOPLEVEL}" "${FLINK_INSTALL_DIR}"
 
 popd # work_dir
 
 sudo mkdir -p "${FLINK_LOG_DIR}"
 sudo chmod -R 0777 "${FLINK_LOG_DIR}"
+
+################################################
+################################################ Genereate GitHub key pair.
+################################################
+
+readonly GITHUB_KEY_NAME="github"
+sudo -i -u graphbolt bash << EOF
+  ssh-keygen -t rsa -f ~/.ssh/$GITHUB_KEY_NAME -N "" -C "GraphBolt GitHub Access"
+  gsutil cp ~/.ssh/$GITHUB_KEY_NAME.pub gs://$GS_BUCKET_CODE_DIR/$GITHUB_KEY_NAME.pub
+  chmod 600 ~/.ssh/github
+EOF
+
+
+
+
