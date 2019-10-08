@@ -33,11 +33,7 @@ readonly FLINK_WORKING_DIR='/var/lib/flink'
 readonly FLINK_YARN_SCRIPT='/usr/bin/flink-yarn-daemon'
 readonly FLINK_WORKING_USER='yarn'
 readonly HADOOP_CONF_DIR='/etc/hadoop/conf'
-#readonly FLINK_LOG_DIR='/var/log/flink'
-
 readonly FLINK_LOG_DIR='/usr/lib/flink/log'
-
-
 readonly FLINK_SLAVES_FILE="$FLINK_INSTALL_DIR/conf/slaves"
 readonly FLINK_MASTERS_FILE="$FLINK_INSTALL_DIR/conf/masters"
 
@@ -110,6 +106,9 @@ function install_flink_snapshot() {
   mv "${flink_toplevel}" "${FLINK_INSTALL_DIR}"
 
   popd # work_dir
+  
+  sudo mkdir -p "${FLINK_LOG_DIR}"
+  chmod -R 0777 "${FLINK_LOG_DIR}"
 }
 
 function configure_flink() {
@@ -158,6 +157,10 @@ function configure_flink() {
 
   # create working directory
   mkdir -p "${FLINK_WORKING_DIR}"
+  
+  # Testing directory creation was successful.
+  ls ${FLINK_INSTALL_DIR}
+  sudo ls ${FLINK_INSTALL_DIR}
 
   # Apply Flink settings by appending them to the default config.
   cat <<EOF >>${FLINK_INSTALL_DIR}/conf/flink-conf.yaml
@@ -240,48 +243,41 @@ function start_flink_standalone() {
 #  start_yarn_session="$(/usr/share/google/get_metadata_value "attributes/${START_FLINK_YARN_SESSION_METADATA_KEY}" || echo "${START_FLINK_YARN_SESSION_DEFAULT}")"
 
   # Start Flink master only on the master node ("0"-master in HA mode)
-  if [[ "${start_yarn_session}" == "true" && "${HOSTNAME}" == "${master_hostname}" ]]; then
-    "${FLINK_YARN_SCRIPT}"
-  else
-    echo "Doing nothing"
-  fi
+  # if [[ "${start_yarn_session}" == "true" && "${HOSTNAME}" == "${master_hostname}" ]]; then
+    # "${FLINK_YARN_SCRIPT}"
+  # else
+    # echo "Doing nothing"
+  # fi
 }
 
 function main() {
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
-  sudo mkdir -p "${FLINK_LOG_DIR}"
-  chmod -R 0777 "${FLINK_LOG_DIR}"
-
-  install_flink_snapshot || err "Unable to install Flink"
-
-  # check if a flink snapshot URL is specified
-#  if /usr/share/google/get_metadata_value "attributes/${FLINK_SNAPSHOT_URL_METADATA_KEY}"; then
-#    install_flink_snapshot || err "Unable to install Flink"
-#  else
-#    update_apt_get || err "Unable to update apt-get"
-#    install_apt_get flink || err "Unable to install flink"
-#  fi
+  # install_flink_snapshot || err "Unable to install Flink 1.6.2"
 
   configure_flink || err "Flink configuration failed"
+  
+  
   if [[ "${role}" == 'Master' ]]; then
     #start_flink_master || err "Unable to start Flink master"
-
-
 	start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   fi
 
-  # Prepare GraphBolt code.
-  GRAPHBOLT_CODE_DIR=/home/GraphBolt/Documents/Projects/GraphBolt
-  GS_BUCKET="graphbolt-bucket"
-  GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
-  GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
-  gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
-  cd $GRAPHBOLT_CODE_DIR
-  unzip -o $GS_GRAPHBOLT_ZIP_NAME
-  mv $GS_GRAPHBOLT_ZIP_NAME ..
-  chmod -R 0777 *
+  ## Prepare GraphBolt code.
+  # GRAPHBOLT_USER="graphbolt"
+  # GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+  # GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
+  
+  ## GRAPHBOLT_CODE_DIR=/home/GraphBolt/Documents/Projects/GraphBolt
+  # GS_BUCKET="graphbolt-bucket"
+  # GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
+  # GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
+  # gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
+  # cd $GRAPHBOLT_CODE_DIR
+  # unzip -o $GS_GRAPHBOLT_ZIP_NAME
+  # mv $GS_GRAPHBOLT_ZIP_NAME ..
+  # chmod -R 0777 *
 
   # Prepare SSH agent and inter-machine keys.
   ssh-agent bash

@@ -65,6 +65,7 @@ unzip $GS_GRAPHBOLT_ZIP_NAME
 # Make the files readable and writable by everyone.
 chmod -R 777 $GRAPHBOLT_ROOT
 
+
 ################################################
 ################################################ Download and compile Python 3.6.9
 ################################################
@@ -107,3 +108,33 @@ pip3 install pytz
 pip3 install matplotlib
 pip3 install numpy
 pip3 install datetime
+
+################################################
+################################################ Configure Flink 1.6.2.
+################################################
+
+readonly FLINK_INSTALL_DIR='/usr/lib/flink'
+readonly FLINK_LOG_DIR='/usr/lib/flink/log'
+
+local work_dir
+work_dir="$(mktemp -d)"
+local flink_url
+flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
+local flink_local="${work_dir}/flink.tgz"
+local flink_toplevel_pattern="${work_dir}/flink-*"
+
+pushd "${work_dir}"
+
+curl -o "${flink_local}" "${flink_url}"
+tar -xzvf "${flink_local}"
+rm "${flink_local}"
+
+# only the first match of the flink toplevel pattern is used
+local flink_toplevel
+flink_toplevel=$(compgen -G "${flink_toplevel_pattern}" | head -n1)
+mv "${flink_toplevel}" "${FLINK_INSTALL_DIR}"
+
+popd # work_dir
+
+sudo mkdir -p "${FLINK_LOG_DIR}"
+sudo chmod -R 0777 "${FLINK_LOG_DIR}"
