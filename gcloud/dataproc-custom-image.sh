@@ -15,8 +15,9 @@ apt-get -y install git
 ################################################ Setup GraphBolt user and directories.
 ################################################
 
-
-GRAPHBOLT_USER="graphbolt"
+readonly GRAPHBOLT_USER="graphbolt"
+readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
 
 # Create Debian user only allowing .ssh public key access.
 # See: https://askubuntu.com/questions/94060/run-adduser-non-interactively
@@ -28,21 +29,28 @@ usermod -aG sudo $GRAPHBOLT_USER
 # Generate SSH private/public keys.
 # Info: https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1604
 # ssh-keygen is run as user $GRAPHBOLT_USER
+
+readonly CLUSTER_SSH_PKEY="cluster"
+readonly GITHUB_SSH_PKEY="github"
 sudo -i -u graphbolt bash << EOF
-  ssh-keygen -t rsa -f ~/.ssh/cluster -N "" -C "Flink Dataproc Access"
+  ssh-keygen -t rsa -f ~/.ssh/$CLUSTER_SSH_PKEY -N "" -C "Flink Dataproc Access"
   touch ~/.ssh/authorized_keys
-  cat ~/.ssh/cluster.pub > ~/.ssh/authorized_keys
+  cat ~/.ssh/$CLUSTER_SSH_PKEY > ~/.ssh/authorized_keys
   chmod -R go= ~/.ssh
-  chmod 600 ~/.ssh/cluster
+  chmod 600 ~/.ssh/$CLUSTER_SSH_PKEY
+  
+  ssh-keygen -t rsa -f ~/.ssh/$GITHUB_SSH_PKEY -N "" -C "GraphBolt GitHub Access"
+  gsutil cp ~/.ssh/$GITHUB_SSH_PKEY.pub gs://$GS_BUCKET_CODE_DIR/$GITHUB_SSH_PKEY.pub
+  chmod 600 ~/.ssh/$GITHUB_SSH_PKEY
 EOF
 
 # Create the GraphBolt dataset directories.
-GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/
 
-GS_BUCKET="graphbolt-bucket"
-GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
+readonly GS_BUCKET="graphbolt-bucket"
+readonly GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
 
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random
 gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/
@@ -51,21 +59,18 @@ mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random
 gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/
 
 # Create and copy the GraphBolt code directories.
-GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
+
 mkdir -p $GRAPHBOLT_CODE_DIR
 mkdir -p $GRAPHBOLT_CODE_DIR/testing/Temp
 mkdir -p $GRAPHBOLT_CODE_DIR/cache
 
-GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
-GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
+readonly GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
+readonly GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
 gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
 cd $GRAPHBOLT_CODE_DIR
 unzip $GS_GRAPHBOLT_ZIP_NAME
 
-
-# Make the files readable and writable by everyone.
-chmod -R 777 $GRAPHBOLT_ROOT
-
+# Prepare .bash_profile and misc utilities.
 sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
 sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
 SSH_ENV="$HOME/.ssh/environment"
@@ -90,7 +95,26 @@ if [ -f "${SSH_ENV}" ]; then
 else
     start_agent;
 fi
+
+ssh-add $HOME/.ssh/$CLUSTER_SSH_PKEY
+ssh-add $HOME/.ssh/$GITHUB_SSH_PKEY
+
 EOF
+
+# Copy misc UNIX program configurations.
+readonly GS_UNIX_DIR="$GS_BUCKET/home_utils"
+gsutil cp -r gs://$GS_UNIX_DIR/* $GRAPHBOLT_ROOT/
+
+# Set appropriate .ssh permissions
+sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT
+sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/*
+sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/*
+readonly GRAPHBOLT_SSH_DIR=$GRAPHBOLT_ROOT/.ssh
+sudo chmod 700 $GRAPHBOLT_SSH_DIR
+sudo chmod 644 $GRAPHBOLT_SSH_DIR/*.pub
+sudo chmod 600 $GRAPHBOLT_SSH_DIR/$CLUSTER_SSH_PKEY
+sudo chmod 600 $GRAPHBOLT_SSH_DIR/$GITHUB_SSH_PKEY
+sudo chmod 600 $GRAPHBOLT_SSH_DIR/authorized_keys
 
 ################################################
 ################################################ Download and compile Python 3.6.9
@@ -110,7 +134,7 @@ apt-get install -y libssl-dev
 
 
 # Download Python 3.6.9.
-PYTHON_BIN_DIR="$GRAPHBOLT_ROOT/bin"
+readonly PYTHON_BIN_DIR="$GRAPHBOLT_ROOT/bin"
 mkdir -p "$PYTHON_BIN_DIR"
 cd $PYTHON_BIN_DIR
 wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz
@@ -142,7 +166,6 @@ pip3 install datetime
 readonly FLINK_INSTALL_DIR='/usr/lib/flink'
 readonly FLINK_LOG_DIR='/usr/lib/flink/log'
 
-
 readonly WORK_DIR="$(mktemp -d)"
 readonly FLINK_URL='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
 readonly FLINK_LOCAL="${WORK_DIR}/flink.tgz"
@@ -161,19 +184,3 @@ mv "${FLINK_TOPLEVEL}" "${FLINK_INSTALL_DIR}"
 popd # work_dir
 
 sudo mkdir -p "${FLINK_LOG_DIR}"
-sudo chmod -R 0777 "${FLINK_LOG_DIR}"
-
-################################################
-################################################ Genereate GitHub key pair.
-################################################
-
-readonly GITHUB_KEY_NAME="github"
-sudo -i -u graphbolt bash << EOF
-  ssh-keygen -t rsa -f ~/.ssh/$GITHUB_KEY_NAME -N "" -C "GraphBolt GitHub Access"
-  gsutil cp ~/.ssh/$GITHUB_KEY_NAME.pub gs://$GS_BUCKET_CODE_DIR/$GITHUB_KEY_NAME.pub
-  chmod 600 ~/.ssh/github
-EOF
-
-
-
-
