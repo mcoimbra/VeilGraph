@@ -165,14 +165,22 @@ function configure_flink() {
   # Apply Flink settings by appending them to the default config.
   cat <<EOF >>${FLINK_INSTALL_DIR}/conf/flink-conf.yaml
 # Settings applied by Cloud Dataproc initialization action
-jobmanager.rpc.address: ${master_hostname}
+rest.address: ${master_hostname}
 jobmanager.heap.mb: ${flink_jobmanager_memory}
 taskmanager.heap.mb: ${flink_taskmanager_memory}
 taskmanager.numberOfTaskSlots: ${flink_taskmanager_slots}
 parallelism.default: ${flink_parallelism}
 taskmanager.network.numberOfBuffers: ${FLINK_NETWORK_NUM_BUFFERS}
 fs.hdfs.hadoopconf: ${HADOOP_CONF_DIR}
-env.log.dir: "${FLINK_LOG_DIR}"
+env.log.dir: ${FLINK_LOG_DIR}
+env.hadoop.conf.dir: /etc/hadoop/conf
+
+query.server.ports: 30000-35000
+query.proxy.ports: 35001-40000
+taskmanager.rpc.port: 45001-50000
+taskmanager.data.port: 50001-55000
+blob.server.port: 55001-60000
+
 EOF
 
   # See 'here-documents' to know what this is doing:

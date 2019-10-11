@@ -10,6 +10,8 @@ apt-get -y install maven
 # Install git
 apt-get -y install git
 
+# Install htop
+apt-get -y install htop
 
 ################################################
 ################################################ Setup GraphBolt user and directories.
@@ -72,6 +74,10 @@ unzip $GS_GRAPHBOLT_ZIP_NAME
 # Prepare .bash_profile and misc utilities.
 sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
 sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
+if [ -f \$HOME/.bashrc ]; then
+    . \$HOME/.bashrc
+fi
+
 SSH_ENV="\$HOME/.ssh/environment"
 
 function start_agent {
@@ -98,9 +104,11 @@ fi
 ssh-add \$HOME/.ssh/$CLUSTER_SSH_PKEY
 ssh-add \$HOME/.ssh/$GITHUB_SSH_PKEY
 
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+
 EOF
 
-# Copy misc UNIX program configurations.
+# Copy misc UNIX program configurations (.bashrc, .vim/, .viminfo, .screenrc).
 readonly GS_UNIX_DIR="$GS_BUCKET/home_utils"
 gsutil cp -r gs://$GS_UNIX_DIR/* $GRAPHBOLT_ROOT/
 
@@ -183,3 +191,4 @@ mv "${FLINK_TOPLEVEL}" "${FLINK_INSTALL_DIR}"
 popd # work_dir
 
 sudo mkdir -p "${FLINK_LOG_DIR}"
+sudo chown -r graphbolt ${FLINK_INSTALL_DIR}
