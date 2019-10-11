@@ -254,57 +254,25 @@ function main() {
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
-  # install_flink_snapshot || err "Unable to install Flink 1.6.2"
-
   configure_flink || err "Flink configuration failed"
-  
   
   if [[ "${role}" == 'Master' ]]; then
     #start_flink_master || err "Unable to start Flink master"
 	start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   fi
 
-  ## Prepare GraphBolt code.
-  # GRAPHBOLT_USER="graphbolt"
-  # GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
-  # GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
+  # Prepare GraphBolt code.
+  GRAPHBOLT_USER="graphbolt"
+  GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+  GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
+  cd $GRAPHBOLT_CODE_DIR
   
-  ## GRAPHBOLT_CODE_DIR=/home/GraphBolt/Documents/Projects/GraphBolt
-  # GS_BUCKET="graphbolt-bucket"
-  # GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
-  # GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
-  # gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
-  # cd $GRAPHBOLT_CODE_DIR
-  # unzip -o $GS_GRAPHBOLT_ZIP_NAME
-  # mv $GS_GRAPHBOLT_ZIP_NAME ..
-  # chmod -R 0777 *
-
-  # Prepare SSH agent and inter-machine keys.
-  # sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
-# sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
-# SSH_ENV="$HOME/.ssh/environment"
-
-# function start_agent {
-    # echo "Initialising new SSH agent..."
-    # /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "$SSH_ENV"
-    # echo succeeded
-    # chmod 600 "${SSH_ENV}"
-    # . "${SSH_ENV}" > /dev/null
-    # /usr/bin/ssh-add;
-# }
-
-# # Source SSH settings, if applicable
-
-# if [ -f "${SSH_ENV}" ]; then
-    # . "${SSH_ENV}" > /dev/null
-    # #ps ${SSH_AGENT_PID} doesn't work under cywgin
-    # ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        # start_agent;
-    # }
-# else
-    # start_agent;
-# fi
-# EOF
+  # Fetch from GitHub and compile it.
+  sudo -i -u graphbolt bash << EOF
+cd $GRAPHBOLT_CODE_DIR
+git reset --hard github/master
+mvn clean install
+EOF
 
 }
 

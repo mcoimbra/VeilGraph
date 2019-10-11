@@ -17,7 +17,6 @@ apt-get -y install git
 
 readonly GRAPHBOLT_USER="graphbolt"
 readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
-readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt
 
 # Create Debian user only allowing .ssh public key access.
 # See: https://askubuntu.com/questions/94060/run-adduser-non-interactively
@@ -35,7 +34,7 @@ readonly GITHUB_SSH_PKEY="github"
 sudo -i -u graphbolt bash << EOF
   ssh-keygen -t rsa -f ~/.ssh/$CLUSTER_SSH_PKEY -N "" -C "Flink Dataproc Access"
   touch ~/.ssh/authorized_keys
-  cat ~/.ssh/$CLUSTER_SSH_PKEY > ~/.ssh/authorized_keys
+  cat ~/.ssh/$CLUSTER_SSH_PKEY.pub > ~/.ssh/authorized_keys
   chmod -R go= ~/.ssh
   chmod 600 ~/.ssh/$CLUSTER_SSH_PKEY
   
@@ -59,7 +58,7 @@ mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random
 gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/
 
 # Create and copy the GraphBolt code directories.
-
+readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
 mkdir -p $GRAPHBOLT_CODE_DIR
 mkdir -p $GRAPHBOLT_CODE_DIR/testing/Temp
 mkdir -p $GRAPHBOLT_CODE_DIR/cache
@@ -96,8 +95,8 @@ else
     start_agent;
 fi
 
-ssh-add \$HOME/.ssh/\$CLUSTER_SSH_PKEY
-ssh-add \$HOME/.ssh/\$GITHUB_SSH_PKEY
+ssh-add \$HOME/.ssh/$CLUSTER_SSH_PKEY
+ssh-add \$HOME/.ssh/$GITHUB_SSH_PKEY
 
 EOF
 
@@ -126,7 +125,7 @@ sudo chmod 600 $GRAPHBOLT_SSH_DIR/authorized_keys
 # Install dependencies required to compile Python 3.6.9.
 apt-get install -y make build-essential libssl-dev zlib1g-dev
 apt-get install -y libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm
-apt-get install -y libncurses5-dev  libncursesw5-dev xz-utils tk-dev
+apt-get install -y libncurses5-dev libncursesw5-dev xz-utils tk-dev
 
 # We need libssl-dev so pip3.6 can install things.
 # https://www.linuxquestions.org/questions/linux-software-2/where-can-i-download-openssl-devel-for-debian-727415/
@@ -134,7 +133,7 @@ apt-get install -y libssl-dev
 
 
 # Download Python 3.6.9.
-readonly PYTHON_BIN_DIR="$GRAPHBOLT_ROOT/bin"
+readonly PYTHON_BIN_DIR="$GRAPHBOLT_ROOT/Downloads"
 mkdir -p "$PYTHON_BIN_DIR"
 cd $PYTHON_BIN_DIR
 wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz
