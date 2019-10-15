@@ -163,12 +163,16 @@ function configure_flink() {
   sudo ls ${FLINK_INSTALL_DIR}
 
   # Apply Flink settings by appending them to the default config.
+  #taskmanager.numberOfTaskSlots: ${flink_taskmanager_slots}
   cat <<EOF >>${FLINK_INSTALL_DIR}/conf/flink-conf.yaml
 # Settings applied by Cloud Dataproc initialization action
+jobmanager.rpc.address: ${master_hostname}
+jobmanager.rpc.port: 6123
 rest.address: ${master_hostname}
-jobmanager.heap.mb: ${flink_jobmanager_memory}
-taskmanager.heap.mb: ${flink_taskmanager_memory}
-taskmanager.numberOfTaskSlots: ${flink_taskmanager_slots}
+rest.port: 8081
+jobmanager.heap.size: ${flink_jobmanager_memory}m
+taskmanager.heap.size: ${flink_taskmanager_memory}m
+taskmanager.numberOfTaskSlots: 1
 parallelism.default: ${flink_parallelism}
 taskmanager.network.numberOfBuffers: ${FLINK_NETWORK_NUM_BUFFERS}
 fs.hdfs.hadoopconf: ${HADOOP_CONF_DIR}
@@ -183,6 +187,20 @@ taskmanager.data.port: 50001-55000
 blob.server.port: 55001-60000
 
 EOF
+
+
+  local role
+  role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
+
+  if [[ ! "${role}" == 'Master' ]]; then
+    cat <<EOF >>${FLINK_INSTALL_DIR}/conf/flink-conf.yaml
+taskmanager.host: $HOSTNAME
+EOF
+  fi
+
+  # TODO: write this with the address of each worker vm (so $cluster-name-w-0 would have taskmanager.host: $cluster-name-w-0)
+
+
 
   # See 'here-documents' to know what this is doing:
   # https://wiki.bash-hackers.org/syntax/redirection#here_documents
@@ -222,7 +240,7 @@ EOF
   echo "Writing to masters file."
   echo "$FLINK_MASTERS_FILE"
   truncate -s 0 $FLINK_MASTERS_FILE
-  echo "$cluster_name-m" >> $FLINK_MASTERS_FILE
+  echo "$cluster_name-m:8081" >> $FLINK_MASTERS_FILE
 }
 
 function start_flink_master() {
@@ -244,8 +262,8 @@ function start_flink_master() {
 }
 
 function start_flink_standalone() {
-#  local master_hostname
-#  master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
+  local master_hostname
+  master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
 
 #  echo "master_hostname: ${master_hostname}"
 #  local start_yarn_session
@@ -263,22 +281,23 @@ function main() {
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
+  local cluster_name
+  cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
+
   configure_flink || err "Flink configuration failed"
   
   # Prepare GraphBolt code.
   readonly GRAPHBOLT_USER="graphbolt"
   readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
   readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
-  cd $GRAPHBOLT_CODE_DIR
   
   # Fetch from GitHub and compile it.
   sudo -i -u graphbolt bash << EOF
 ssh-keyscan -t rsa github.com | tee /tmp/github-key-temp | ssh-keygen -lf -
-cat /tmp/github-key-temp >> ~/.ssh/known_hosts
+cat /tmp/github-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/github-key-temp
 cd $GRAPHBOLT_CODE_DIR
-git fetch
-git reset --hard github/master
+git pull github master
 mvn clean install
 EOF
 
@@ -290,20 +309,19 @@ EOF
       echo "[master] Adding: $cluster_name-w-$i to /home/graphbolt/.ssh/known_hosts"
 	  sudo -i -u graphbolt bash << EOF
 ssh-keyscan -t rsa $cluster_name-w-$i | tee /tmp/$cluster_name-w-$i-key-temp | ssh-keygen -lf -
-cat /tmp/$cluster_name-w-$i-key-temp >> ~/.ssh/known_hosts
+cat /tmp/$cluster_name-w-$i-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/$cluster_name-w-$i-key-temp
 EOF
-      echo "$cluster_name-w-$i" >> $FLINK_SLAVES_FILE
     done
     
     # Start the Flink standalone cluster.
     #start_flink_master || err "Unable to start Flink master"
     start_flink_standalone  || err "Unable to start Flink master in standalone mode"
-  else then
+  else
     # Add the cluster master host finperprint to the /home/graphbolt/.ssh/known_hosts file.
 	sudo -i -u graphbolt bash << EOF
 ssh-keyscan -t rsa $cluster_name-m | tee /tmp/$cluster_name-m-key-temp | ssh-keygen -lf -
-cat /tmp/$cluster_name-m-key-temp >> ~/.ssh/known_hosts
+cat /tmp/$cluster_name-m-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/$cluster_name-m-key-temp
 EOF
   fi

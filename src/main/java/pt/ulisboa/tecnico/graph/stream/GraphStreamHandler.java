@@ -469,7 +469,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                         version = line.substring(line.indexOf(">") + 1, line.lastIndexOf("<"));
                     }
                     if (artifactId != null && version != null) {
-                        jarFile = "target/original-" + artifactId + "-" + version + packaging;
+                        //jarFile = "target/original-" + artifactId + "-" + version + packaging;
+                        jarFile = "target/" + artifactId + "-" + version + packaging;
                         break;
                     }
                 }

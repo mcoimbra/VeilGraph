@@ -170,6 +170,8 @@ pip3 install matplotlib
 pip3 install numpy
 pip3 install datetime
 
+sudo chown -R graphbolt:graphbolt $PYTHON_BIN_DIR
+
 ################################################
 ################################################ Configure Flink 1.6.2.
 ################################################
