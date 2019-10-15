@@ -50,7 +50,9 @@ EOF
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/
 
-readonly GS_BUCKET="graphbolt-bucket"
+# Personal
+# readonly GS_BUCKET="graphbolt-bucket"
+readonly GS_BUCKET="graphbolt-storage"
 readonly GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
 
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random
@@ -74,8 +76,10 @@ unzip $GS_GRAPHBOLT_ZIP_NAME
 # Prepare .bash_profile and misc utilities.
 sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
 sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
-if [ -f \$HOME/.bashrc ]; then
-    . \$HOME/.bashrc
+if [ -n "\$BASH_VERSION" ]; then
+    if [ -f \$HOME/.bashrc ]; then
+        . \$HOME/.bashrc
+    fi
 fi
 
 SSH_ENV="\$HOME/.ssh/environment"
@@ -184,11 +188,50 @@ curl -o "${FLINK_LOCAL}" "${FLINK_URL}"
 tar -xzvf "${FLINK_LOCAL}"
 rm "${FLINK_LOCAL}"
 
-# only the first match of the flink toplevel pattern is used
+# Only the first match of the flink toplevel pattern is used.
 readonly FLINK_TOPLEVEL=$(compgen -G "${FLINK_TOPLEVEL_PATTERN}" | head -n1)
 mv "${FLINK_TOPLEVEL}" "${FLINK_INSTALL_DIR}"
 
 popd # work_dir
 
 sudo mkdir -p "${FLINK_LOG_DIR}"
-sudo chown -r graphbolt ${FLINK_INSTALL_DIR}
+
+# Set permissions and ownership for Flink files.
+sudo chown -R graphbolt ${FLINK_INSTALL_DIR}
+
+sudo chmod -x ${FLINK_INSTALL_DIR}/LICENSE
+sudo chmod -x ${FLINK_INSTALL_DIR}/NOTICE
+sudo chmod -x ${FLINK_INSTALL_DIR}/README.txt
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/log
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/opt
+sudo chmod -x ${FLINK_INSTALL_DIR}/opt/*.jar
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/lib
+sudo chmod -x ${FLINK_INSTALL_DIR}/lib/*.jar
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/batch
+sudo chmod -x ${FLINK_INSTALL_DIR}/examples/batch/*.jar
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/gelly
+sudo chmod -x ${FLINK_INSTALL_DIR}/examples/gelly/*.jar
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/python
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/python/batch
+sudo chmod -x ${FLINK_INSTALL_DIR}/examples/python/batch/*.py
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/python/streaming
+sudo chmod -x ${FLINK_INSTALL_DIR}/examples/python/streaming/*.py
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/examples/streaming
+sudo chmod -x ${FLINK_INSTALL_DIR}/examples/streaming/*.jar
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/bin
+sudo chmod -x ${FLINK_INSTALL_DIR}/bin/*.bat
+
+sudo chmod 755 ${FLINK_INSTALL_DIR}/conf
+sudo chmod -x ${FLINK_INSTALL_DIR}/conf/*
+

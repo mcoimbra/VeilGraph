@@ -174,6 +174,7 @@ taskmanager.network.numberOfBuffers: ${FLINK_NETWORK_NUM_BUFFERS}
 fs.hdfs.hadoopconf: ${HADOOP_CONF_DIR}
 env.log.dir: ${FLINK_LOG_DIR}
 env.hadoop.conf.dir: /etc/hadoop/conf
+env.ssh.opts: -oStrictHostKeyChecking=no
 
 query.server.ports: 30000-35000
 query.proxy.ports: 35001-40000
