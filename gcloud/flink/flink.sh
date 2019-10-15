@@ -186,6 +186,10 @@ taskmanager.rpc.port: 45001-50000
 taskmanager.data.port: 50001-55000
 blob.server.port: 55001-60000
 
+
+akka.transport.heartbeat.pause: "6000 s"
+akka.tcp.timeout: "600 s"
+
 EOF
 
 
