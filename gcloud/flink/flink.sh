@@ -244,10 +244,10 @@ function start_flink_master() {
 }
 
 function start_flink_standalone() {
-  local master_hostname
-  master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
+#  local master_hostname
+#  master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
 
-  echo "master_hostname: ${master_hostname}"
+#  echo "master_hostname: ${master_hostname}"
 #  local start_yarn_session
 #  start_yarn_session="$(/usr/share/google/get_metadata_value "attributes/${START_FLINK_YARN_SESSION_METADATA_KEY}" || echo "${START_FLINK_YARN_SESSION_DEFAULT}")"
 
@@ -265,23 +265,48 @@ function main() {
 
   configure_flink || err "Flink configuration failed"
   
-  if [[ "${role}" == 'Master' ]]; then
-    #start_flink_master || err "Unable to start Flink master"
-	start_flink_standalone  || err "Unable to start Flink master in standalone mode"
-  fi
-
   # Prepare GraphBolt code.
-  GRAPHBOLT_USER="graphbolt"
-  GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
-  GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
+  readonly GRAPHBOLT_USER="graphbolt"
+  readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+  readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
   cd $GRAPHBOLT_CODE_DIR
   
   # Fetch from GitHub and compile it.
   sudo -i -u graphbolt bash << EOF
+ssh-keyscan -t rsa github.com | tee /tmp/github-key-temp | ssh-keygen -lf -
+cat /tmp/github-key-temp >> ~/.ssh/known_hosts
+rm /tmp/github-key-temp
 cd $GRAPHBOLT_CODE_DIR
+git fetch
 git reset --hard github/master
 mvn clean install
 EOF
+
+
+  if [[ "${role}" == 'Master' ]]; then
+    # Add all the cluster workers' host fingerprint to the /home/graphbolt/.ssh/known_hosts file.
+	local num_workers=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
+    for (( i = 0; i < num_workers; ++i )); do
+      echo "[master] Adding: $cluster_name-w-$i to /home/graphbolt/.ssh/known_hosts"
+	  sudo -i -u graphbolt bash << EOF
+ssh-keyscan -t rsa $cluster_name-w-$i | tee /tmp/$cluster_name-w-$i-key-temp | ssh-keygen -lf -
+cat /tmp/$cluster_name-w-$i-key-temp >> ~/.ssh/known_hosts
+rm /tmp/$cluster_name-w-$i-key-temp
+EOF
+      echo "$cluster_name-w-$i" >> $FLINK_SLAVES_FILE
+    done
+    
+    # Start the Flink standalone cluster.
+    #start_flink_master || err "Unable to start Flink master"
+    start_flink_standalone  || err "Unable to start Flink master in standalone mode"
+  else then
+    # Add the cluster master host finperprint to the /home/graphbolt/.ssh/known_hosts file.
+	sudo -i -u graphbolt bash << EOF
+ssh-keyscan -t rsa $cluster_name-m | tee /tmp/$cluster_name-m-key-temp | ssh-keygen -lf -
+cat /tmp/$cluster_name-m-key-temp >> ~/.ssh/known_hosts
+rm /tmp/$cluster_name-m-key-temp
+EOF
+  fi
 
 }
 
