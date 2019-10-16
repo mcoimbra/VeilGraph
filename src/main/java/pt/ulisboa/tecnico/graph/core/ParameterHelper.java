@@ -336,9 +336,13 @@ public class ParameterHelper {
         if(cmd.hasOption(GraphBoltArgumentName.CACHE.toString())) {
             final String cachePath = cmd.getOptionValue(GraphBoltArgumentName.CACHE.toString()).replace("'", "");
 
-            final File cacheFile = new File(cachePath);
-            if (! cacheFile.exists() || ! cacheFile.isDirectory())
-                throw new IllegalArgumentException(GraphBoltArgumentName.CACHE.toString() + " must be a valid file path. Provided: " + cachePath);
+            if( ! cachePath.startsWith("gs://")) {
+                final File cacheFile = new File(cachePath);
+                if (! cacheFile.exists() || ! cacheFile.isDirectory())
+                    throw new IllegalArgumentException(GraphBoltArgumentName.CACHE.toString() + " must be a valid file path. Provided: " + cachePath);
+            }
+
+
 
             argValues.put(GraphBoltArgumentName.CACHE.toString(), cachePath);
         }
