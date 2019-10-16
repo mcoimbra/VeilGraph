@@ -147,6 +147,7 @@ function configure_flink() {
   local flink_jobmanager_memory
   flink_jobmanager_memory=$(python2 -c \
     "print int(${worker_total_mem} * ${FLINK_JOBMANAGER_MEMORY_FRACTION})")
+
   local flink_taskmanager_memory
   flink_taskmanager_memory=$(python2 -c \
     "print int(${worker_total_mem} * ${FLINK_TASKMANAGER_MEMORY_FRACTION})")
@@ -170,7 +171,8 @@ jobmanager.rpc.address: ${master_hostname}
 jobmanager.rpc.port: 6123
 rest.address: ${master_hostname}
 rest.port: 8081
-jobmanager.heap.size: ${flink_jobmanager_memory}m
+rest.idleness-timeout: 6000000
+jobmanager.heap.size: 4096m
 taskmanager.heap.size: ${flink_taskmanager_memory}m
 taskmanager.numberOfTaskSlots: 1
 parallelism.default: ${flink_parallelism}
@@ -183,13 +185,13 @@ env.ssh.opts: -oStrictHostKeyChecking=no
 query.server.ports: 30000-35000
 query.proxy.ports: 35001-40000
 taskmanager.rpc.port: 45001-50000
-taskmanager.data.port: 50001-55000
+taskmanager.data.port: 50001
 blob.server.port: 55001-60000
+blob.client.socket.timeout: 6000000
 
-
-akka.transport.heartbeat.pause: "6000 s"
-akka.tcp.timeout: "600 s"
-
+akka.transport.heartbeat.pause: 6000s
+akka.tcp.timeout: 6000s
+akka.ask.timeout: 6000s
 EOF
 
 
@@ -287,6 +289,8 @@ function main() {
 
   local cluster_name
   cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
+
+  sudo iptables -A INPUT -p tcp -m tcp --dport 30000:60000 -j ACCEPT
 
   configure_flink || err "Flink configuration failed"
   

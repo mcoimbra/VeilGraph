@@ -593,12 +593,13 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.cacheDirectory += this.getCustomName();
         this.cacheDirectory = this.cacheDirectory.replace(',', '.');
 
-
-        // Create cache directory if it does not exist.
-        try {
-            Files.createDirectories(Paths.get(this.cacheDirectory));
-        } catch (IOException e) {
-            e.printStackTrace();
+        if( ! this.cacheDirectory.startsWith("gs://")) {
+            try {
+                // Create cache directory if it does not exist.
+                Files.createDirectories(Paths.get(this.cacheDirectory));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         // Will graph models be dumped into disk?
