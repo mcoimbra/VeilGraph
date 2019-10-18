@@ -24,9 +24,6 @@
 
 set -euxo pipefail
 
-# Use Python from /usr/bin instead of /opt/conda.
-#export PATH=/usr/bin:$PATH
-
 # Install directories for Flink and Hadoop.
 readonly FLINK_INSTALL_DIR='/usr/lib/flink'
 readonly FLINK_WORKING_DIR='/var/lib/flink'
@@ -53,10 +50,6 @@ readonly START_FLINK_YARN_SESSION_METADATA_KEY='flink-start-yarn-session'
 
 # Set this to true to start a flink yarn session at initialization time.
 readonly START_FLINK_YARN_SESSION_DEFAULT=false
-
-# Set this to install flink from a snapshot URL instead of apt
-#readonly FLINK_SNAPSHOT_URL_METADATA_KEY='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-scala_2.11.tgz'
-
 
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
@@ -88,8 +81,6 @@ function install_flink_snapshot() {
   work_dir="$(mktemp -d)"
   local flink_url
   
-  #flink_url="$(/usr/share/google/get_metadata_value "attributes/${FLINK_SNAPSHOT_URL_METADATA_KEY}")"
-  
   flink_url='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
   local flink_local="${work_dir}/flink.tgz"
   local flink_toplevel_pattern="${work_dir}/flink-*"
@@ -100,7 +91,7 @@ function install_flink_snapshot() {
   tar -xzvf "${flink_local}"
   rm "${flink_local}"
 
-  # only the first match of the flink toplevel pattern is used
+  # Only the first match of the flink toplevel pattern is used.
   local flink_toplevel
   flink_toplevel=$(compgen -G "${flink_toplevel_pattern}" | head -n1)
   mv "${flink_toplevel}" "${FLINK_INSTALL_DIR}"
@@ -112,16 +103,16 @@ function install_flink_snapshot() {
 }
 
 function configure_flink() {
-  # Number of worker nodes in your cluster
+  # Number of worker nodes in your cluster.
   local num_workers
   num_workers=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
 
   # Number of Flink TaskManagers to use. Reserve 1 node for the JobManager.
-  # NB: This assumes > 1 worker node.
-  local num_taskmanagers="$((num_workers - 1))"
+  # NOTE: This assumes > 1 worker nodes.
+  local num_taskmanagers="$num_workers"
 
   # Determine the number of task slots per worker.
-  # TODO: Dataproc does not currently set the number of worker cores on the
+  # NOTE: Dataproc does not currently set the number of worker cores on the
   # master node. However, the spark configuration sets the number of executors
   # to be half the number of CPU cores per worker. We use this value to
   # determine the number of worker cores. Fix this hack when
@@ -156,7 +147,7 @@ function configure_flink() {
   local master_hostname
   master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
 
-  # create working directory
+  # Create working directory.
   mkdir -p "${FLINK_WORKING_DIR}"
   
   # Testing directory creation was successful.
@@ -204,10 +195,6 @@ taskmanager.host: $HOSTNAME
 EOF
   fi
 
-  # TODO: write this with the address of each worker vm (so $cluster-name-w-0 would have taskmanager.host: $cluster-name-w-0)
-
-
-
   # See 'here-documents' to know what this is doing:
   # https://wiki.bash-hackers.org/syntax/redirection#here_documents
   cat >"${FLINK_YARN_SCRIPT}" <<EOF
@@ -247,6 +234,9 @@ EOF
   echo "$FLINK_MASTERS_FILE"
   truncate -s 0 $FLINK_MASTERS_FILE
   echo "$cluster_name-m:8081" >> $FLINK_MASTERS_FILE
+  
+  # Get Google Cloud Storage libraries.
+  wget -O ${FLINK_INSTALL_DIR}/lib/gcs-connector-latest-hadoop2.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-latest-hadoop2.jar
 }
 
 function start_flink_master() {
@@ -284,14 +274,11 @@ function start_flink_standalone() {
 }
 
 function main() {
-  local role
-  role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
-  local cluster_name
-  cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
-
+  # Allow port usage for the TaskManagers.
   sudo iptables -A INPUT -p tcp -m tcp --dport 30000:60000 -j ACCEPT
 
+  # Configure Flink (TaskManager/JobManager memory, akka timeouts, etc.)
   configure_flink || err "Flink configuration failed"
   
   # Prepare GraphBolt code.
@@ -309,10 +296,16 @@ git pull github master
 mvn clean install
 EOF
 
+  local role
+  role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
   if [[ "${role}" == 'Master' ]]; then
-    # Add all the cluster workers' host fingerprint to the /home/graphbolt/.ssh/known_hosts file.
-	local num_workers=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
+    local cluster_name
+    cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
+  
+    # Add all the cluster workers' host fingerprint to /home/graphbolt/.ssh/known_hosts.
+	local num_workers
+	num_workers=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
     for (( i = 0; i < num_workers; ++i )); do
       echo "[master] Adding: $cluster_name-w-$i to /home/graphbolt/.ssh/known_hosts"
 	  sudo -i -u graphbolt bash << EOF
@@ -323,10 +316,9 @@ EOF
     done
     
     # Start the Flink standalone cluster.
-    #start_flink_master || err "Unable to start Flink master"
     start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   else
-    # Add the cluster master host finperprint to the /home/graphbolt/.ssh/known_hosts file.
+    # Add the cluster master host finperprint to /home/graphbolt/.ssh/known_hosts.
 	sudo -i -u graphbolt bash << EOF
 ssh-keyscan -t rsa $cluster_name-m | tee /tmp/$cluster_name-m-key-temp | ssh-keygen -lf -
 cat /tmp/$cluster_name-m-key-temp >> \$HOME/.ssh/known_hosts

@@ -118,6 +118,12 @@ under the License.
         </dependency>
 
 
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-storage</artifactId>
+			<version>1.96.0</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
@@ -333,6 +339,12 @@ under the License.
                     <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
                     <version>${flink.version}</version>
                 </dependency>
+				
+				<dependency>
+					<groupId>com.google.cloud</groupId>
+					<artifactId>google-cloud-storage</artifactId>
+					<version>1.96.0</version>
+				</dependency>
 
 				<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 				<dependency>
@@ -595,6 +607,12 @@ under the License.
                     <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
                     <version>${flink.version}</version>
                 </dependency>
+				
+				<dependency>
+					<groupId>com.google.cloud</groupId>
+					<artifactId>google-cloud-storage</artifactId>
+					<version>1.96.0</version>
+				</dependency>
 
 				<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 				<dependency>
