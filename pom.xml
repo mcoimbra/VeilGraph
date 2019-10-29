@@ -116,6 +116,13 @@ under the License.
             <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
+		
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-hadoop-compatibility_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
 
 
 		<dependency>
@@ -339,6 +346,12 @@ under the License.
                     <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
                     <version>${flink.version}</version>
                 </dependency>
+				
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-hadoop-compatibility_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
 				
 				<dependency>
 					<groupId>com.google.cloud</groupId>
@@ -607,6 +620,12 @@ under the License.
                     <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
                     <version>${flink.version}</version>
                 </dependency>
+				
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-hadoop-compatibility_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
 				
 				<dependency>
 					<groupId>com.google.cloud</groupId>
