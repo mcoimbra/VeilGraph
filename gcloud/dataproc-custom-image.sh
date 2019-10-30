@@ -31,6 +31,10 @@ usermod -aG sudo $GRAPHBOLT_USER
 # Info: https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1604
 # ssh-keygen is run as user $GRAPHBOLT_USER
 
+# readonly GS_BUCKET="graphbolt-bucket"
+readonly GS_BUCKET="graphbolt-storage"
+readonly GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
+
 readonly CLUSTER_SSH_PKEY="cluster"
 readonly GITHUB_SSH_PKEY="github"
 sudo -i -u graphbolt bash << EOF
@@ -51,8 +55,7 @@ mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/
 
 # Personal
-# readonly GS_BUCKET="graphbolt-bucket"
-readonly GS_BUCKET="graphbolt-storage"
+
 readonly GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
 
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random
@@ -67,11 +70,13 @@ mkdir -p $GRAPHBOLT_CODE_DIR
 mkdir -p $GRAPHBOLT_CODE_DIR/testing/Temp
 mkdir -p $GRAPHBOLT_CODE_DIR/cache
 
-readonly GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
+
 readonly GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
 gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
 cd $GRAPHBOLT_CODE_DIR
 unzip $GS_GRAPHBOLT_ZIP_NAME
+
+readonly GS_KEY_NAME="datastorm-1083-f24ebf51869d.json"
 
 # Prepare .bash_profile and misc utilities.
 sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
@@ -109,12 +114,21 @@ ssh-add \$HOME/.ssh/$CLUSTER_SSH_PKEY
 ssh-add \$HOME/.ssh/$GITHUB_SSH_PKEY
 
 export HADOOP_CONF_DIR=/etc/hadoop/conf
+export GOOGLE_APPLICATION_CREDENTIALS=\$HOME/.gcloud/$GS_KEY_NAME
 
 EOF
 
 # Copy misc UNIX program configurations (.bashrc, .vim/, .viminfo, .screenrc).
 readonly GS_UNIX_DIR="$GS_BUCKET/home_utils"
 gsutil cp -r gs://$GS_UNIX_DIR/* $GRAPHBOLT_ROOT/
+
+# Copy the appropriate service key.
+
+readonly GS_DS_KEY="$GS_BUCKET/iam/$GS_KEY_NAME"
+sudo mkdir $GRAPHBOLT_ROOT/.gcloud
+gsutil cp gs://$GS_DS_KEY $GRAPHBOLT_ROOT/.gcloud/
+sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT/.gcloud
+sudo chmod -R 640 $GRAPHBOLT_ROOT/.gcloud/*
 
 # Set appropriate .ssh permissions
 sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT
@@ -211,7 +225,12 @@ sudo chmod 755 ${FLINK_INSTALL_DIR}/opt
 sudo chmod -x ${FLINK_INSTALL_DIR}/opt/*.jar
 
 sudo chmod 755 ${FLINK_INSTALL_DIR}/lib
+
+# We need to fetch the gcs connector library and put it in Flink's lib directory.
+# https://stackoverflow.com/questions/51860988/flink-checkpoints-to-google-cloud-storage
+wget -O ${FLINK_INSTALL_DIR}/lib/gcs-connector-latest-hadoop2.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-latest-hadoop2.jar
 sudo chmod -x ${FLINK_INSTALL_DIR}/lib/*.jar
+
 
 sudo chmod 755 ${FLINK_INSTALL_DIR}/examples
 
