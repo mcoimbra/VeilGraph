@@ -299,9 +299,11 @@ EOF
   local role
   role="$(/usr/share/google/get_metadata_value attributes/dataproc-role)"
 
+  local cluster_name
+  cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
+
   if [[ "${role}" == 'Master' ]]; then
-    local cluster_name
-    cluster_name="$(/usr/share/google/get_metadata_value attributes/dataproc-cluster-name)"
+
   
     # Add all the cluster workers' host fingerprint to /home/graphbolt/.ssh/known_hosts.
 	local num_workers

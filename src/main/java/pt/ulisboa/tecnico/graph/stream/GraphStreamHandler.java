@@ -619,6 +619,9 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 .toString()
                 .replace(',', '.');
 
+        if( ! this.cacheDirectory.startsWith("gs://")) {
+            this.modelDirectory = this.cacheDirectory;
+        }
 
 
         // Define the results directory.
@@ -755,8 +758,10 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             System.out.println(String.format("Results:\t%s", this.resultsDirectory));
 
             // Create models directory if it does not exist and it is necessary.
-            Files.createDirectories(Paths.get(this.modelDirectory));
-            System.out.println(String.format("Models:\t\t%s", this.modelDirectory));
+            if ( ! this.modelDirectory.startsWith("gs://")) {
+                Files.createDirectories(Paths.get(this.modelDirectory));
+                System.out.println(String.format("Models:\t\t%s", this.modelDirectory));
+            }
 
             java.nio.file.Path file = dirs.resolve(this.datasetName + ".tsv"); //placed in the statistics directory
             if (!Files.exists(file)) {

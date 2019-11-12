@@ -104,6 +104,11 @@ public class ParameterHelper {
         KEEP_CACHE("keep_cache"),
 
         /**
+         * Directory for intermediate graph summary structure writes.
+         */
+        MODEL_DIRECTORY("model_dir"),
+
+        /**
          * Directory for Flink internal temporary files.
          */
         TEMP_DIR("temp"),
@@ -347,6 +352,21 @@ public class ParameterHelper {
             argValues.put(GraphBoltArgumentName.CACHE.toString(), cachePath);
         }
 
+        if(cmd.hasOption(GraphBoltArgumentName.MODEL_DIRECTORY.toString())) {
+            final String modelPath = cmd.getOptionValue(GraphBoltArgumentName.MODEL_DIRECTORY.toString()).replace("'", "");
+
+            if( ! modelPath.startsWith("gs://")) {
+                final File modelFile = new File(modelPath);
+                if (! modelFile.exists() || ! modelFile.isDirectory())
+                    throw new IllegalArgumentException(GraphBoltArgumentName.MODEL_DIRECTORY.toString() + " must be a valid file path. Provided: " + modelPath);
+            }
+
+            argValues.put(GraphBoltArgumentName.MODEL_DIRECTORY.toString(), modelPath);
+        }
+
+
+
+
         argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
         if(cmd.hasOption(GraphBoltArgumentName.DEBUG.toString())) {
             for(Map.Entry<String, Object> param : argValues.entrySet()) {
@@ -366,6 +386,11 @@ public class ParameterHelper {
         final Option cacheOption = new Option(GraphBoltArgumentName.CACHE.toString(), true, "path to GraphBolt cache directory.");
         cacheOption.setRequired(false);
         options.addOption(cacheOption);
+
+        // GraphBolt parameters.
+        final Option modelOption = new Option(GraphBoltArgumentName.MODEL_DIRECTORY.toString(), true, "path to GraphBolt model directory.");
+        modelOption.setRequired(false);
+        options.addOption(modelOption);
 
         final Option tempOption = new Option(GraphBoltArgumentName.TEMP_DIR.toString(), true, "path to directory to use for temporary files.");
         tempOption.setRequired(false);
