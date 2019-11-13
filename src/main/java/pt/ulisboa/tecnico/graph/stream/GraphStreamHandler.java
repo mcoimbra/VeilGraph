@@ -619,7 +619,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 .toString()
                 .replace(',', '.');
 
-        if( ! this.cacheDirectory.startsWith("gs://")) {
+        if( this.cacheDirectory.startsWith("gs://")) {
             this.modelDirectory = this.cacheDirectory;
         }
 
