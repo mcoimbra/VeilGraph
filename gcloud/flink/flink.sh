@@ -181,8 +181,8 @@ blob.server.port: 55001-60000
 blob.client.socket.timeout: 6000000
 
 akka.transport.heartbeat.pause: 6000s
-akka.tcp.timeout: 6000s
-akka.ask.timeout: 6000s
+akka.tcp.timeout: 60000s
+akka.ask.timeout: 60000s
 web.timeout: 600000
 EOF
 
