@@ -1225,8 +1225,11 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
 
         if ( ! this.keepingCacheDirectory) {
-            final java.nio.file.Path cachePath = Paths.get(this.cacheDirectory);
-            GraphUtils.deleteFileOrFolder(cachePath);
+			
+			if( ! this.cacheDirectory.startsWith("gs:")) {
+				final java.nio.file.Path cachePath = Paths.get(this.cacheDirectory);
+				GraphUtils.deleteFileOrFolder(cachePath);
+			}
         }
 
         if ( ! this.keepingTemporaryDirectory) {
