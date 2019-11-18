@@ -27,10 +27,12 @@ import argparse
 from collections import OrderedDict
 import datetime
 import getpass
+import glob
 from io import TextIOWrapper
 import os
 import pathlib # https://docs.python.org/3.6/library/pathlib.html#pathlib.Path.mkdir
 import shlex # https://docs.python.org/3/library/shlex.html#shlex.quote
+import shutil
 import signal
 import socket
 import string
@@ -44,6 +46,8 @@ from typing import Dict, List
 # 2. related third party imports
 import psutil
 import pytz
+from google.api_core.protobuf_helpers import get_messages
+from google.cloud import storage
 
 # 3. custom local imports
 #from graphbolt.evaluation.rbo import batch_rank_evaluator
@@ -52,10 +56,78 @@ from graphbolt.stream import streamer
 from graphbolt import localutil
 
 ###########################################################################
+######################### GOOGLE CLOUD FUNCTIONS ##########################
+###########################################################################
+
+def upload_to_bucket(blob_name, path_to_file, bucket_name):
+    """ Upload data to a bucket"""
+
+    # Explicitly use service account credentials by specifying the private key
+    # file.
+    #storage_client = storage.Client.from_service_account_json('creds.json')
+    storage_client = storage.Client()
+
+    #print(buckets = list(storage_client.list_buckets())
+
+    bucket = storage_client.get_bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_filename(path_to_file)
+
+    #returns a public url
+    return blob.public_url
+
+def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
+    #assert os.path.isdir(local_path)
+
+    if os.path.isdir(local_path):
+        for local_file in glob.glob(local_path + '/**'):
+            if not os.path.isfile(local_file):
+                upload_local_directory_to_gcs(local_file, bucket, gcs_path + "/" + os.path.basename(local_file))
+ #       else:
+    else:
+        #remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
+
+        #print("remote_path:\t{}".format(remote_path))
+        #print("local_path:\t{}".format(local_path))
+        #exit(0)
+
+        print("gcs_path:{}".format(gcs_path))
+        print("local_path:{}".format(local_path))
+
+        blob = bucket.blob(gcs_path)
+        #blob.upload_from_filename(local_file)
+        blob.upload_from_filename(local_path)
+
+        print('File {} uploaded to {}.'.format(
+            local_path,
+            gcs_path))
+
+def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str):
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    archive_root = target_path[:target_path.find("testing")+len("testing")]
+    results_zip_base_name = target_path[target_path.rfind(os.path.sep) + 1:]
+    results_zip_path = os.path.join(ZIP_DIR, results_zip_base_name + "_" + archive_keyword)
+    archive_base = target_path[target_path.find(archive_keyword):]
+    shutil.make_archive(results_zip_path, 'zip', archive_root, archive_base)
+
+
+
+    remote_file_name = results_zip_path[results_zip_path.rfind(os.path.sep)+1:] + ".zip"
+
+    print("local_zip: " + results_zip_path + ".zip")
+    print("bucket: " + bucket_name)
+    print("archive_base: " + "testing/" + remote_file_name)
+
+    upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
+
+###########################################################################
 ##################### CHILD PROCESS CLEANUP ROUTINES ######################
 ###########################################################################
 
 streamer_server = None
+
 
 
 def kill_proc_tree(pid: int, including_parent: bool = True) -> None:
@@ -157,7 +229,11 @@ parser.add_argument("-dump-summary", help="should intermediate summary graphs be
 parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-periodic-full-dump", help="should GraphBolt save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
 
+parser.add_argument("-summarized-only", help="running only the approximate version.", required=False, action="store_true")
+
 parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
+
+
 
 args = parser.parse_args()
 
@@ -274,6 +350,9 @@ print("> Will tell GraphBolt to use cache directory:\t\t{}".format(CACHE_BASE))
 EVAL_DIR, STATISTICS_DIR, _, RESULTS_DIR, OUT_DIR, STREAMER_LOG_DIR = localutil.get_pagerank_data_paths(args.out_dir)
 GRAPHBOLT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+
+ZIP_DIR = RESULTS_DIR.replace("Results", "Zips")
+
 # Make necessary GraphBolt directories if they don't exist.
 print("> Checking GraphBolt directories...\n")
 
@@ -385,6 +464,8 @@ complete_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{K
     KW_RESULTS_DIR = RESULTS_DIR, KW_PARALLELISM=args.parallelism, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, 
     KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
+complete_pagerank_stats_path = complete_pagerank_result_path.replace("Results", "Statistics")
+
 need_to_run_complete_pagerank = False
 # Was a results directory found?
 if not os.path.exists(complete_pagerank_result_path):
@@ -487,7 +568,7 @@ with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file
     shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
 
 # If we are not skipping results and they were invalid/missing, execute.
-if need_to_run_complete_pagerank and not args.rbo_only:
+if (not args.summarized_only) and need_to_run_complete_pagerank and not args.rbo_only:
     print("> Executing complete version...")
     with open(graphbolt_output_file, 'w') as out_file:
         process = start_process(graphbolt_run_command, out_file)
@@ -498,6 +579,11 @@ if need_to_run_complete_pagerank and not args.rbo_only:
         print("> Finished registering children of process {}.".format(process.pid))
         process.wait()
     print("> Complete PageRank finished.\n")
+
+    upload_zip_files(complete_pagerank_result_path, "graphbolt-storage", "Results")
+    upload_zip_files(complete_pagerank_stats_path, "graphbolt-storage", "Statistics")
+
+
 else:
     print("> Complete PageRank skipped.\n")
 
@@ -546,6 +632,9 @@ if args.list != None:
 
         summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}".format(
     KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_PARALLELISM = args.parallelism, KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
+
+        approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}'.format(
+            KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
         # Build summarized PageRank evaluation command (RBO evaluation code).
         graphbolt_eval_command = '{KW_PYTHON_PATH} -m evaluation.rbo.batch_rank_evaluator "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
@@ -608,7 +697,7 @@ if args.list != None:
                     need_to_run_this_approx = True
 
 
-        # If were invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
+        # If we're invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
         if need_to_run_this_approx and (not args.rbo_only):
             with open(graphbolt_output_file, 'w') as out_file:
                 print("> Executing summarized version...")
@@ -617,8 +706,7 @@ if args.list != None:
 
 
 
-                approx_stats_path = '{KW_STATISTICS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(
-        KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta)
+
 
                 print("> Statistics directory:\t{}".format(approx_stats_path))
                 print("> Eval file:\t{}".format(graphbolt_output_eval_path))
@@ -631,22 +719,30 @@ if args.list != None:
                 print("> Finished registering children of process {}.".format(process.pid))
                 process.wait()
                 print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
+
+                upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results")
+                upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics")
         elif args.rbo_only:
             print("> Skipping summarized execution, attempting to generate RBO directly.")
         else:
             print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-        # Execute RBO evaluation code.
-        print("{}".format(graphbolt_eval_command))
-        print("{}".format(graphbolt_output_eval_path))
+            upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results")
+            upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics")
 
-        # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
-        if os.path.isdir(summarized_pagerank_result_path):
-            with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
-                print("> Calculating RBO of summarized version...\n")
+        if not args.summarized_only:
+
+            # Execute RBO evaluation code.
+            print("{}".format(graphbolt_eval_command))
+            print("{}".format(graphbolt_output_eval_path))
+
+            # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
+            if os.path.isdir(summarized_pagerank_result_path):
+                with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
+                    print("> Calculating RBO of summarized version...\n")
 
 
-                batch_rank_evaluator.compute_rbo(summarized_pagerank_result_path, complete_pagerank_result_path, out = rbo_out_file)
+                    batch_rank_evaluator.compute_rbo(summarized_pagerank_result_path, complete_pagerank_result_path, out = rbo_out_file)
             
 ###########################################################################
 ############################# CLEANUP ON EXIT #############################
