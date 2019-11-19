@@ -261,17 +261,12 @@ function start_flink_master() {
 function start_flink_standalone() {
   local master_hostname
   master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
+  
+  sudo -i -u graphbolt bash << EOF
+cd ${FLINK_INSTALL_DIR}/bin
+./start-cluster.sh
+EOF
 
-#  echo "master_hostname: ${master_hostname}"
-#  local start_yarn_session
-#  start_yarn_session="$(/usr/share/google/get_metadata_value "attributes/${START_FLINK_YARN_SESSION_METADATA_KEY}" || echo "${START_FLINK_YARN_SESSION_DEFAULT}")"
-
-  # Start Flink master only on the master node ("0"-master in HA mode)
-  # if [[ "${start_yarn_session}" == "true" && "${HOSTNAME}" == "${master_hostname}" ]]; then
-    # "${FLINK_YARN_SCRIPT}"
-  # else
-    # echo "Doing nothing"
-  # fi
 }
 
 function main() {
@@ -279,7 +274,10 @@ function main() {
   # Allow port usage for the TaskManagers.
   sudo iptables -A INPUT -p tcp -m tcp --dport 30000:60000 -j ACCEPT
 
-  sudo pip install google.cloud
+  sudo pip3 install google
+  sudo pip3 install google-auth
+  sudo pip3 install google-cloud-core
+  sudo pip3 install google-cloud-storage
 
   # Configure Flink (TaskManager/JobManager memory, akka timeouts, etc.)
   configure_flink || err "Flink configuration failed"

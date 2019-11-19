@@ -183,6 +183,11 @@ pip3 install pytz
 pip3 install matplotlib
 pip3 install numpy
 pip3 install datetime
+pip3 install google
+pip3 install google-auth
+pip3 install google-cloud-core
+pip3 install google-cloud-storage
+
 
 sudo chown -R graphbolt:graphbolt $PYTHON_BIN_DIR
 
