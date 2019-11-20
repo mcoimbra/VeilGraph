@@ -16,8 +16,7 @@ function run_complete() {
   
   gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'cd /home/graphbolt/Documents/Projects/GraphBolt.git/python && python3 -m graphbolt.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/graphbolt/Documents/Projects/GraphBolt.git/testing" -data-dir '$dataset_dir' -cache "gs://graphbolt-storage/cache" -p '$flink_parallelism' -size 5000 -periodic-full-dump -temp "/home/graphbolt/Documents/Projects/GraphBolt.git/testing/Temp" -flink-address graphbolt-cluster-m -flink-port 8081'
   
-  
-  gcloud dataproc clusters delete --region=us-east1 graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete --region=us-east1 graphbolt-cluster
 }
 
 function run_summarized() {
@@ -34,7 +33,7 @@ function run_summarized() {
   
   gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'cd /home/graphbolt/Documents/Projects/GraphBolt.git/python && python3 -m graphbolt.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/graphbolt/Documents/Projects/GraphBolt.git/testing" -data-dir '$dataset_dir' -cache "gs://graphbolt-storage/cache" -p '$flink_parallelism' -size 5000 -periodic-full-dump -temp "/home/graphbolt/Documents/Projects/GraphBolt.git/testing/Temp" -flink-address graphbolt-cluster-m -flink-port 8081 -summarized-only -l '$r_param' '$n_param' '$delta_param''
   
-  gcloud dataproc clusters delete --region=us-east1 graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete --region=us-east1 graphbolt-cluster
 
 }
 
@@ -45,7 +44,7 @@ function run_summarized() {
 
 ### P = 1
 
-run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
+#run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
 
 run_summarized 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
 
