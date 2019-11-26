@@ -76,7 +76,7 @@ def upload_to_bucket(blob_name, path_to_file, bucket_name):
     #returns a public url
     return blob.public_url
 
-def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
+def upload_local_directory_to_gcs(local_path, bucket, gcs_path, skip_upload: bool = False):
     #assert os.path.isdir(local_path)
 
     if os.path.isdir(local_path):
@@ -102,7 +102,7 @@ def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
             local_path,
             gcs_path))
 
-def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str):
+def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str, skip_upload: bool = False):
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
 
@@ -119,8 +119,9 @@ def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str):
     print("local_zip: " + results_zip_path + ".zip")
     print("bucket: " + bucket_name)
     print("archive_base: " + "testing/" + remote_file_name)
-
-    upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
+	
+	if not skip_upload:
+		upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
 
 ###########################################################################
 ##################### CHILD PROCESS CLEANUP ROUTINES ######################
@@ -230,6 +231,8 @@ parser.add_argument("-delete-edges", help="should edge deletions be sent in the 
 parser.add_argument("-periodic-full-dump", help="should GraphBolt save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
 
 parser.add_argument("-summarized-only", help="running only the approximate version.", required=False, action="store_true")
+
+parser.add_argument("-skip-upload", help="should we skip .zip upload to gcloud?", required=False, action="store_true")
 
 parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
 
@@ -580,8 +583,8 @@ if (not args.summarized_only) and need_to_run_complete_pagerank and not args.rbo
         process.wait()
     print("> Complete PageRank finished.\n")
 
-    upload_zip_files(complete_pagerank_result_path, "graphbolt-storage", "Results")
-    upload_zip_files(complete_pagerank_stats_path, "graphbolt-storage", "Statistics")
+    upload_zip_files(complete_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
+    upload_zip_files(complete_pagerank_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
 
 
 else:
@@ -720,15 +723,15 @@ if args.list != None:
                 process.wait()
                 print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-                upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results")
-                upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics")
+                upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
+                upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
         elif args.rbo_only:
             print("> Skipping summarized execution, attempting to generate RBO directly.")
         else:
             print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-            upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results")
-            upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics")
+            upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
+            upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
 
         if not args.summarized_only:
 
