@@ -152,6 +152,8 @@ parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", requ
 parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 
+parser.add_argument("-skip-rbo", help="skip RBO plots?", required=False, action="store_true") # if ommited, default value is false
+
 parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
 
 parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManager parallelism.", required=False, type=int, default=1)
@@ -217,10 +219,10 @@ EVAL_DIR, STATISTICS_DIR, FIGURES_DIR, _, _, _ = localutil.get_pagerank_data_pat
 print("> Checking GraphBolt directories...\n")
 
 
-if not os.path.exists(EVAL_DIR):
+if (not args.skip_rbo) and (not os.path.exists(EVAL_DIR)):
     print("Evaluation directory not found:\t\t'{}'".format(EVAL_DIR))
     sys.exit(1)
-else:
+elif (not args.skip_rbo):
     print("Evaluation directory found:\t\t'{}'".format(EVAL_DIR))
 
 if not os.path.exists(STATISTICS_DIR):
@@ -279,61 +281,63 @@ if args.list != None:
         graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}.csv'.format(
         KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
-        ##### Make RBO figure.
-        print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path))
-        if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
-            file_sz = localutil.file_len(graphbolt_output_eval_path)
-        else:
-            file_sz = -1
-        print("> File has {} lines.".format(file_sz))
-        
-        if os.path.isfile(graphbolt_output_eval_path) and file_sz  == args.chunk_count + 1:
-            with open(graphbolt_output_eval_path, 'r') as eval_results:
-                rbo_lines = eval_results.readlines()
 
-                for l in rbo_lines:
-                    i, rbo = l.split(";")
-                    rbos.append(float(rbo))
-                    indexes.append(int(i))
-
-            # Create a dedicated directory for the current dataset and PageRank parameters.
-            figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
-
-            # Single-plot figures will be crowded together in a specific 'singles' directory.
-            figure_singles_new_dir_path = '{KW_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}/singles'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_FIGURE_BASE_NAME = figure_base_name)
-
-            # Create 'singles' directory.
-            pathlib.Path(figure_singles_new_dir_path).mkdir(parents=True, exist_ok=True)
-
-            # Set the figure base name for the GraphBolt vertex K set parameters.
-            figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
+        if (not args.skip_rbo):
+            ##### Make RBO figure.
+            print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path)) #####
+            if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
+                file_sz = localutil.file_len(graphbolt_output_eval_path)
+            else:
+                file_sz = -1
+            print("> File has {} lines.".format(file_sz))
             
-            
-            result_rbo_matrices[key_label] = rbos
+            if os.path.isfile(graphbolt_output_eval_path) and file_sz  == args.chunk_count + 1:
+                with open(graphbolt_output_eval_path, 'r') as eval_results:
+                    rbo_lines = eval_results.readlines()
 
-            print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
-            #print(result_rbo_matrices)
+                    for l in rbo_lines:
+                        i, rbo = l.split(";")
+                        rbos.append(float(rbo))
+                        indexes.append(int(i))
 
-            if(args.plot_single_figures):
-                print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
-                fig, ax = plt.subplots()
-                plt.xlabel("Number of PageRank executions")
-                plt.ylabel("PageRank similarity measure (RBO)")
-                plt.yticks(rotation=45)
+                # Create a dedicated directory for the current dataset and PageRank parameters.
+                figure_base_name = '{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}{KW_DELETE_TOKEN}'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_DELETE_TOKEN = DELETE_TOKEN)
 
-                plot_rbo = [100 * y for y in rbos]
+                # Single-plot figures will be crowded together in a specific 'singles' directory.
+                figure_singles_new_dir_path = '{KW_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}/singles'.format(KW_FIGURES_DIR = FIGURES_DIR, KW_FIGURE_BASE_NAME = figure_base_name)
 
-                ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
-                plt.plot(indexes, plot_rbo, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
-                plt.title(key_label)
-                ax.set_xlim(left=0, right=args.chunk_count)
-                x_step = int(args.chunk_count / 10)
-                new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [0]
-                plt.xticks(new_xticks)
-                #plt.legend()
-                save_figure(figure_path_name + '-RBO', fig_file_types)
+                # Create 'singles' directory.
+                pathlib.Path(figure_singles_new_dir_path).mkdir(parents=True, exist_ok=True)
 
-                plt.close(fig)
+                # Set the figure base name for the GraphBolt vertex K set parameters.
+                figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
+                
+                
+                result_rbo_matrices[key_label] = rbos
+
+                print("r: {}\tn: {}\tdelta: {}".format(r, n, delta))
+                #print(result_rbo_matrices)
+
+                if(args.plot_single_figures):
+                    print('> Generating figures for parameters r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.'.format(KW_r = r, KW_n = n, KW_delta = delta))
+                    fig, ax = plt.subplots()
+                    plt.xlabel("Number of PageRank executions")
+                    plt.ylabel("PageRank similarity measure (RBO)")
+                    plt.yticks(rotation=45)
+
+                    plot_rbo = [100 * y for y in rbos]
+
+                    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+                    plt.plot(indexes, plot_rbo, marker=matplotlib_config.styles[0], alpha=matplotlib_config.PLOT_ALPHA)
+                    plt.title(key_label)
+                    ax.set_xlim(left=0, right=args.chunk_count)
+                    x_step = int(args.chunk_count / 10)
+                    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [0]
+                    plt.xticks(new_xticks)
+                    #plt.legend()
+                    save_figure(figure_path_name + '-RBO', fig_file_types)
+
+                    plt.close(fig) #####
 
 
         
@@ -751,70 +755,24 @@ save_figure(figure_path_name + top_3_bottom_3_edge_savings, fig_file_types)
 
 plt.close(fig)
 
-##### PLOT the five highest RBO results.
-fig, ax = plt.subplots()
-plt.ylabel("PageRank similarity measure (RBO)")
-plt.yticks(rotation=45)
-ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
 
-sorted_rbos = sorted(list(result_rbo_matrices.items()), reverse=True, key=lambda rbo_list: np.mean(rbo_list[1]))
-sorted_rbos_dict = OrderedDict(sorted_rbos)
-indexes = range(args.chunk_count + 1)
+if (not args.skip_rbo):
 
-min_y_tick = -1
-for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
+    ##### PLOT the five highest RBO results.
+    fig, ax = plt.subplots() ######
+    plt.ylabel("PageRank similarity measure (RBO)")
+    plt.yticks(rotation=45)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
 
-    if plot_counter == PLOT_LIMIT:
-        break
+    sorted_rbos = sorted(list(result_rbo_matrices.items()), reverse=True, key=lambda rbo_list: np.mean(rbo_list[1]))
+    sorted_rbos_dict = OrderedDict(sorted_rbos)
+    indexes = range(args.chunk_count + 1)
 
-    rbos = [100 * y for y in sorted_rbos_dict[k]]
+    min_y_tick = -1
+    for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
 
-    curr_min_rbo = min(rbos)
-    if min_y_tick == -1 or curr_min_rbo < min_y_tick:
-        min_y_tick = curr_min_rbo
-
-    
-    color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
-    style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
-
-    # We are starting at index 1 to skip the first index which is a comparison between two complete PageRank executions
-    plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
-
-x_step = int(args.chunk_count / 10)
-new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-plt.xticks(new_xticks)
-ax.set_xlim(left=1, right=args.chunk_count)
-y_divisor = 6
-y_step = (100 - min_y_tick) / y_divisor
-new_yticks = [min_y_tick + y_step * i for i in range(0, y_divisor + 1)]
-plt.yticks(new_yticks)
-plt.legend()
-
-top_5_rbo = "-RBO-top-{}".format(PLOT_LIMIT)
-save_figure(figure_path_name + top_5_rbo, fig_file_types)
-
-plt.close(fig)
-
-##### PLOT the three highest and three lowest RBO results.
-fig, ax = plt.subplots()
-plt.ylabel("PageRank similarity measure (RBO)")
-plt.yticks(rotation=45)
-ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
-sorted_rbos = sorted(list(result_rbo_matrices.items()), reverse=True, key=lambda rbo_list: np.mean(rbo_list[1]))
-sorted_rbos_dict = OrderedDict(sorted_rbos)
-indexes = range(args.chunk_count + 1)
-
-min_y_tick = -1
-
-matrix_count = len(sorted_rbos_dict.keys())
-
-style_ctr = 0
-for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
-
-    
-    if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
-
-        #print('> Plotting counter #{}/{}'.format(plot_counter, matrix_count))
+        if plot_counter == PLOT_LIMIT:
+            break
 
         rbos = [100 * y for y in sorted_rbos_dict[k]]
 
@@ -823,31 +781,80 @@ for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
             min_y_tick = curr_min_rbo
 
         
-        color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
-        style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
-        style_ctr = style_ctr + 1
+        color = matplotlib_config.colors[plot_counter % len(matplotlib_config.colors)]
+        style = matplotlib_config.styles[(plot_counter - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
 
         # We are starting at index 1 to skip the first index which is a comparison between two complete PageRank executions
         plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
 
-x_step = int(args.chunk_count / 10)
-new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
-plt.xticks(new_xticks)
-ax.set_xlim(left=1, right=args.chunk_count)
+    x_step = int(args.chunk_count / 10)
+    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+    plt.xticks(new_xticks)
+    ax.set_xlim(left=1, right=args.chunk_count)
+    y_divisor = 6
+    y_step = (100 - min_y_tick) / y_divisor
+    new_yticks = [min_y_tick + y_step * i for i in range(0, y_divisor + 1)]
+    plt.yticks(new_yticks)
+    plt.legend()
 
-y_divisor = 6
-y_step = (100 - min_y_tick) / y_divisor
-new_yticks = [min_y_tick + y_step * i for i in range(0, y_divisor + 1)]
-plt.yticks(new_yticks)
-plt.legend()
+    top_5_rbo = "-RBO-top-{}".format(PLOT_LIMIT)
+    save_figure(figure_path_name + top_5_rbo, fig_file_types)
 
-top_3_bottom_3_rbo = "-RBO-top-{}-bottom-{}".format(CATEGORY_BEST_PLOT_COUNT, CATEGORY_WORST_PLOT_COUNT)
-save_figure(figure_path_name + top_3_bottom_3_rbo, fig_file_types)
+    plt.close(fig)
 
-plt.gca().axes.get_xaxis().set_ticks([])
-save_figure(figure_path_name + top_3_bottom_3_rbo + '_nolabels', fig_file_types)
+    ##### PLOT the three highest and three lowest RBO results.
+    fig, ax = plt.subplots()
+    plt.ylabel("PageRank similarity measure (RBO)")
+    plt.yticks(rotation=45)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(is_latex=False))
+    sorted_rbos = sorted(list(result_rbo_matrices.items()), reverse=True, key=lambda rbo_list: np.mean(rbo_list[1]))
+    sorted_rbos_dict = OrderedDict(sorted_rbos)
+    indexes = range(args.chunk_count + 1)
 
-plt.close(fig)
+    min_y_tick = -1
+
+    matrix_count = len(sorted_rbos_dict.keys())
+
+    style_ctr = 0
+    for plot_counter, k in enumerate(sorted_rbos_dict.keys()):
+
+        
+        if plot_counter < CATEGORY_BEST_PLOT_COUNT or plot_counter >= matrix_count  - CATEGORY_WORST_PLOT_COUNT:
+
+            #print('> Plotting counter #{}/{}'.format(plot_counter, matrix_count))
+
+            rbos = [100 * y for y in sorted_rbos_dict[k]]
+
+            curr_min_rbo = min(rbos)
+            if min_y_tick == -1 or curr_min_rbo < min_y_tick:
+                min_y_tick = curr_min_rbo
+
+            
+            color = matplotlib_config.colors[style_ctr % len(matplotlib_config.colors)]
+            style = matplotlib_config.styles[(style_ctr - len(matplotlib_config.linestyles)) % len(matplotlib_config.styles)]
+            style_ctr = style_ctr + 1
+
+            # We are starting at index 1 to skip the first index which is a comparison between two complete PageRank executions
+            plt.plot(indexes[1:], rbos[1:],   label = k, marker=style, color=color, alpha=matplotlib_config.PLOT_ALPHA)
+
+    x_step = int(args.chunk_count / 10)
+    new_xticks = list(range(x_step, args.chunk_count + x_step, x_step)) + [1]
+    plt.xticks(new_xticks)
+    ax.set_xlim(left=1, right=args.chunk_count)
+
+    y_divisor = 6
+    y_step = (100 - min_y_tick) / y_divisor
+    new_yticks = [min_y_tick + y_step * i for i in range(0, y_divisor + 1)]
+    plt.yticks(new_yticks)
+    plt.legend()
+
+    top_3_bottom_3_rbo = "-RBO-top-{}-bottom-{}".format(CATEGORY_BEST_PLOT_COUNT, CATEGORY_WORST_PLOT_COUNT)
+    save_figure(figure_path_name + top_3_bottom_3_rbo, fig_file_types)
+
+    plt.gca().axes.get_xaxis().set_ticks([])
+    save_figure(figure_path_name + top_3_bottom_3_rbo + '_nolabels', fig_file_types)
+
+    plt.close(fig) #####
 
 
 
