@@ -45,9 +45,12 @@ function run_summarized() {
 
 ### P = 1
 
-#run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
+run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
 
-#run_summarized 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
+run_summarized 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
+
+
+exit 0
 
 ### P = 2
 
