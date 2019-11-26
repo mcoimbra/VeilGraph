@@ -119,9 +119,9 @@ def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str, s
     print("local_zip: " + results_zip_path + ".zip")
     print("bucket: " + bucket_name)
     print("archive_base: " + "testing/" + remote_file_name)
-	
-	if not skip_upload:
-		upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
+    
+    if not skip_upload:
+        upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
 
 ###########################################################################
 ##################### CHILD PROCESS CLEANUP ROUTINES ######################
