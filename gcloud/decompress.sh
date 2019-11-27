@@ -32,7 +32,8 @@ for d in 1 2 4 8 16; do
 	
 	cat $SUMMARIZED_PATH | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$SUMMARIZED_DIR"/columns.tsv
 	
-	paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t'
+	echo P"$d"_columns.tsv
+	paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > P"$d"_columns.tsv
 	
 done
 
