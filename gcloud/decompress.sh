@@ -8,7 +8,12 @@ process_scenario () {
 	RBO_LEN=$5
 	DAMPENING=$6
 
+	declare -a COLUMNS_PATH_ARRAY=()
+
 	for d in 1 2 4 8 16; do
+
+		printf "> Parallelism: %d\n" $d
+
 		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
 		FILE_NAME=$(ls "$COMPLETE_DIR" | grep start.tsv)
 		COMPLETE_PATH="$COMPLETE_DIR/$FILE_NAME"
@@ -23,10 +28,19 @@ process_scenario () {
 
 		cat "$SUMMARIZED_PATH" | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$SUMMARIZED_DIR"/columns.tsv
 
-		echo P"$d"_columns.tsv
-		paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > $DATASET_PREFIX\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
+		# Create file for gnuplot to compare complete and summarizex execution times.
+		# One _columns file is created for each value of parallelism $d.
+		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
+		echo $COLUMNS_OUT_FILE
+		paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > $COLUMNS_OUT_FILE
+		
+		# Store the current columns file path in array.
+		COLUMNS_PATH_ARRAY+=($COLUMNS_OUT_FILE)
 	
 	done
+
+	# Parse the files in the array to generate single big file.
+	paste -d , $(printf "%s " "${COLUMNS_PATH_ARRAY[@]}")
 }
 
 # Establish run order.
