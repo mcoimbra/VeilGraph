@@ -21,7 +21,7 @@ set style data linespoints
 set xrange [0:51]
 #set size 0.5,1.0
 #set origin 0.0,0.0
-set title  'amazon-2008-40000-random summarized times'
+set title  'amazon-2008-40000-random'
 set key autotitle columnhead
 
 plot \
