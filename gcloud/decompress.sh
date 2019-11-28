@@ -1,5 +1,35 @@
 #!/bin/bash
 
+append_to_column_names () {
+
+	SOURCE_FILE_PATH=$1
+	PREFIX=$2
+	PARALLELISM=$3
+
+	declare -a FIXED_NAMES_ARRAY=()
+
+	# Iterate each line of the input given to the while-loop.
+	# Because the input comes from <(head -n 1 ...), the while loops exactly once.
+	while IFS=$'\t' read -r -a COL_NAME_ARRAY
+	do
+		# Prepend $PREFIX to each column name.
+		for COL_NAME in "${COL_NAME_ARRAY[@]}"
+		do
+			FIXED_NAMES_ARRAY+=(P$PARALLELISM\_$PREFIX\_$COL_NAME)
+		done
+	done < <(head -n 1 "$SOURCE_FILE_PATH")
+
+	# Output of this function is the tab-separated now-prefixed column names.
+	FINAL_STRING=$(printf "%s\t" "${FIXED_NAMES_ARRAY[@]}")
+
+	# Remove the whitespace at the end and produce function output.
+	echo ${FINAL_STRING::-1} | sed -e 's/ /'\\t'/g'
+
+	unset FIXED_NAMES_ARRAY
+}
+
+
+
 process_scenario () {
 	DATASET_PREFIX=$1
 	R=$2
@@ -14,24 +44,53 @@ process_scenario () {
 
 		printf "> Parallelism: %d\n" $d
 
+		######### Complete data file.
+
 		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
 		FILE_NAME=$(ls "$COMPLETE_DIR" | grep start.tsv)
 		COMPLETE_PATH="$COMPLETE_DIR/$FILE_NAME"
-		printf "> Complete path:\t$COMPLETE_PATH\n"
+		printf "\tComplete path:\t$COMPLETE_PATH\n"
 
-		cat "$COMPLETE_PATH" | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$COMPLETE_DIR"/columns.tsv
+		# Delete the columns file if it already existed.
+		rm -f "$COMPLETE_DIR"/columns.tsv
+
+		# Store in a temporary file.
+		cat "$COMPLETE_PATH" | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$COMPLETE_DIR"/columns.tsv.tmp
+
+		# Set the headers.
+		COMPLETE_HEADERS=$(append_to_column_names "$COMPLETE_DIR"/columns.tsv.tmp "complete" $d)
+		echo "$COMPLETE_HEADERS" > "$COMPLETE_DIR"/columns.tsv
+		tail -n +2 "$COMPLETE_DIR"/columns.tsv.tmp >> "$COMPLETE_DIR"/columns.tsv
+
+		# Remove temporary data file.
+		rm -f "$COMPLETE_DIR"/columns.tsv.tmp
+
+		######### Summarized data file.
 
 		SUMMARIZED_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_model_$R\_$N\_$DELTA\_D)
 		FILE_NAME=$(ls "$SUMMARIZED_DIR" | grep start.tsv)
 		SUMMARIZED_PATH="$SUMMARIZED_DIR/$FILE_NAME"
-		printf "> Summarized path:\t$SUMMARIZED_PATH\n"
+		printf "\tSummarized path:\t$SUMMARIZED_PATH\n"
 
-		cat "$SUMMARIZED_PATH" | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$SUMMARIZED_DIR"/columns.tsv
+		# Delete the columns file if it already existed.
+		rm -f "$SUMMARIZED_DIR"/columns.tsv
+
+		# Store in a temporary file.
+		cat "$SUMMARIZED_PATH" | cut -d ";" -f1,4,5,6 | tr ';' '\t' > "$SUMMARIZED_DIR"/columns.tsv.tmp
+
+		# Set the headers.
+		SUMMARIZED_HEADERS=$(append_to_column_names "$SUMMARIZED_DIR"/columns.tsv.tmp "summarized" $d)
+		echo "$SUMMARIZED_HEADERS" > "$SUMMARIZED_DIR"/columns.tsv
+		tail -n +2 "$SUMMARIZED_DIR"/columns.tsv.tmp >> "$SUMMARIZED_DIR"/columns.tsv
+
+		# Remove temporary data file.
+		rm -f "$SUMMARIZED_DIR"/columns.tsv.tmp
+
+		######### Merge the complete and summarized statistics in the same file.
 
 		# Create file for gnuplot to compare complete and summarizex execution times.
 		# One _columns file is created for each value of parallelism $d.
 		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
-		echo $COLUMNS_OUT_FILE
 		paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > $COLUMNS_OUT_FILE
 		
 		# Store the current columns file path in array.
@@ -39,8 +98,10 @@ process_scenario () {
 	
 	done
 
-	# Parse the files in the array to generate single big file.
-	paste -d , $(printf "%s " "${COLUMNS_PATH_ARRAY[@]}")
+	#echo "${COLUMNS_PATH_ARRAY[@]}"
+	paste -d , $(echo "${COLUMNS_PATH_ARRAY[@]}") | tr ',' '\t' > "$DATASET_PREFIX"_data.tsv
+
+	unset COLUMNS_PATH_ARRAY
 }
 
 # Establish run order.

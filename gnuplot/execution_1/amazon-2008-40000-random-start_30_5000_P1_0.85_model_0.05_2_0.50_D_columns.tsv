@@ -1,4 +1,4 @@
-execution_count	graph_update_time	total_update_time	computation_time	execution_count	graph_update_time	total_update_time	computation_time
+P1_complete_execution_count	P1_complete_graph_update_time	P1_complete_total_update_time	P1_complete_computation_time	P1_summarized_execution_count	P1_summarized_graph_update_time	P1_summarized_total_update_time	P1_summarized_computation_time
 1	37468	85516	263113	1	36142	88145	137529
 2	34911	78524	267628	2	34604	78508	127652
 3	36964	82642	260624	3	34072	78395	127590
