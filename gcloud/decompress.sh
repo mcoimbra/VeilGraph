@@ -49,6 +49,9 @@ process_scenario () {
 		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
 		FILE_NAME=$(ls "$COMPLETE_DIR" | grep start.tsv)
 		COMPLETE_PATH="$COMPLETE_DIR/$FILE_NAME"
+
+		#exit 0
+
 		printf "\tComplete path:\t$COMPLETE_PATH\n"
 
 		# Delete the columns file if it already existed.
@@ -106,7 +109,7 @@ process_scenario () {
 
 # Establish run order.
 main() {
-	#set -x
+	set -x
 
 	TARGET_STATS_DIR=$1
 	
@@ -123,6 +126,7 @@ main() {
 	fi
 
 	# Process the statistics files.
+	TARGET_STATS_DIR=$(pwd)
 	ZIP_TARGET_OUT=$TARGET_STATS_DIR/Statistics/pagerank
 
 	DATASET_PREFIX="$2"

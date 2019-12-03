@@ -39,6 +39,16 @@ function run_summarized() {
 }
 
 
+run_summarized 8 8 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
+
+### P = 16
+
+run_complete 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
+
+run_summarized 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
+
+exit 0
+
 #######################################
 ####################################### eu-2005-40000-random
 #######################################
