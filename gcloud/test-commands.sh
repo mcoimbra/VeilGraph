@@ -38,6 +38,36 @@ function run_summarized() {
 
 }
 
+# Establish run order.
+main() {
+	set -x
+
+  # ./test-commands "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
+
+  DATA_DIR=$1
+  DATASET_PREFIX=$2
+  R=$3
+	N=$4
+	DELTA=$5
+
+  run_summarized 8 8 $DATA_DIR $DATASET_PREFIX $R $N $DELTA
+
+  
+
+  run_complete 1 2 $DATA_DIR $DATASET_PREFIX
+
+  run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA
+
+  for d in 2 4 8 16; do
+    run_complete $d $d $DATA_DIR $DATASET_PREFIX
+
+    run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA
+  done
+}
+
+main "$@"
+
+exit 0
 
 run_summarized 8 8 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
 
@@ -59,8 +89,6 @@ run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
 
 run_summarized 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
 
-
-exit 0
 
 ### P = 2
 
