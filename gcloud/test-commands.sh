@@ -50,10 +50,7 @@ main() {
 	N=$4
 	DELTA=$5
 
-  run_summarized 8 8 $DATA_DIR $DATASET_PREFIX $R $N $DELTA
-
   
-
   run_complete 1 2 $DATA_DIR $DATASET_PREFIX
 
   run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA
@@ -66,84 +63,3 @@ main() {
 }
 
 main "$@"
-
-exit 0
-
-run_summarized 8 8 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-### P = 16
-
-run_complete 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-exit 0
-
-#######################################
-####################################### eu-2005-40000-random
-#######################################
-
-### P = 1
-
-run_complete 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
-
-run_summarized 1 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
-
-
-### P = 2
-
-run_complete 2 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
-
-run_summarized 2 2 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
-
-### P = 4
-
-run_complete 4 4 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
-
-run_summarized 4 4 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
-
-### P = 8
-
-run_complete 8 8 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
-
-run_summarized 8 8 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
-
-### P = 16
-
-run_complete 16 16 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random"
-
-run_summarized 16 16 "/home/graphbolt/Documents/datasets/web" "eu-2005-40000-random" 0.05 2 0.50
-
-#######################################
-####################################### amazon-2008-40000-random
-#######################################
-
-### P = 1
-
-run_complete 1 2 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 1 2 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-### P = 2
-
-run_complete 2 2 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 2 2 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-### P = 4
-
-run_complete 4 4 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 4 4 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-### P = 8
-
-run_complete 8 8 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 8 8 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
-
-### P = 16
-
-run_complete 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random"
-
-run_summarized 16 16 "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50

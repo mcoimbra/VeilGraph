@@ -116,20 +116,22 @@ main() {
 	CURR_DIR=$(pwd)
 	cd "$TARGET_STATS_DIR"
 
+	DATASET_PREFIX="$2"
+
 	# If the 'Statistics' directory does not exist, create it extract all .zip files to it.
-	if [ ! -d "Statistics" ]
-	then
-		# List directory with .zip files.
-		for f in *.zip; do
-			unzip -o $f #-o to overwrite
-		done
-	fi
+	#if [ ! -d "Statistics" ]
+	#then
+	# List directory with .zip files.
+	for f in $DATASET_PREFIX*.zip; do
+		unzip -o $f #-o to overwrite
+	done
+	#fi
 
 	# Process the statistics files.
 	TARGET_STATS_DIR=$(pwd)
 	ZIP_TARGET_OUT=$TARGET_STATS_DIR/Statistics/pagerank
 
-	DATASET_PREFIX="$2"
+	
 	R=$3
 	N=$4
 	DELTA=$5
