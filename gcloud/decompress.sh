@@ -108,7 +108,7 @@ process_scenario () {
 
 	PY_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 	
-	python3 get_avg_std.py "$DATASET_PREFIX"_data.tsv
+	python3 $GCLOUD_DIR/get_avg_std.py "$DATASET_PREFIX"_data.tsv
 }
 
 # Establish run order.
@@ -118,6 +118,9 @@ main() {
 	TARGET_STATS_DIR=$1
 	
 	CURR_DIR=$(pwd)
+
+	GCLOUD_DIR="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
 	cd "$TARGET_STATS_DIR"
 
 	DATASET_PREFIX="$2"
