@@ -11,9 +11,14 @@ GCLOUD_DIR_NAME="logs_$DATE_TIME_STAMP"
 
 GCLOUD_PATH="gs://graphbolt-storage/testing/flink_logs/$GCLOUD_DIR_NAME"
 
-echo "> Copying log files to $GCLOUD_PATH"
+printf "> Timestamp:\t$DATE_TIME_STAMP"
+
+printf "> Copying log files to $GCLOUD_PATH\n"
+
+exit 0
+
 
 for (( i = 0; i < PARALLELISM; ++i )); do
-    echo $i
+    #echo $i
     ssh "graphbolt@graphbolt-cluster-w-$i" "gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH"
 done
