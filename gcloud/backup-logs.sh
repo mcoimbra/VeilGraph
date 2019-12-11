@@ -17,7 +17,7 @@ printf "> Timestamp:\t$DATE_TIME_STAMP\n"
 printf "> Copying log files to:\t$GCLOUD_PATH\n"
 
 # Copy master node Flink logs.
-gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH
+gsutil cp -p /usr/lib/flink/log/* "$GCLOUD_PATH"
 
 # Order each worker to copy its Flink logs.
 for (( i = 0; i < PARALLELISM; ++i )); do
