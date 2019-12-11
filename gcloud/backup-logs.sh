@@ -4,7 +4,7 @@
 
 PARALLELISM=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
 
-DATE_TIME_STAMP=$(printf -v date '%(%Y-%m-%d %H:%M:%S)T\n' -1)
+printf -v date '%(%Y-%m-%d %H:%M:%S)T\n' -1
 printf "> Timestamp:\t$DATE_TIME_STAMP\n"
 DATE_TIME_STAMP=$(echo $date | tr ' ' _ )
 
