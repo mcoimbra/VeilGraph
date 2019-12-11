@@ -32,11 +32,12 @@ append_to_column_names () {
 
 process_scenario () {
 	DATASET_PREFIX=$1
-	R=$2
-	N=$3
-	DELTA=$4
-	RBO_LEN=$5
-	DAMPENING=$6
+	ITERATIONS=$2
+	R=$3
+	N=$4
+	DELTA=$5
+	RBO_LEN=$6
+	DAMPENING=$7
 
 	declare -a COLUMNS_PATH_ARRAY=()
 
@@ -46,7 +47,7 @@ process_scenario () {
 
 		######### Complete data file.
 
-		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
+		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
 		FILE_NAME=$(ls "$COMPLETE_DIR" | grep start.tsv)
 		COMPLETE_PATH="$COMPLETE_DIR/$FILE_NAME"
 
@@ -70,7 +71,7 @@ process_scenario () {
 
 		######### Summarized data file.
 
-		SUMMARIZED_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$RBO_LEN\_P$d\_$DAMPENING\_model_$R\_$N\_$DELTA\_D)
+		SUMMARIZED_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_model_$R\_$N\_$DELTA\_D)
 		FILE_NAME=$(ls "$SUMMARIZED_DIR" | grep start.tsv)
 		SUMMARIZED_PATH="$SUMMARIZED_DIR/$FILE_NAME"
 		printf "\tSummarized path:\t$SUMMARIZED_PATH\n"
@@ -93,7 +94,7 @@ process_scenario () {
 
 		# Create file for gnuplot to compare complete and summarizex execution times.
 		# One _columns file is created for each value of parallelism $d.
-		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
+		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
 		paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > $COLUMNS_OUT_FILE
 		
 		# Store the current columns file path in array.
@@ -102,13 +103,34 @@ process_scenario () {
 	done
 
 	#echo "${COLUMNS_PATH_ARRAY[@]}"
-	paste -d , $(echo "${COLUMNS_PATH_ARRAY[@]}") | tr ',' '\t' > "$DATASET_PREFIX"_data.tsv
+
+	FINAL_DATA_OUT_PREFIX=
+	FINAL_DATA_OUT_PATH=$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_data.tsv
+
+	paste -d , $(echo "${COLUMNS_PATH_ARRAY[@]}") | tr ',' '\t' > $FINAL_DATA_OUT_PATH
 
 	unset COLUMNS_PATH_ARRAY
 
 	PY_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 	
-	python3 "$GCLOUD_DIR"/get_avg_std.py "$DATASET_PREFIX"_data.tsv
+	#python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"_data.tsv
+	python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"
+
+	cp "$GCLOUD_DIR"/../gnuplot/templates/summarized-time.gnuplot "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/XXXXX/'$DATASET_PREFIX'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/ITERATIONS/'$ITERATIONS'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/RBO/'$RBO_LEN'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/DAMP/'$DAMPENING'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/RPARAM/'$R'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/NPARAM/'$N'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+	sed -i 's/DELTAPARAM/'$DELTA'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
+
+	gnuplot "$DATASET_PREFIX"-summarized-time.gnuplot
+
+	cp "$GCLOUD_DIR"/../gnuplot/templates/update-and-computation-time-bar-group-plot.gnuplot "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot
+	sed -i 's/XXXXX/'$DATASET_PREFIX'/g' "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot.gnuplot
+	gnuplot "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot
+
 }
 
 # Establish run order.
@@ -138,14 +160,14 @@ main() {
 	TARGET_STATS_DIR=$(pwd)
 	ZIP_TARGET_OUT=$TARGET_STATS_DIR/Statistics/pagerank
 
-	
-	R=$3
-	N=$4
-	DELTA=$5
-	RBO_LEN=$6
-	DAMPENING=$7
+	ITERATIONS=$3
+	R=$4
+	N=$5
+	DELTA=$6
+	RBO_LEN=$7
+	DAMPENING=$8
 
-	process_scenario $DATASET_PREFIX $R $N $DELTA $RBO_LEN $DAMPENING
+	process_scenario $DATASET_PREFIX $ITERATIONS $R $N $DELTA $RBO_LEN $DAMPENING
 
     cd "$CURR_DIR"
 }

@@ -46,6 +46,9 @@ summarized_out_path = os.path.join(out_dir, summarized_out_file)
 comparative_out_file = data_path[data_path.rfind(os.path.sep)+1:].replace('.tsv', '_comparative_stats.tsv')
 comparative_out_path = os.path.join(out_dir, comparative_out_file)
 
+times_out_file = data_path[data_path.rfind(os.path.sep)+1:].replace('.tsv', '_time_stats.tsv')
+times_out_path = os.path.join(out_dir, times_out_file)
+
 df = pd.read_csv(data_path, sep="\t")   # read dummy .tsv file into memory
 
 #print(df['P1_complete_total_update_time'].mean())
@@ -55,21 +58,33 @@ p1_complete_total_update_time_mean = df['P1_complete_total_update_time'].mean()
 p1_complete_computation_time_mean = df['P1_complete_computation_time'].mean()
 
 
-with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, open(summarized_out_path, 'w') as summarized_out, open(comparative_out_path, 'w') as comparative_out:
+with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, open(summarized_out_path, 'w') as summarized_out, open(comparative_out_path, 'w') as comparative_out, open(times_out_path, 'w') as times_out:
 
     val_order = ["P",
         "complete_graph_update_time_ratio_avg",
         "complete_graph_update_time_ratio_std",
+        'complete_graph_update_time_avg',
+        'complete_graph_update_time_std',
         "complete_total_update_time_ratio_avg",
         "complete_total_update_time_ratio_std",
+        'complete_total_update_time_avg',
+        'complete_total_update_time_std',
         "complete_computation_time_ratio_avg",
         "complete_computation_time_ratio_std",
+        "complete_computation_time_avg",
+        "complete_computation_time_std",
         "summarized_graph_update_time_ratio_avg",
         "summarized_graph_update_time_ratio_std",
+        "summarized_graph_update_time_avg",
+        "summarized_graph_update_time_std",
         "summarized_total_update_time_ratio_avg",
         "summarized_total_update_time_ratio_std",
+        "summarized_total_update_time_avg",
+        "summarized_total_update_time_std",
         "summarized_computation_time_ratio_avg",
         "summarized_computation_time_ratio_std",
+        "summarized_computation_time_avg",
+        "summarized_computation_time_std",
         "comparative_graph_update_time_ratio_avg",
         "comparative_graph_update_time_ratio_std",
         "comparative_total_update_time_ratio_avg",
@@ -80,6 +95,7 @@ with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, o
     complete_order = ["P"]
     summarized_order = ["P"]
     comparative_order = ["P"]
+    times_order = ["P"]
 
     val_dict = {}
     
@@ -95,11 +111,15 @@ with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, o
         if val_name.startswith("comparative"):
             comparative_order.append(val_name)
 
+        if (not 'ratio' in val_name) and (not val_name.startswith('P')):
+            times_order.append(val_name)
+
 
     out.write("{}\n".format('\t'.join(val_order)))
     complete_out.write("{}\n".format('\t'.join(complete_order)))
     summarized_out.write("{}\n".format('\t'.join(summarized_order)))
     comparative_out.write("{}\n".format('\t'.join(comparative_order)))
+    times_out.write("{}\n".format('\t'.join(times_order)))
 
     p_list = [2, 4, 8, 16]
 
@@ -113,26 +133,44 @@ with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, o
         val_dict['complete_graph_update_time_ratio_avg'].append(complete_graph_update_time_ratio_df.mean())
         val_dict['complete_graph_update_time_ratio_std'].append(complete_graph_update_time_ratio_df.std())
 
+        val_dict['complete_graph_update_time_avg'].append(df['P' + p + '_complete_graph_update_time'].mean())
+        val_dict['complete_graph_update_time_std'].append(df['P' + p + '_complete_graph_update_time'].std())
+
         complete_total_update_time_ratio_df = df['P1_complete_total_update_time'] / df['P' + p + '_complete_total_update_time']
         val_dict['complete_total_update_time_ratio_avg'].append(complete_total_update_time_ratio_df.mean())
         val_dict['complete_total_update_time_ratio_std'].append(complete_total_update_time_ratio_df.std())
 
+        val_dict['complete_total_update_time_avg'].append(df['P' + p + '_complete_total_update_time'].mean())
+        val_dict['complete_total_update_time_std'].append(df['P' + p + '_complete_total_update_time'].std())
+
         complete_computation_time_ratio_df = df['P1_complete_computation_time'] / df['P' + p + '_complete_computation_time']
         val_dict['complete_computation_time_ratio_avg'].append(complete_computation_time_ratio_df.mean())
         val_dict['complete_computation_time_ratio_std'].append(complete_computation_time_ratio_df.std())
+
+        val_dict['complete_computation_time_avg'].append(df['P' + p + '_complete_computation_time'].mean())
+        val_dict['complete_computation_time_std'].append(df['P' + p + '_complete_computation_time'].std())
 
         # Summarized version's parallelism scalability and time increases.
         summarized_graph_update_time_ratio_df = df['P1_summarized_graph_update_time'] / df['P' + p + '_summarized_graph_update_time']
         val_dict['summarized_graph_update_time_ratio_avg'].append(summarized_graph_update_time_ratio_df.mean())
         val_dict['summarized_graph_update_time_ratio_std'].append(summarized_graph_update_time_ratio_df.std())
 
+        val_dict['summarized_graph_update_time_avg'].append(df['P' + p + '_summarized_graph_update_time'].mean())
+        val_dict['summarized_graph_update_time_std'].append(df['P' + p + '_summarized_graph_update_time'].std())
+
         summarized_total_update_time_ratio_df = df['P1_summarized_total_update_time'] / df['P' + p + '_summarized_total_update_time']
         val_dict['summarized_total_update_time_ratio_avg'].append(summarized_total_update_time_ratio_df.mean())
         val_dict['summarized_total_update_time_ratio_std'].append(summarized_total_update_time_ratio_df.std())
 
+        val_dict['summarized_total_update_time_avg'].append(df['P' + p + '_summarized_total_update_time'].mean())
+        val_dict['summarized_total_update_time_std'].append(df['P' + p + '_summarized_total_update_time'].std())
+
         summarized_computation_time_ratio_df = df['P1_summarized_computation_time'] / df['P' + p + '_summarized_computation_time']
         val_dict['summarized_computation_time_ratio_avg'].append(summarized_computation_time_ratio_df.mean())
         val_dict['summarized_computation_time_ratio_std'].append(summarized_computation_time_ratio_df.std())
+
+        val_dict['summarized_computation_time_avg'].append(df['P' + p + '_summarized_computation_time'].mean())
+        val_dict['summarized_computation_time_std'].append(df['P' + p + '_summarized_computation_time'].std())
 
         # Summarized vs complete version comparative speedup and time increases.
         comparative_graph_update_time_ratio_df = df['P' + p + '_complete_graph_update_time'] / df['P' + p + '_summarized_graph_update_time']
@@ -156,6 +194,8 @@ with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, o
         complete_str = ""
         summarized_str = ""
         comparative_str = ""
+        times_str = ""
+
         for val in val_order:
             insertion_value = str(val_dict[val][parallelism_index])
             if len(curr_str) == 0:
@@ -180,11 +220,18 @@ with open(out_path, 'w') as out, open(complete_out_path, 'w') as complete_out, o
                     comparative_str = insertion_value
                 else:
                     comparative_str = comparative_str + "\t" + insertion_value
+
+            if not 'ratio' in val:
+                if len(times_str) == 0:
+                    times_str = insertion_value
+                else:
+                    times_str = times_str + "\t" + insertion_value
         
         out.write("{}\n".format(curr_str))
         complete_out.write("{}\n".format(complete_str))
         summarized_out.write("{}\n".format(summarized_str))
         comparative_out.write("{}\n".format(comparative_str))
+        times_out.write("{}\n".format(times_str))
 
     #a = df.values  # access the numpy array containing values
     #print(a)
