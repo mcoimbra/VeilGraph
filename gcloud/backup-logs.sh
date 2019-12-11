@@ -9,7 +9,7 @@ printf -v date '%(%Y-%m-%d %H:%M:%S)T\n' -1
 DATE_TIME_STAMP=$(echo $date | tr ' ' _ )
 
 # Prepare the Google Cloud Storage object names.
-GCLOUD_DIR_NAME="logs_$DATE_TIME_STAMP_$DIR_SUFFIX"
+GCLOUD_DIR_NAME="logs_$DATE_TIME_STAMP\_$DIR_SUFFIX"
 GCLOUD_PATH="gs://graphbolt-storage/testing/flink_logs/$GCLOUD_DIR_NAME"
 
 # Helpful information.
