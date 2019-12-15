@@ -28,9 +28,30 @@ append_to_column_names () {
 	unset FIXED_NAMES_ARRAY
 }
 
+process_gnuplot_scenario () {
+	TARGET_FILE=$1
+	# DATASET_PREFIX=$2
+	# ITERATIONS=$3
+	# R=$4
+	# N=$5
+	# DELTA=$6
+	# RBO_LEN=$7
+	# DAMPENING=$8
 
+	cp "$GCLOUD_DIR"/../gnuplot/templates/"$TARGET_FILE" "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/XXXXX/'$DATASET_PREFIX'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/ITERATIONS/'$ITERATIONS'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/RBO/'$RBO_LEN'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/DAMP/'$DAMPENING'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/RPARAM/'$R'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/NPARAM/'$N'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+	sed -i 's/DELTAPARAM/'$DELTA'/g' "$DATASET_PREFIX"-"$TARGET_FILE"
+
+	gnuplot "$DATASET_PREFIX"-"$TARGET_FILE"
+}
 
 process_scenario () {
+
 	DATASET_PREFIX=$1
 	ITERATIONS=$2
 	R=$3
@@ -94,7 +115,7 @@ process_scenario () {
 
 		# Create file for gnuplot to compare complete and summarizex execution times.
 		# One _columns file is created for each value of parallelism $d.
-		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P"$d"\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_columns.tsv
+		COLUMNS_OUT_FILE=$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P"$d"_"$DAMPENING"_model_$R\_$N\_$DELTA\_D_columns.tsv
 		paste -d , "$COMPLETE_DIR"/columns.tsv "$SUMMARIZED_DIR"/columns.tsv | tr ',' '\t' > $COLUMNS_OUT_FILE
 		
 		# Store the current columns file path in array.
@@ -104,32 +125,21 @@ process_scenario () {
 
 	#echo "${COLUMNS_PATH_ARRAY[@]}"
 
-	FINAL_DATA_OUT_PREFIX=
 	FINAL_DATA_OUT_PATH=$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_$DAMPENING\_model_$R\_$N\_$DELTA\_D_data.tsv
 
 	paste -d , $(echo "${COLUMNS_PATH_ARRAY[@]}") | tr ',' '\t' > $FINAL_DATA_OUT_PATH
 
 	unset COLUMNS_PATH_ARRAY
-
 	PY_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
-	
-	#python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"_data.tsv
 	python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"
 
-	cp "$GCLOUD_DIR"/../gnuplot/templates/summarized-time.gnuplot "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/XXXXX/'$DATASET_PREFIX'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/ITERATIONS/'$ITERATIONS'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/RBO/'$RBO_LEN'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/DAMP/'$DAMPENING'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/RPARAM/'$R'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/NPARAM/'$N'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-	sed -i 's/DELTAPARAM/'$DELTA'/g' "$DATASET_PREFIX"-summarized-time.gnuplot
-
-	gnuplot "$DATASET_PREFIX"-summarized-time.gnuplot
-
-	cp "$GCLOUD_DIR"/../gnuplot/templates/update-and-computation-time-bar-group-plot.gnuplot "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot
-	sed -i 's/XXXXX/'$DATASET_PREFIX'/g' "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot.gnuplot
-	gnuplot "$DATASET_PREFIX"-update-and-computation-time-bar-group-plot.gnuplot
+	process_gnuplot_scenario "summarized-time.gnuplot" 
+	process_gnuplot_scenario "update-and-computation-time-bar-group-plot.gnuplot" 
+	process_gnuplot_scenario "scalability-summarized-speedup.gnuplot"
+	process_gnuplot_scenario "scalability-summarized-speedup-candle-plot.gnuplot"
+	process_gnuplot_scenario "scalability-complete-speedup-candle-plot.gnuplot"
+	process_gnuplot_scenario "scalability-comparative-speedup-candle-plot.gnuplot"
+	process_gnuplot_scenario "complete-vs-summarized-speedup.gnuplot"
 
 }
 

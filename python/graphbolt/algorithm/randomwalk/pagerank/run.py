@@ -343,18 +343,7 @@ if len(args.temp_dir) > 0:
         print("> Provided temporary directory does not exist: {}. Exiting".format(args.temp_dir))
         exit(1)
     TEMP_DIR = args.temp_dir
-else:
-    TEMP_DIR = tempfile.gettempdir()
-
-
-
-print("> Will tell GraphBolt to use cache directory:\t\t{}".format(CACHE_BASE))
-
-EVAL_DIR, STATISTICS_DIR, _, RESULTS_DIR, OUT_DIR, STREAMER_LOG_DIR = localutil.get_pagerank_data_paths(args.out_dir)
-GRAPHBOLT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-
-ZIP_DIR = RESULTS_DIR.replace("Results", "Zips")
+- Change passwords
 
 # Make necessary GraphBolt directories if they don't exist.
 print("> Checking GraphBolt directories...\n")

@@ -1,7 +1,7 @@
 #!/usr/bin/gnuplot
 
 set terminal pdfcairo mono font "sans, 16" color 
-set output 'XXXXX-complete-update-and-computation-time-bar-group-plot.pdf'
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-complete-update-and-computation-time-bar-group-plot.pdf'
 
 set key top left
 set grid
@@ -20,19 +20,19 @@ set style fill solid border -1
 set boxwidth 0.75
 
 set title "Complete version isolated times"
-plot 'XXXXX_ITERATIONS_data_time_stats.tsv' using 2:xtic(1) ti "I/O" fc rgb graph_update_color, \
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using 2:xtic(1) ti "I/O" fc rgb graph_update_color, \
  '' u 4 ti "Integration" fc rgb total_update_color, \
  '' u 6 ti "Computation" fc rgb computation_time_color;
 
 
 set title "Summarized version isolated times" 
-set output 'XXXXX-summarized-update-and-computation-time-bar-group-plot.pdf'
-plot 'XXXXX_ITERATIONS_data_time_stats.tsv' using 8:xtic(1) ti "I/O" fc rgb graph_update_color, \
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-summarized-update-and-computation-time-bar-group-plot.pdf'
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using 8:xtic(1) ti "I/O" fc rgb graph_update_color, \
 '' u 10 ti "Integration" fc rgb total_update_color, \
 '' u 12 ti "Computation" fc rgb computation_time_color;
 
 
-set output 'XXXXX-update-and-computation-overlapped-time-bar-group-plot.pdf'
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-update-and-computation-overlapped-time-bar-group-plot.pdf'
 
 set style histogram columnstacked clustered  gap 1;
 #set style histogram clustered  gap 1;
@@ -50,10 +50,10 @@ offset=-0.82
 # See: https://stackoverflow.com/questions/18332161/gnuplot-histogram-cluster-bar-chart-with-one-line-per-category
 #plot newhistogram "1", 'amazon-2008-40000-random-start_30_data_time_stats.tsv' using 6:xtic(1) with boxes  ti "Computation" fc rgb computation_time_color, '' u 4:xtic(1) with boxes ti "Integration" fc rgb total_update_color, '' u 2:xtic(1) with boxes ti "I/O" fc rgb graph_update_color, newhistogram "1" at 200, 'amazon-2008-40000-random-start_30_data_time_stats.tsv'  using 12 with boxes ti "Computation" fc rgb graph_update_color, '' u 10 with boxes ti "Integration" fc rgb total_update_color, '' u 8 with boxes  ti "I/O" fc rgb computation_time_color 
 
-plot newhistogram "1", 'XXXXX_ITERATIONS_data_time_stats.tsv' using 6:xtic(1) with boxes ti "Computation" fc rgb computation_time_color, \
+plot newhistogram "1", 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using 6:xtic(1) with boxes ti "Computation" fc rgb computation_time_color, \
 '' u 4:xtic(1) with boxes ti "Integration" fc rgb total_update_color, \
 '' u 2:xtic(1) with boxes ti "I/O" fc rgb graph_update_color, \
-newhistogram "2", 'XXXXX_ITERATIONS_data_time_stats.tsv'  using 12:xtic(1) ti "Computation" fc rgb graph_update_color, \
+newhistogram "2", 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv'  using 12:xtic(1) ti "Computation" fc rgb graph_update_color, \
 '' u 10 ti "Integration" fc rgb total_update_color, \
 '' u 8 ti "I/O" fc rgb computation_time_color;
 

@@ -1,5 +1,5 @@
 set terminal pdfcairo mono font "sans, 16"
-set output 'amazon-2008-40000-summarized-speedup.pdf'
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-summarized-speedup.pdf'
 #set multiplot
 #unset key
 set key top left
@@ -9,6 +9,7 @@ set ylabel 'Complete versus summarized speedups'
 set format '%g'
 #set logscale xy
 #set logscale x
+
 
 
 set style data linespoints
@@ -25,11 +26,11 @@ set title  'amazon-2008-40000-random'
 set key autotitle columnhead
 
 plot \
-    'amazon-2008-40000-random-start_30_5000_P1_0.85_model_0.05_2_0.50_D_columns.tsv' using 1:($4/$8) pt 10 title 'P1', \
-    'amazon-2008-40000-random-start_30_5000_P2_0.85_model_0.05_2_0.50_D_columns.tsv' using 1:($4/$8) pt 4 title 'P2', \
-    'amazon-2008-40000-random-start_30_5000_P4_0.85_model_0.05_2_0.50_D_columns.tsv' using 1:($4/$8) pt 6 title 'P4', \
-    'amazon-2008-40000-random-start_30_5000_P8_0.85_model_0.05_2_0.50_D_columns.tsv' using 1:($4/$8) pt 16 title 'P8', \
-    'amazon-2008-40000-random-start_30_5000_P16_0.85_model_0.05_2_0.50_D_columns.tsv' using 1:($4/$8) pt 12 title 'P16', \
+    'XXXXX_ITERATIONS_RBO_P1_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($4/$8) pt 10 title 'P1', \
+    'XXXXX_ITERATIONS_RBO_P2_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($4/$8) pt 4 title 'P2', \
+    'XXXXX_ITERATIONS_RBO_P4_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($4/$8) pt 6 title 'P4', \
+    'XXXXX_ITERATIONS_RBO_P8_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($4/$8) pt 16 title 'P8', \
+    'XXXXX_ITERATIONS_RBO_P16_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($4/$8) pt 12 title 'P16', \
 
 
   #  'data-dyn-inesc-AC-time-dm.csv' using (log($1)/log(2)*log($2)):(($3/$2)*1000*1000) pt 10 title 'P2', \

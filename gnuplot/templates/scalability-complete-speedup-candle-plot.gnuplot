@@ -1,7 +1,7 @@
 # set terminal pngcairo  transparent enhanced font "arial,10" fontscale 1.0 size 600, 400 
 # set output 'candlesticks.3.png'
 set terminal pdfcairo mono font "sans, 16" color 
-set output 'amazon-2008-scalability-complete-speedup-candle-plot.pdf'
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-scalability-complete-speedup-candle-plot.pdf'
 
 set key top left
 set grid
@@ -20,4 +20,4 @@ set xrange [1:32]
 #set yrange [1:6]
 set logscale x 2
 
-plot 'amazon-2008-40000-random-start_30_data_complete_stats.tsv' using 1:($6-$7):($6-$7):($6+$7):($6+$7) linecolor rgb '#3399ff' with candlesticks 
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_complete_stats.tsv' using 1:($6-$7):($6-$7):($6+$7):($6+$7) linecolor rgb '#3399ff' with candlesticks 

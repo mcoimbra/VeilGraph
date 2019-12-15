@@ -1,5 +1,5 @@
 set terminal pdfcairo mono font "sans, 16"
-set output 'amazon-2008-40000-scalability-speedup.pdf'
+set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-scalability-speedup.pdf'
 #set multiplot
 #unset key
 set key top left
@@ -21,14 +21,14 @@ set style data linespoints
 set xrange [0:51]
 #set size 0.5,1.0
 #set origin 0.0,0.0
-set title  'amazon-2008-40000-random'
+set title  'XXXXX'
 set key autotitle columnhead
 
 plot \
-    'amazon-2008-40000-random-start_30_data.tsv' using 1:($8/$16) pt 4 title 'P2', \
-    'amazon-2008-40000-random-start_30_data.tsv' using 1:($8/$24) pt 6 title 'P4', \
-    'amazon-2008-40000-random-start_30_data.tsv' using 1:($8/$32) pt 16 title 'P8', \
-    'amazon-2008-40000-random-start_30_data.tsv' using 1:($4/$40) pt 12 title 'P16'
+    'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data.tsv' using 1:($8/$16) pt 4 title 'P2', \
+    'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data.tsv' using 1:($8/$24) pt 6 title 'P4', \
+    'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data.tsv' using 1:($8/$32) pt 16 title 'P8', \
+    'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data.tsv' using 1:($4/$40) pt 12 title 'P16'
 
 
   #  'data-dyn-inesc-AC-time-dm.csv' using (log($1)/log(2)*log($2)):(($3/$2)*1000*1000) pt 10 title 'P2', \
