@@ -133,13 +133,16 @@ process_scenario () {
 	PY_SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 	python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"
 
-	process_gnuplot_scenario "summarized-time.gnuplot" 
-	process_gnuplot_scenario "update-and-computation-time-bar-group-plot.gnuplot" 
-	process_gnuplot_scenario "scalability-summarized-speedup.gnuplot"
-	process_gnuplot_scenario "scalability-summarized-speedup-candle-plot.gnuplot"
-	process_gnuplot_scenario "scalability-complete-speedup-candle-plot.gnuplot"
+	
+	process_gnuplot_scenario "scalability-comparative-executions-vs-speedup.gnuplot"
 	process_gnuplot_scenario "scalability-comparative-speedup-candle-plot.gnuplot"
-	process_gnuplot_scenario "complete-vs-summarized-speedup.gnuplot"
+	process_gnuplot_scenario "scalability-complete-speedup-candle-plot.gnuplot"
+	process_gnuplot_scenario "scalability-summarized-executions-vs-speedup.gnuplot"
+	process_gnuplot_scenario "scalability-summarized-speedup-candle-plot.gnuplot"
+	process_gnuplot_scenario "summarized-executions-vs-time.gnuplot" 
+	process_gnuplot_scenario "update-and-computation-time-bar-group-plot.gnuplot" 
+
+	
 
 }
 
