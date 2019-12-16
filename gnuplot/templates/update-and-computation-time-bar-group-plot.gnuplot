@@ -6,7 +6,9 @@ set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-complete-
 set key top right
 set grid
 
- 
+# https://stackoverflow.com/questions/23596518/need-to-reduce-this-whitespace-but-seem-to-be-at-a-limit-at-how-much-i-can-gnu
+set lmargin 6.5
+set rmargin 0
 
 set ylabel "Time (ms)"  font ",10" offset 4,0,0
 set xlabel "#Workers"  font ",10" offset 0,0,0
@@ -71,7 +73,8 @@ set ytics  norangelimit autofreq  font ",8"
 set ztics border in scale 0,0 nomirror norotate  autojustify
 set cbtics border in scale 0,0 mirror norotate  autojustify
 set rtics axis in scale 0,0 nomirror norotate  autojustify
-set title "All isolated times" 
+#set title "All isolated times" 
+set title "" 
 #set xlabel  offset character 0, -2, 0 font "" textcolor lt -1 norotate
 set xrange [ * : * ] noreverse writeback
 set x2range [ * : * ] noreverse writeback
