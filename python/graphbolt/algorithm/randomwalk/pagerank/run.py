@@ -343,7 +343,7 @@ if len(args.temp_dir) > 0:
         print("> Provided temporary directory does not exist: {}. Exiting".format(args.temp_dir))
         exit(1)
     TEMP_DIR = args.temp_dir
-- Change passwords
+
 
 # Make necessary GraphBolt directories if they don't exist.
 print("> Checking GraphBolt directories...\n")
