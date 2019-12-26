@@ -20,7 +20,7 @@ plot \
     'XXXXX_ITERATIONS_RBO_P1_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($8/1000) pt 10 title 'P1', \
     'XXXXX_ITERATIONS_RBO_P2_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($8/1000) pt 4 title 'P2', \
     'XXXXX_ITERATIONS_RBO_P4_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($8/1000) pt 6 title 'P4', \
-    'XXXXX_ITERATIONS_RBO_P8_DAMP_model_RPARAM_NPARAM_DELTAPARAMD_columns.tsv' using 1:($8/1000) pt 16 title 'P8', \
+    'XXXXX_ITERATIONS_RBO_P8_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($8/1000) pt 16 title 'P8', \
     'XXXXX_ITERATIONS_RBO_P16_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_columns.tsv' using 1:($8/1000) pt 12 title 'P16'
 
 
