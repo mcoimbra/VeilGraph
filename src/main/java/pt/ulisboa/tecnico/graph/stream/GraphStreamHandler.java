@@ -505,7 +505,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             conf.setString(QueryableStateOptions.SERVER_PORT_RANGE.key(), "30000-35000");
             conf.setString(QueryableStateOptions.PROXY_PORT_RANGE.key(), "35001-40000");
             conf.setString(TaskManagerOptions.RPC_PORT.key(), "45001-50000");
-            conf.setString(TaskManagerOptions.DATA_PORT.key(), "50001-55000");
+            conf.setString(NettyShuffleEnvironmentOptions.DATA_PORT.key(), "50001-55000");
             conf.setString(BlobServerOptions.PORT.key(), "55001-60000");
             conf.setString(HistoryServerOptions.HISTORY_SERVER_WEB_PORT.key(), "60001-62000");
 
