@@ -192,22 +192,29 @@ pip3 install google-cloud-storage
 sudo chown -R graphbolt:graphbolt $PYTHON_BIN_DIR
 
 ################################################
-################################################ Configure Flink 1.6.2.
+################################################ Configure Flink 1.9.1.
 ################################################
 
 readonly FLINK_INSTALL_DIR='/usr/lib/flink'
 readonly FLINK_LOG_DIR='/usr/lib/flink/log'
 
 readonly WORK_DIR="$(mktemp -d)"
-readonly FLINK_URL='https://archive.apache.org/dist/flink/flink-1.6.2/flink-1.6.2-bin-hadoop28-scala_2.11.tgz'
-readonly FLINK_LOCAL="${WORK_DIR}/flink.tgz"
+#readonly FLINK_URL='https://archive.apache.org/dist/flink/flink-1.9.1/flink-1.9.1-bin-scala_2.11.tgz'
+readonly FLINK_URL='https://github.com/apache/flink/archive/release-1.9.zip'
+readonly FLINK_LOCAL="${WORK_DIR}/flink.zip"
 readonly FLINK_TOPLEVEL_PATTERN="${WORK_DIR}/flink-*"
 
 pushd "${WORK_DIR}"
 
 curl -o "${FLINK_LOCAL}" "${FLINK_URL}"
-tar -xzvf "${FLINK_LOCAL}"
+unzip "${FLINK_LOCAL}"
 rm "${FLINK_LOCAL}"
+
+# Compiler Flink 1.9.1
+cd release-1.9.zip
+mvn clean install -DskipTests -Dhadoop.version=2.8.3 -Pinclude-hadoop
+cd flink-dist
+mvn clean install
 
 # Only the first match of the flink toplevel pattern is used.
 readonly FLINK_TOPLEVEL=$(compgen -G "${FLINK_TOPLEVEL_PATTERN}" | head -n1)

@@ -293,7 +293,7 @@ ssh-keyscan -t rsa github.com | tee /tmp/github-key-temp | ssh-keygen -lf -
 cat /tmp/github-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/github-key-temp
 cd $GRAPHBOLT_CODE_DIR
-git pull github master
+git pull github testing
 mvn clean install
 EOF
 
