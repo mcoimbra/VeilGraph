@@ -200,21 +200,26 @@ readonly FLINK_LOG_DIR='/usr/lib/flink/log'
 
 readonly WORK_DIR="$(mktemp -d)"
 #readonly FLINK_URL='https://archive.apache.org/dist/flink/flink-1.9.1/flink-1.9.1-bin-scala_2.11.tgz'
-readonly FLINK_URL='https://github.com/apache/flink/archive/release-1.9.zip'
+#readonly FLINK_URL='https://github.com/apache/flink/archive/release-1.9.zip'
+
 readonly FLINK_LOCAL="${WORK_DIR}/flink.zip"
 readonly FLINK_TOPLEVEL_PATTERN="${WORK_DIR}/flink-*"
 
 pushd "${WORK_DIR}"
 
-curl -o "${FLINK_LOCAL}" "${FLINK_URL}"
+readonly GS_FLINK_19="$GS_BUCKET/flink-1.9-build.zip"
+gsutil cp gs://$GS_FLINK_19 "${FLINK_LOCAL}"
+
+
+#curl -o "${FLINK_LOCAL}" "${FLINK_URL}"
 unzip "${FLINK_LOCAL}"
 rm "${FLINK_LOCAL}"
 
 # Compiler Flink 1.9.1
-cd release-1.9.zip
-mvn clean install -DskipTests -Dhadoop.version=2.8.3 -Pinclude-hadoop
-cd flink-dist
-mvn clean install
+#cd release-1.9.zip
+#mvn clean install -DskipTests -Dhadoop.version=2.8.3 -Pinclude-hadoop
+#cd flink-dist
+#mvn clean install
 
 # Only the first match of the flink toplevel pattern is used.
 readonly FLINK_TOPLEVEL=$(compgen -G "${FLINK_TOPLEVEL_PATTERN}" | head -n1)
