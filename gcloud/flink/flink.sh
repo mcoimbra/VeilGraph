@@ -274,11 +274,6 @@ function main() {
   # Allow port usage for the TaskManagers.
   sudo iptables -A INPUT -p tcp -m tcp --dport 30000:60000 -j ACCEPT
 
-  sudo pip3 install google
-  sudo pip3 install google-auth
-  sudo pip3 install google-cloud-core
-  sudo pip3 install google-cloud-storage
-
   # Configure Flink (TaskManager/JobManager memory, akka timeouts, etc.)
   configure_flink || err "Flink configuration failed"
   

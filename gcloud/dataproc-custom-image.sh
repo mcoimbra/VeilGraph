@@ -116,6 +116,8 @@ ssh-add \$HOME/.ssh/$GITHUB_SSH_PKEY
 export HADOOP_CONF_DIR=/etc/hadoop/conf
 export GOOGLE_APPLICATION_CREDENTIALS=\$HOME/.gcloud/$GS_KEY_NAME
 
+export HADOOP_CLASSPATH=`hadoop classpath`
+
 EOF
 
 # Copy misc UNIX program configurations (.bashrc, .vim/, .viminfo, .screenrc).
