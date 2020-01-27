@@ -245,6 +245,16 @@ sudo chmod -x ${FLINK_INSTALL_DIR}/opt/*.jar
 
 sudo chmod 755 ${FLINK_INSTALL_DIR}/lib
 
+readonly S3_PRESTO_DIR=${FLINK_INSTALL_DIR}/plugins/s3-fs-presto
+sudo mkdir ${S3_PRESTO_DIR}
+sudo chmod 755 ${S3_PRESTO_DIR}
+cp ${FLINK_INSTALL_DIR}/opt/flink-s3-fs-presto*.jar ${S3_PRESTO_DIR}/
+
+readonly S3_HADOOP_DIR=${FLINK_INSTALL_DIR}/plugins/s3-fs-hadoop
+sudo mkdir ${S3_HADOOP_DIR}
+sudo chmod 755 ${S3_HADOOP_DIR}
+cp ${FLINK_INSTALL_DIR}/opt/flink-s3-fs-hadoop*.jar ${S3_HADOOP_DIR}/
+
 # We need to fetch the gcs connector library and put it in Flink's lib directory.
 # https://stackoverflow.com/questions/51860988/flink-checkpoints-to-google-cloud-storage
 wget -O ${FLINK_INSTALL_DIR}/lib/gcs-connector-latest-hadoop2.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-latest-hadoop2.jar
