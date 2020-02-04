@@ -22,7 +22,7 @@ function run_complete() {
   
   gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'source /home/graphbolt/.bash_profile && ssh-add /home/graphbolt/.ssh/cluster && cd /home/graphbolt/Documents/Projects/GraphBolt.git/gcloud && ./backup-logs.sh '$dataset_name'_'$pagerank_iterations'_'$rbo_length'_P'$flink_parallelism'_'$damp'_complete'
 
-  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster --region=us-east1
 }
 
 function run_summarized() {
@@ -47,7 +47,7 @@ function run_summarized() {
   
 
 
-  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster --region=us-east1
 
 }
 
