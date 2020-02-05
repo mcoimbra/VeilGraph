@@ -19,7 +19,7 @@ set xlabel "#Workers"
 set xrange [1:32]
 set logscale x 2
 
-plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_complete_stats.tsv' using 1:($6-$7):($6-$7):($6+$7):($6+$7) linecolor rgb '#3399ff' with candlesticks 
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_complete_stats.tsv' using 1:($10-$11):($10-$11):($10+$11):($10+$11) linecolor rgb '#3399ff' with candlesticks 
 
 set terminal png crop
 set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-scalability-complete-speedup-candle-plot.png'
