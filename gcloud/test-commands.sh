@@ -18,7 +18,7 @@ function run_complete() {
 
   echo "> Cluster name: $cluster_name"
 
-  return
+  #return
 
   gcloud dataproc clusters create graphbolt-cluster --region us-east1 --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
@@ -48,7 +48,7 @@ function run_summarized() {
 
   echo "> Cluster name: $cluster_name"
 
-  return
+  #return
 
   gcloud dataproc clusters create graphbolt-cluster --region us-east1 --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
