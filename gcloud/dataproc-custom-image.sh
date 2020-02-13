@@ -64,10 +64,11 @@ gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* $GRAPHBOLT_
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2015-host-40000-random
 gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2015-host-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2015-host-40000-random/
 
+mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/hollywood-2011-40000-random
+gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/hollywood-2011-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/hollywood-2011-40000-random/
+
 mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random
 gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/
-
-
 
 
 # Create and copy the GraphBolt code directories.
@@ -143,6 +144,8 @@ sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT
 sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/*
 sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2015-host-40000-random/*
 sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/*
+sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/social/hollywood-2011-40000-random/*
+
 readonly GRAPHBOLT_SSH_DIR=$GRAPHBOLT_ROOT/.ssh
 sudo chmod 700 $GRAPHBOLT_SSH_DIR
 sudo chmod 644 $GRAPHBOLT_SSH_DIR/*.pub
