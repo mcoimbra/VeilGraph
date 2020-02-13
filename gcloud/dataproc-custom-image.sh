@@ -295,3 +295,5 @@ sudo chmod -x ${FLINK_INSTALL_DIR}/bin/*.bat
 sudo chmod 755 ${FLINK_INSTALL_DIR}/conf
 sudo chmod -x ${FLINK_INSTALL_DIR}/conf/*
 
+# Uninstall unnecessary software.
+sudo apt-get remove spark

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 ######################################
 ####################################### Automation functions.
 #######################################
@@ -12,9 +10,15 @@ function run_complete() {
   local dataset_dir=$3
   local dataset_name=$4
   
-  rbo_length=5000
+  rbo_length=$5
   pagerank_iterations=30
   damp="0.85"
+
+  local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp
+
+  echo "> Cluster name: $cluster_name"
+
+  return
 
   gcloud dataproc clusters create graphbolt-cluster --region us-east1 --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
@@ -33,11 +37,18 @@ function run_summarized() {
   local r_param=$5
   local n_param=$6
   local delta_param=$7
+  local rbo_length=$8
   
   
-  rbo_length=5000
+  
   pagerank_iterations=30
   damp="0.85"
+
+  local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp\_$r_param\_$n_param\_$delta_param
+
+  echo "> Cluster name: $cluster_name"
+
+  return
 
   gcloud dataproc clusters create graphbolt-cluster --region us-east1 --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
@@ -53,26 +64,31 @@ function run_summarized() {
 
 # Establish run order.
 main() {
-	set -x
+	#set -x
 
-  # ./test-commands "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
+  # ./test-commands "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50 5000
 
   DATA_DIR=$1
   DATASET_PREFIX=$2
   R=$3
 	N=$4
 	DELTA=$5
+  RBO_LEN=$6
 
   
-  run_complete 1 2 $DATA_DIR $DATASET_PREFIX
+  #run_complete 1 2 $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
-  run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA
+  #run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
 
-  for d in 2 4 8 16; do
-    run_complete $d $d $DATA_DIR $DATASET_PREFIX
+  #for d in 2 4 8 16; do
+  for d in 2; do
+    run_complete $d $d $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
-    run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA
+    run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
   done
+
+  wait
+  echo "> All tasks finished."
 }
 
 main "$@"
