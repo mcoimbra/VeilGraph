@@ -251,11 +251,16 @@ if args.flink_port <= 0 or not isinstance(args.flink_port, int):
 if args.chunk_count <= 0 or not isinstance(args.chunk_count, int):
     print("> '-chunks' must be a positive integer. Exiting.")
     sys.exit(1)
-if args.data_dir.startswith('~'):
-    args.data_dir = os.path.expanduser(args.data_dir).replace('\\', '/')
-if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
-    print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
-    sys.exit(1)
+
+if not args.data_dir.startswith('gs:'):
+    if args.data_dir.startswith('~'):
+        args.data_dir = os.path.expanduser(args.data_dir).replace('\\', '/')
+    if not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
+        print("> '-data_dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
+        sys.exit(1)
+    if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
+        print("> '-data-dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
+        exit(1)
 if args.iterations <= 0 or not isinstance(args.iterations, int):
     print("> '-iterations' must be a positive integer. Exiting.")
     sys.exit(1)
@@ -281,9 +286,7 @@ if len(args.out_dir) == 0:
     print("> '-out-dir' must be a non-empty string. Exiting")
     sys.exit(1)
 
-if len(args.data_dir) > 0 and not (os.path.exists(args.data_dir) and os.path.isdir(args.data_dir)):
-    print("> '-data-dir' must be an existing directory.\nProvided: {}\nExiting.".format(args.data_dir))
-    exit(1)
+
 
 print("> Arguments: {}".format(args))
 
