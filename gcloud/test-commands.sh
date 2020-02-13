@@ -15,7 +15,7 @@ function run_complete() {
   damp="0.85"
 
   #local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp
-  local cluster_name=complete-P$cluster_parallelism-$dataset_name
+  local cluster_name=complete-P$cluster_parallelism
 
   echo "> Cluster name: $cluster_name"
 
@@ -47,7 +47,7 @@ function run_summarized() {
 
   #local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp\_$r_param\_$n_param\_$delta_param
 
-  local cluster_name=summarized-P$cluster_parallelism-$dataset_name
+  local cluster_name=summarized-P$cluster_parallelism
 
   echo "> Cluster name: $cluster_name"
 
@@ -79,12 +79,12 @@ main() {
   RBO_LEN=$6
 
   
-  #run_complete 1 2 $DATA_DIR $DATASET_PREFIX $RBO_LEN &
+  run_complete 1 2 $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
-  #run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
+  run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
 
   #for d in 2 4 8 16; do
-  for d in 1 2; do
+  for d in 2; do
     run_complete $d $d $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
     run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
