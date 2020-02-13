@@ -15,7 +15,7 @@ function run_complete() {
   damp="0.85"
 
   #local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp
-  local cluster_name=complete-P$cluster_parallelism
+  local cluster_name=complete-p$cluster_parallelism-$dataset_name
 
   echo "> Cluster name: $cluster_name"
 
@@ -47,7 +47,7 @@ function run_summarized() {
 
   #local cluster_name=graphbolt-cluster-P$cluster_parallelism-$dataset_name\_$rbo_length\_$pagerank_iterations\_$damp\_$r_param\_$n_param\_$delta_param
 
-  local cluster_name=summarized-P$cluster_parallelism
+  local cluster_name=summarized-p$cluster_parallelism-$dataset_name
 
   echo "> Cluster name: $cluster_name"
 
