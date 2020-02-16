@@ -83,12 +83,12 @@ main() {
   RBO_LEN=$6
 
   
-  run_complete 1 2 $DATA_DIR $DATASET_PREFIX $RBO_LEN &
+  #run_complete 1 2 $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
-  run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
+  #run_summarized 1 2 $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
 
   #for d in 2 4 8 16; do
-  for d in 2; do
+  for d in 4 8 16; do
     run_complete $d $d $DATA_DIR $DATASET_PREFIX $RBO_LEN &
 
     run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN &
