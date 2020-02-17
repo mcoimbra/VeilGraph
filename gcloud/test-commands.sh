@@ -9,9 +9,8 @@ function run_complete() {
   local cluster_parallelism=$2
   local dataset_dir=$3
   local dataset_name=$4
-  local region=$5
-  
-  rbo_length=$5
+  local rbo_length=$5
+  local region=$6
   pagerank_iterations=30
   damp="0.85"
 
@@ -92,11 +91,16 @@ main() {
 
   #for d in 2 4 8 16; do
   #for d in 4 8 16; do
-  for d in 8 16; do
-    run_complete $d $d $DATA_DIR $DATASET_PREFIX $RBO_LEN $REGION &
+  #for d in 8 16; do
+  #  run_complete $d $d $DATA_DIR $DATASET_PREFIX $RBO_LEN $REGION &
 
-    run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN $REGION &
-  done
+  #  run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN $REGION &
+  #done
+
+  run_summarized 4 4 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 0.05 2 0.50 500000 us-east4
+  run_complete 8 8 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 500000 us-east4
+
+  run_summarized 8 8 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 0.05 2 0.50 500000 us-west2
 
   wait
   echo "> All tasks finished."
