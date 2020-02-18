@@ -1,6 +1,6 @@
 #!/bin/bash
 
-######################################
+#######################################
 ####################################### Automation functions.
 #######################################
 
@@ -97,8 +97,8 @@ main() {
   #  run_summarized $d $d $DATA_DIR $DATASET_PREFIX $R $N $DELTA $RBO_LEN $REGION &
   #done
 
-  run_complete 16 16 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 500000 us-east1 &
-  run_summarized 16 16 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 0.05 2 0.50 500000 us-east1 &
+  #run_complete 16 16 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 500000 us-east1 &
+  #run_summarized 16 16 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 0.05 2 0.50 500000 us-east1 &
 
   #run_summarized 4 4 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 0.05 2 0.50 500000 us-east4 &
   #run_complete 8 8 /home/graphbolt/Documents/datasets/web eu-2015-host-40000-random 500000 us-east4 &
@@ -109,6 +109,14 @@ main() {
 
   #run_summarized 2 2 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 0.05 2 0.50 500000 us-west1 &
   #run_complete 2 2 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 500000 us-west1 &
+  
+  run_summarized 4 4 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 0.05 2 0.50 500000 us-east4 &
+  run_complete 4 4 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 500000 us-east4 &
+  
+  run_summarized 8 8 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 0.05 2 0.50 500000 us-east1 &
+  run_complete 8 8 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 500000 us-east1 &
+
+  run_summarized 16 16 /home/graphbolt/Documents/datasets/social hollywood-2011-40000-random 0.05 2 0.50 500000 us-central1 &
 
   wait
   echo "> All tasks finished."
