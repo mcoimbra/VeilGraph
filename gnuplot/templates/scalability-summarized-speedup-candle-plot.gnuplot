@@ -9,12 +9,17 @@ set grid
 # Setting the boxwidth to desirable value.
 # http://gnuplot.sourceforge.net/docs_4.2/node163.html
 set boxwidth 
+
+#set boxwidth 2 relative
+
 set style fill solid 1.00 border 
 
-set title "Summarized version speedup (scalability)" 
+set title "Summarization speedup (scalability)" 
 
 set ylabel "Speedup"
 set xlabel "#Workers"
+
+
 
 set xrange [1:32]
 set logscale x 2

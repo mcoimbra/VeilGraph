@@ -23,15 +23,20 @@ plt.rc('text', usetex=True)
 
 # Controlling font size from matplotlib: https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
 SMALL_SIZE = 8
-MEDIUM_SIZE = 11
-BIGGER_SIZE = 12
+MEDIUM_SIZE = 15
+BIGGER_SIZE = 16
+
+TICK_SIZE = 18
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
 plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-plt.rc('ytick', labelsize=MEDIUM_SIZE)   # fontsize of the tick labels
-plt.rc('legend', fontsize=MEDIUM_SIZE)   # legend fontsize
+plt.rc('xtick', labelsize=TICK_SIZE)   # fontsize of the tick labels
+plt.rc('ytick', labelsize=TICK_SIZE)   # fontsize of the tick labels
+#plt.rc('legend', fontsize=MEDIUM_SIZE)   # legend fontsize
+
+plt.rc('legend', fontsize=18)   # legend fontsize
+
 plt.rc('legend', loc="best")
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 

@@ -68,7 +68,7 @@ process_scenario () {
 
 		######### Complete data file.
 
-		COMPLETE_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
+		COMPLETE_DIR=$(echo "$ZIP_STATS_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_complete_D)
 		FILE_NAME=$(ls "$COMPLETE_DIR" | grep start.tsv)
 		COMPLETE_PATH="$COMPLETE_DIR/$FILE_NAME"
 
@@ -92,7 +92,7 @@ process_scenario () {
 
 		######### Summarized data file.
 
-		SUMMARIZED_DIR=$(echo "$ZIP_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_model_$R\_$N\_$DELTA\_D)
+		SUMMARIZED_DIR=$(echo "$ZIP_STATS_TARGET_OUT"/$DATASET_PREFIX\_$ITERATIONS\_$RBO_LEN\_P$d\_$DAMPENING\_model_$R\_$N\_$DELTA\_D)
 		FILE_NAME=$(ls "$SUMMARIZED_DIR" | grep start.tsv)
 		SUMMARIZED_PATH="$SUMMARIZED_DIR/$FILE_NAME"
 		printf "\tSummarized path:\t$SUMMARIZED_PATH\n"
@@ -171,7 +171,9 @@ main() {
 
 	# Process the statistics files.
 	TARGET_STATS_DIR=$(pwd)
-	ZIP_TARGET_OUT=$TARGET_STATS_DIR/Statistics/pagerank
+	ZIP_STATS_TARGET_OUT=$TARGET_STATS_DIR/Statistics/pagerank
+	ZIP_RESULTS_TARGET_OUT=$TARGET_STATS_DIR/Results/pagerank
+	ZIP_RBO_TARGET_OUT=$TARGET_STATS_DIR/Eval/pagerank
 
 	ITERATIONS=$3
 	R=$4

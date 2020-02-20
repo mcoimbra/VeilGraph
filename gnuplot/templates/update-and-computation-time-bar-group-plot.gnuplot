@@ -10,8 +10,8 @@ set grid
 set lmargin 6.5
 set rmargin 0
 
-set ylabel "Time (ms)"  font ",10" offset 4,0,0
-set xlabel "#Workers"  font ",10" offset 0,0,0
+set ylabel "Time (s)"  font ",15" offset 1.50,0,0
+set xlabel "#Workers"  font ",15" offset 0,1,0
 
 
 graph_update_color = "#99ffff"; total_update_color = "#4671d5"; computation_time_color = "#ff0000";
@@ -26,9 +26,9 @@ set boxwidth 0.75
 
 # Isolated graph update, total update and processing times for the complete version.
 set title "Complete version isolated times"
-plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using 2:xtic(1) ti "I/O" fc rgb graph_update_color, \
- '' u 4 ti "Integration" fc rgb total_update_color, \
- '' u 6 ti "Computation" fc rgb computation_time_color;
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using ($2/1000):xtic(1) ti "I/O" fc rgb graph_update_color, \
+ '' u ($4/1000) ti "Integration" fc rgb total_update_color, \
+ '' u ($6/1000) ti "Computation" fc rgb computation_time_color;
 
 
 set terminal png crop
@@ -37,11 +37,19 @@ replot
 set terminal pdfcairo mono font "sans, 16" color 
 
 # Isolated graph update, total update and processing times for the summarized version.
+
+set xrange [0.5:4.5]
+
+set lmargin 6.5
+set rmargin 2
+set tics font ", 15"
+set key font ",15"
+
 set title "Summarized version isolated times" 
 set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-summarized-update-and-computation-time-bar-group-plot.pdf'
-plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using 8:xtic(1) ti "I/O" fc rgb graph_update_color, \
-'' u 10 ti "Integration" fc rgb total_update_color, \
-'' u 12 ti "Computation" fc rgb computation_time_color;
+plot 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D_data_time_stats.tsv' using ($8/1000):xtic(1) ti "I/O" fc rgb graph_update_color, \
+'' u ($10/1000) ti "Integration" fc rgb total_update_color, \
+'' u ($12/1000) ti "Computation" fc rgb computation_time_color;
 
 set terminal png crop
 set output 'XXXXX_ITERATIONS_RBO_DAMP_model_RPARAM_NPARAM_DELTAPARAM_D-summarized-update-and-computation-time-bar-group-plot.png'

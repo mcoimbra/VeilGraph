@@ -161,7 +161,7 @@ parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManag
 args = parser.parse_args()
 
 # Sanitize arguments and exit on invalid values.
-if (args.list != None) and (len(args.list) <= 0 or (len(args.list) % 3 ) != 0):
+if (args.list == None) or (args.list != None) and (len(args.list) <= 0 or (len(args.list) % 3 ) != 0):
     print("> Big vertex parameter list must be a multiple of three. Exiting.")
     sys.exit(1)
 
