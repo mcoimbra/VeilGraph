@@ -134,6 +134,8 @@ process_scenario () {
 	python3 "$GCLOUD_DIR"/get_avg_std.py "$FINAL_DATA_OUT_PATH"
 
 	
+	#exit 0
+
 	process_gnuplot_scenario "scalability-comparative-executions-vs-speedup.gnuplot"
 	process_gnuplot_scenario "scalability-comparative-speedup-candle-plot.gnuplot"
 	process_gnuplot_scenario "scalability-complete-speedup-candle-plot.gnuplot"
