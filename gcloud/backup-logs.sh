@@ -1,6 +1,8 @@
 #!/bin/bash
 
-DIR_SUFFIX=$1
+
+CLUSTER_NAME=$1
+DIR_SUFFIX=$2
 
 PARALLELISM=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
 
@@ -21,5 +23,5 @@ gsutil cp -p /usr/lib/flink/log/* "$GCLOUD_PATH"
 
 # Order each worker to copy its Flink logs.
 for (( i = 0; i < PARALLELISM; ++i )); do
-    ssh "graphbolt@graphbolt-cluster-w-$i" "gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH"
+    ssh "graphbolt@$CLUSTER_NAME-w-$i" "gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH"
 done
