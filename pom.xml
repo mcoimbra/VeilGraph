@@ -20,37 +20,75 @@ under the License.
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>pt.ulisboa.tecnico.graph</groupId>
-	<artifactId>GraphBolt</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<groupId>pt.ulisboa.tecnico.veilgraph</groupId>
+	<artifactId>VeilGraph</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>GraphBolt</name>
+	<name>VeilGraph</name>
 	<url>http://maven.apache.org</url>
 
-	<description>pt.ulisboa.tecnico.graph - An approximate graph computing approach.</description>
+	<description>pt.ulisboa.tecnico.veilgraph - An approximate graph computing approach.</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<!-- Configure Maven compiler versions. -->
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<flink.version>1.9.1</flink.version>
-		<!--<flink.version>1.6.2</flink.version>-->
-		<hadoop.version>2.8.5</hadoop.version>
-		<!--<flink.version>1.8-SNAPSHOT</flink.version>-->
-		<!--<flink.version>1.4.2</flink.version>-->
+		<!-- <maven.compiler.source>11</maven.compiler.source> -->
+		<!-- <maven.compiler.target>11</maven.compiler.target> -->
 
+		<!-- Configure Maven plugin versions. -->
+		<maven.compiler.plugin>3.8.1</maven.compiler.plugin>
+		<maven.enforcer.plugin>3.0.0-M3</maven.enforcer.plugin>
+		<maven.required.version>3.6.0</maven.required.version>
+		<maven.shade.plugin>3.2.4</maven.shade.plugin>
+
+		<!-- Configure Surefire plugin version. -->
+		<!-- We are using 2.21.0 because after that, breaking changes were introduced
+		and VeilGraph becomes unable to compile. -->
+		<!-- <maven.surefire.plugin>3.0.0-M5</maven.surefire.plugin> -->
+		<maven.surefire.plugin>2.21.0</maven.surefire.plugin>
+
+
+
+		<maven.clean.plugin>3.1.0</maven.clean.plugin>
+		<maven.deploy.plugin>3.0.0-M1</maven.deploy.plugin>
+		<maven.install.plugin>3.0.0-M1</maven.install.plugin>
+		<maven.jar.plugin>3.2.0</maven.jar.plugin>
+		<maven.resources.plugin>3.2.0</maven.resources.plugin>
+		<maven.site.plugin>3.9.1</maven.site.plugin>
+
+		<!-- <tycho.compiler.jdt.version>2.0.0</tycho.compiler.jdt.version> -->
+		<tycho.compiler.jdt.version>1.7.0</tycho.compiler.jdt.version>
+
+		<!-- Configure Flink version. -->
+		<!--<flink.version>1.4.2</flink.version>-->
+		<!--<flink.version>1.6.2</flink.version>-->
+		<!--<flink.version>1.8-SNAPSHOT</flink.version>-->
+		<!--<flink.version>1.9.1</flink.version>-->
+		<flink.version>1.11.1</flink.version>
+		<hadoop.version>2.8.5</hadoop.version>
+
+		<!-- Configure logging versions. -->
 		<slf4j.version>1.7.7</slf4j.version>
 		<log4j.version>1.2.17</log4j.version>
-		<scala.version>2.11.12</scala.version>
-		<scala.binary.version>2.11</scala.binary.version>
+
+		<!-- Configure Scala version. -->
+		<scala.version>2.12</scala.version>
+		<scala.binary.version>2.12</scala.binary.version>
 		<akka.version>2.4.20</akka.version>
+
+		<!-- Configure JUnit versions. -->
 		<junit.version>4.12</junit.version>
 		<junit.jupiter.version>5.0.0</junit.jupiter.version>
 		<junit.vintage.version>${junit.version}.1</junit.vintage.version>
 		<junit.platform.version>1.0.1</junit.platform.version>
-		<aspectj.version>1.9.1</aspectj.version>
+
+		<!-- Configure AspectJ versions. -->
+		<aspectj.version>1.9.6</aspectj.version>
 	</properties>
 
 	<repositories>
@@ -112,13 +150,13 @@ under the License.
 			<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
-		
-		
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-scala_${scala.binary.version}</artifactId>
@@ -326,14 +364,14 @@ under the License.
 
 
 
-    <profiles>
+	<profiles>
 		<profile>
 			<!-- Profile for packaging correct JAR files -->
 			<id>build-jar</id>
 
-            <properties>
-                <maven.test.skip>true</maven.test.skip>
-            </properties>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
 
 			<activation>
 				<activeByDefault>true</activeByDefault>
@@ -366,12 +404,12 @@ under the License.
 					<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
 					<version>${flink.version}</version>
 				</dependency>
-                <dependency>
-                    <groupId>org.apache.flink</groupId>
-                    <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
-                    <version>${flink.version}</version>
-                </dependency>
-				
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+
 				<dependency>
 					<groupId>org.apache.flink</groupId>
 					<artifactId>flink-scala_${scala.binary.version}</artifactId>
@@ -400,7 +438,7 @@ under the License.
 					<version>${hadoop.version}</version>
 					<scope>provided</scope>
 				</dependency>
-				
+
 				<dependency>
 					<groupId>com.google.cloud</groupId>
 					<artifactId>google-cloud-storage</artifactId>
@@ -501,22 +539,7 @@ under the License.
 					<version>1.0.0</version>
 					<scope>test</scope>
 				</dependency>
-								<!--
-				<dependency>
-					<groupId>org.aspectj</groupId>
-					<artifactId>aspectjweaver</artifactId>
-					<version>${aspectj.version}</version>
-				</dependency>
 
-
-				<dependency>
-					<groupId>org.aspectj</groupId>
-					<artifactId>aspectjtools</artifactId>
-					<version>${aspectj.version}</version>
-				</dependency>
-
-
-				-->
 				<dependency>
 					<groupId>org.aspectj</groupId>
 					<artifactId>aspectjrt</artifactId>
@@ -533,12 +556,34 @@ under the License.
 
 			<build>
 
+
+
 				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-enforcer-plugin</artifactId>
+						<version>${maven.enforcer.plugin}</version>
+						<executions>
+							<execution>
+								<id>enforce-maven</id>
+								<goals>
+									<goal>enforce</goal>
+								</goals>
+								<configuration>
+									<rules>
+										<requireMavenVersion>
+											<version>${maven.required.version}</version>
+										</requireMavenVersion>
+									</rules>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 					<!-- disable the exclusion rules -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-shade-plugin</artifactId>
-						<version>3.1.0</version>
+						<version>${maven.shade.plugin}</version>
 						<executions>
 							<execution>
 								<phase>package</phase>
@@ -557,7 +602,7 @@ under the License.
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<version>2.19.1</version>
+						<version>${maven.surefire.plugin}</version>
 
 						<configuration>
 							<includes>
@@ -633,9 +678,9 @@ under the License.
 					<name>m2e.version</name>
 				</property>
 			</activation>
-            <properties>
-                <maven.test.skip>true</maven.test.skip>
-            </properties>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
 			<dependencies>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
@@ -663,12 +708,12 @@ under the License.
 					<artifactId>flink-runtime-web_${scala.binary.version}</artifactId>
 					<version>${flink.version}</version>
 				</dependency>
-                <dependency>
-                    <groupId>org.apache.flink</groupId>
-                    <artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
-                    <version>${flink.version}</version>
-                </dependency>
-				
+				<dependency>
+					<groupId>org.apache.flink</groupId>
+					<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+					<version>${flink.version}</version>
+				</dependency>
+
 				<dependency>
 					<groupId>org.apache.flink</groupId>
 					<artifactId>flink-scala_${scala.binary.version}</artifactId>
@@ -697,7 +742,7 @@ under the License.
 					<version>${hadoop.version}</version>
 					<scope>provided</scope>
 				</dependency>
-				
+
 				<dependency>
 					<groupId>com.google.cloud</groupId>
 					<artifactId>google-cloud-storage</artifactId>
@@ -789,18 +834,7 @@ under the License.
 					<version>1.0.0</version>
 					<scope>test</scope>
 				</dependency>
-				<!--
-<dependency>
-    <groupId>org.aspectj</groupId>
-    <artifactId>aspectjweaver</artifactId>
-    <version>${aspectj.version}</version>
-</dependency>
-<dependency>
-	<groupId>org.aspectj</groupId>
-	<artifactId>aspectjtools</artifactId>
-	<version>${aspectj.version}</version>
-</dependency>
--->
+
 				<dependency>
 					<groupId>org.aspectj</groupId>
 					<artifactId>aspectjrt</artifactId>
@@ -848,7 +882,7 @@ under the License.
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-shade-plugin</artifactId>
-						<version>3.1.0</version>
+						<version>${maven.shade.plugin}</version>
 						<executions>
 							<execution>
 								<phase>package</phase>
@@ -866,7 +900,7 @@ under the License.
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<version>2.19.1</version>
+						<version>${maven.surefire.plugin}</version>
 						<configuration>
 							<includes>
 								<include>**/Test*.java</include>
@@ -929,6 +963,9 @@ under the License.
 							<source>1.8</source>
 							<target>1.8</target>
 							<complianceLevel>1.8</complianceLevel>
+<!--							<source>11</source>-->
+<!--							<target>11</target>-->
+<!--							<complianceLevel>11</complianceLevel>-->
 							<forceAjcCompile>true</forceAjcCompile>
 						</configuration>
 					</plugin>
@@ -942,8 +979,44 @@ under the License.
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>${maven.clean.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>${maven.deploy.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>${maven.install.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>${maven.jar.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>${maven.resources.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>${maven.site.plugin}</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19.1</version>
+				<version>${maven.surefire.plugin}</version>
 				<configuration>
 					<includes>
 						<include>**/Test*.java</include>
@@ -1016,7 +1089,7 @@ under the License.
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>${maven.shade.plugin}</version>
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
@@ -1138,11 +1211,36 @@ under the License.
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>${maven.enforcer.plugin}</version>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>${maven.required.version}</version>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+				<!-- <version>3.7.0</version>-->
+				<version>${maven.compiler.plugin}</version>
 				<configuration>
-					<source>1.8</source> <!-- If you want to use Java 8, change this to "1.8" -->
-					<target>1.8</target> <!-- If you want to use Java 8, change this to "1.8" -->
+<!--					<source>11</source>
+					<target>11</target>
+					<release>11</release>-->
+					<source>1.8</source><!-- If you want to use Java 8, change this to "1.8" -->
+					<target>1.8</target><!-- If you want to use Java 8, change this to "1.8" -->
 					<compilerId>jdt</compilerId>
 				</configuration>
 				<dependencies>
@@ -1150,7 +1248,7 @@ under the License.
 					<dependency>
 						<groupId>org.eclipse.tycho</groupId>
 						<artifactId>tycho-compiler-jdt</artifactId>
-						<version>0.21.0</version>
+						<version>${tycho.compiler.jdt.version}</version>
 					</dependency>
 				</dependencies>
 			</plugin>
