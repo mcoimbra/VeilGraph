@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License. """
 __license__ = "Apache 2.0"
 
-# Used to launch combinations of parameters for different GraphBolt 
+# Used to launch combinations of parameters for different VeilGraph 
 # PageRank executions.
 # http://sbillaudelle.de/2015/02/20/matplotlib-with-style.html
 #
@@ -49,16 +49,16 @@ import numpy as np
 
 # 3. custom imports
 # https://stackoverflow.com/questions/48324056/in-python-how-can-i-import-from-a-grandparent-folder-with-a-relative-path?noredirect=1&lq=1
-##from graphbolt import util
+##from VEILGRAPH import util
 #FILE_ABSOLUTE_PATH = os.path.abspath(__file__)  # get absolute filepath
 #CURRENT_DIR = os.path.dirname(FILE_ABSOLUTE_PATH)  # get directory path of file
 #PARENT_DIR = os.path.dirname(CURRENT_DIR)  # get parent directory path
 #BASE_DIR = os.path.dirname(PARENT_DIR)  # get grand parent directory path
 # or you can directly get grandparent directory path as below
-#GRAPHBOLT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-#sys.path.append(GRAPHBOLT_ROOT_DIR)  # append the path to system
-from graphbolt import localutil
-from graphbolt.figure import matplotlib_config
+#VEILGRAPH_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(VEILGRAPH_ROOT_DIR)  # append the path to system
+from VEILGRAPH import localutil
+from VEILGRAPH.figure import matplotlib_config
 
 
 ###########################################################################
@@ -134,13 +134,13 @@ def save_figure(path: str, extension_list: List) -> None:
 ###########################################################################
 
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-DESCRIPTION_TEXT = "GraphBolt PageRank figure generator."
+DESCRIPTION_TEXT = "VeilGraph PageRank figure generator."
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("-plot-single-figures", help="skip parameter-specific figure generation. Only plot groups of combinations of parameters", required=False, action="store_true") # if ommited default value is false
 parser.add_argument("-png", help="output .png files too", required=False, action="store_true") # if ommited default value is false
 parser.add_argument("-pdf", help="output .pdf files too", required=False, action="store_true") # if ommited default value is false
 
-# GraphBolt/PageRank-specific parameters.
+# VeilGraph/PageRank-specific parameters.
 parser.add_argument("-skip-flink-job-stats", help="skip Flink job operator statistics figure generation.", required=False, action="store_true") # if ommited default value is false
 
 parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
@@ -148,7 +148,7 @@ parser.add_argument("-dataset-name", help="dataset name.", required=True, type=s
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
 parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
 parser.add_argument("-chunks", "--chunk-count", help="set desired number of chunks to be sent by the streamer.", required=True, type=int, default=50)
-parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", required=True, type=int, default=1000)
+parser.add_argument("-size", help="set desired VeilGraph RBO rank length.", required=True, type=int, default=1000)
 parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 
@@ -156,7 +156,7 @@ parser.add_argument("-skip-rbo", help="skip RBO plots?", required=False, action=
 
 parser.add_argument('-l','--list', nargs='+', help='<Required> Set flag', required=False, default=None)
 
-parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManager parallelism.", required=False, type=int, default=1)
+parser.add_argument("-p", "--parallelism", help="set desired VeilGraph TaskManager parallelism.", required=False, type=int, default=1)
 
 args = parser.parse_args()
 
@@ -215,8 +215,8 @@ if args.pdf:
 EVAL_DIR, STATISTICS_DIR, FIGURES_DIR, _, _, _ = localutil.get_pagerank_data_paths(args.out_dir)
 
 
-# Make necessary GraphBolt directories if they don't exist.
-print("> Checking GraphBolt directories...\n")
+# Make necessary VeilGraph directories if they don't exist.
+print("> Checking VeilGraph directories...\n")
 
 
 if (not args.skip_rbo) and (not os.path.exists(EVAL_DIR)):
@@ -245,7 +245,7 @@ else:
 # Execute figure generation for different parameters.
 #r_values, n_values, delta_values = localutil.get_big_vertex_params()
 
-# Dictionary to store GraphBolt PageRank statistics for each parameter combination that was found.
+# Dictionary to store VeilGraph PageRank statistics for each parameter combination that was found.
 result_statistic_matrices = {}
 
 # Dictionary to store PageRank RBO values for each parameter combination that was found.
@@ -274,25 +274,25 @@ if args.list != None:
         indexes = []
         rbos = []
         
-        # Label to use in subsequent plots. Also used as a key for the map of GraphBolt statistic matrices.
+        # Label to use in subsequent plots. Also used as a key for the map of VeilGraph statistic matrices.
         key_label = r'\textit{r} = KW_r, \textit{n} = KW_n, $\Delta$ = KW_delta'.replace("KW_r", "{KW_r:.2f}".format(KW_r = r)).replace("KW_n", "{KW_n}".format(KW_n = n)).replace("KW_delta", "{KW_delta:.2f}".format(KW_delta = delta)) 
 
 
-        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}.csv'.format(
+        VEILGRAPH_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}{KW_DELETE_TOKEN}.csv'.format(
         KW_EVAL_DIR = EVAL_DIR, KW_DATASET_NAME = args.dataset_name, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
 
         if (not args.skip_rbo):
             ##### Make RBO figure.
-            print("> Using eval path for figures:\t{}".format(graphbolt_output_eval_path)) #####
-            if os.path.isfile(graphbolt_output_eval_path) and os.stat(graphbolt_output_eval_path).st_size > 0:
-                file_sz = localutil.file_len(graphbolt_output_eval_path)
+            print("> Using eval path for figures:\t{}".format(VEILGRAPH_output_eval_path)) #####
+            if os.path.isfile(VEILGRAPH_output_eval_path) and os.stat(VEILGRAPH_output_eval_path).st_size > 0:
+                file_sz = localutil.file_len(VEILGRAPH_output_eval_path)
             else:
                 file_sz = -1
             print("> File has {} lines.".format(file_sz))
             
-            if os.path.isfile(graphbolt_output_eval_path) and file_sz  == args.chunk_count + 1:
-                with open(graphbolt_output_eval_path, 'r') as eval_results:
+            if os.path.isfile(VEILGRAPH_output_eval_path) and file_sz  == args.chunk_count + 1:
+                with open(VEILGRAPH_output_eval_path, 'r') as eval_results:
                     rbo_lines = eval_results.readlines()
 
                     for l in rbo_lines:
@@ -309,7 +309,7 @@ if args.list != None:
                 # Create 'singles' directory.
                 pathlib.Path(figure_singles_new_dir_path).mkdir(parents=True, exist_ok=True)
 
-                # Set the figure base name for the GraphBolt vertex K set parameters.
+                # Set the figure base name for the VeilGraph vertex K set parameters.
                 figure_path_name = '{KW_SINGLE_FIGURES_DIR}/{KW_FIGURE_BASE_NAME}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}'.format(KW_SINGLE_FIGURES_DIR = figure_singles_new_dir_path, KW_FIGURE_BASE_NAME = figure_base_name, KW_r = r, KW_n = n, KW_delta = delta)
                 
                 
@@ -879,7 +879,7 @@ stream_hyph_idx = stream_last_sep + 1 + stream_file_path[stream_last_sep + 1:str
 stream_size = stream_file_path[stream_hyph_idx + 1: stream_idx]
 dataset_name = stream_file_path[stream_last_sep + 1: stream_hyph_idx]
 
-# Create GraphBolt LaTeX image-including code (4 graphs in a single figure).
+# Create VeilGraph LaTeX image-including code (4 graphs in a single figure).
 latex_code_path = figure_path_name + "-LaTeX-1-fig-4-graphs.tex"
 with open(latex_code_path, 'w') as latex_file:
 
@@ -897,7 +897,7 @@ with open(latex_code_path, 'w') as latex_file:
 
 
 
-# Create GraphBolt LaTeX image-including code (4 graphs, 1 figure for each).
+# Create VeilGraph LaTeX image-including code (4 graphs, 1 figure for each).
 latex_code_path = figure_path_name + "-LaTeX-4-fig-1-graph.tex"
 with open(latex_code_path, 'w') as latex_file:
 
@@ -925,7 +925,7 @@ with open(latex_code_path, 'w') as latex_file:
     latex_file.write(tex_code_str)
 
 
-# Create GraphBolt LaTeX image-including code (4 graphs, 1 figure for each) for best-3 and worst-3 results.
+# Create VeilGraph LaTeX image-including code (4 graphs, 1 figure for each) for best-3 and worst-3 results.
 latex_code_path = figure_path_name + "-LaTeX-4-fig-1-graph-best-3-worst-3.tex"
 with open(latex_code_path, 'w') as latex_file:
 
@@ -953,7 +953,7 @@ with open(latex_code_path, 'w') as latex_file:
     latex_file.write(tex_code_str)
 
 
-# Create GraphBolt LaTeX image-including code (3 graphs in a column).
+# Create VeilGraph LaTeX image-including code (3 graphs in a column).
 latex_code_path = figure_path_name + "-LaTeX-3-fig-1-graph-column.tex"
 with open(latex_code_path, 'w') as latex_file:
 

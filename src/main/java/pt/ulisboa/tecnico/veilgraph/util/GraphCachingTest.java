@@ -69,23 +69,23 @@ public class GraphCachingTest {
 		final Map<String, Object> argValues = ph.getParameters();
 
 		// Set some parameters of PageRank.
-		//pageRankIterationCount = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PAGERANK_ITERATIONS.toString());
-		//pageRankOutputSize = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PAGERANK_SIZE.toString());
-		//pageRankDampeningFactor = (Double) argValues.get(ParameterHelper.GraphBoltArgumentName.DAMPENING_FACTOR.toString());
-		executionLimit = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.EXECUTION_LIMIT.toString());
-		//streamPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.STREAM_PATH.toString());
-		//debugging = (Boolean) argValues.get(PageRankParameterHelper.GraphBoltArgumentName.DEBUG.toString());
-		debugging = argValues.containsKey(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
-		outputBase = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.OUTPUT_DIR.toString());
+		//pageRankIterationCount = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.PAGERANK_ITERATIONS.toString());
+		//pageRankOutputSize = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.PAGERANK_SIZE.toString());
+		//pageRankDampeningFactor = (Double) argValues.get(ParameterHelper.VeilGraphArgumentName.DAMPENING_FACTOR.toString());
+		executionLimit = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.EXECUTION_LIMIT.toString());
+		//streamPath = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.STREAM_PATH.toString());
+		//debugging = (Boolean) argValues.get(PageRankParameterHelper.VeilGraphArgumentName.DEBUG.toString());
+		debugging = argValues.containsKey(ParameterHelper.VeilGraphArgumentName.DEBUG.toString());
+		outputBase = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.OUTPUT_DIR.toString());
 
 		ExecutionEnvironment env = null;
 		boolean runningRemoteFlink =
-				argValues.containsKey(ParameterHelper.GraphBoltArgumentName.SERVER_ADDRESS.toString()) &&
-				argValues.containsKey(ParameterHelper.GraphBoltArgumentName.SERVER_PORT.toString());
+				argValues.containsKey(ParameterHelper.VeilGraphArgumentName.SERVER_ADDRESS.toString()) &&
+				argValues.containsKey(ParameterHelper.VeilGraphArgumentName.SERVER_PORT.toString());
 		if(runningRemoteFlink) {
 
-			final String remoteAddress = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.SERVER_ADDRESS.toString());
-			final Integer remotePort = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.SERVER_PORT.toString());
+			final String remoteAddress = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.SERVER_ADDRESS.toString());
+			final Integer remotePort = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.SERVER_PORT.toString());
 
 			String jarFile = "";
 			File mvnRootFile = null;
@@ -177,11 +177,12 @@ public class GraphCachingTest {
 		}
 
 		// Some details on the ExecutionEnvironment configuration options: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
-		env.getConfig().enableSysoutLogging().setParallelism(1);
+		env.getConfig().setParallelism(1);
+		//env.getConfig().disableSysoutLogging().setParallelism(parallelism);
 		// TODO: experiment with this later: .enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
 		
 		// Read the initial graph.
-		inputPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.INPUT_FILE.toString());
+		inputPath = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.INPUT_FILE.toString());
     	Graph<Long, NullValue, NullValue> graph = Graph.fromCsvReader(inputPath, env)
                 .ignoreCommentsEdges("#").fieldDelimiterEdges("\t").keyType(Long.class);
 
@@ -324,7 +325,7 @@ public class GraphCachingTest {
 			System.out.println("Triggering job execution.");
 			long start = System.nanoTime();
 
-			final JobExecutionResult res = env.execute("GraphBolt execution");
+			final JobExecutionResult res = env.execute("VeilGraph execution");
 
 			long end = System.nanoTime();
 

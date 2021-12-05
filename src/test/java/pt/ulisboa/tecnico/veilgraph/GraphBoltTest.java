@@ -46,10 +46,10 @@ import org.apache.flink.util.Collector;
 
 
 @SuppressWarnings("unused")
-public class GraphBoltTest
+public class VeilGraphTest
 {
-	private static final Logger LOG = Logger.getLogger(GraphBoltTest.class.getName());
-	private static GraphBoltTest singleton = null;
+	private static final Logger LOG = Logger.getLogger(VeilGraphTest.class.getName());
+	private static VeilGraphTest singleton = null;
 	private ExecutionEnvironment context;
 	private ArrayList<Graph<Long, NullValue, NullValue>> g = new ArrayList<>();
 	private ArrayList<Long> vertexCount = new ArrayList<Long>();
@@ -64,7 +64,7 @@ public class GraphBoltTest
 	}
 	
 	/**
-	 * Getter for the global GraphBolt update tracking module instance.
+	 * Getter for the global VeilGraph update tracking module instance.
 	 * This is used throughout the tests of this class to verify the behavior of graph update stream consumption.
 	 * 
 	 * @see pt.ulisboa.tecnico.veilgraph.stream.GraphUpdateTracker
@@ -77,15 +77,15 @@ public class GraphBoltTest
 	/**
 	 * Private constructor for the singleton pattern.
 	 */
-	private GraphBoltTest() {}
+	private VeilGraphTest() {}
 	
 	/**
 	 * Singleton design pattern instance access.
 	 * @return the singleton instance.
 	 */
-	private static GraphBoltTest getInstance() {
+	private static VeilGraphTest getInstance() {
 		if(singleton == null)
-			singleton = new GraphBoltTest();
+			singleton = new VeilGraphTest();
 		return singleton;
 	}
 	
@@ -155,14 +155,14 @@ public class GraphBoltTest
 	
 	@BeforeAll
 	private static void initAll() {
-		final GraphBoltTest instance = getInstance();
+		final VeilGraphTest instance = getInstance();
 		final ExecutionEnvironment context = ExecutionEnvironment.getExecutionEnvironment();
 		instance.setContext(context);
 		
 		context.getConfig().disableSysoutLogging();
 		
 		try {	
-			final String step0GraphPath = new File( GraphBoltTest.class.getResource("/step_0_graph.tsv").toURI()).getPath();
+			final String step0GraphPath = new File( VeilGraphTest.class.getResource("/step_0_graph.tsv").toURI()).getPath();
 			final Graph<Long, NullValue, NullValue> g0 = Graph.fromCsvReader(step0GraphPath, context)
 					.ignoreCommentsEdges("#").fieldDelimiterEdges("\t").keyType(Long.class);		
 			final long vertexCount0 = g0.numberOfVertices();
@@ -171,7 +171,7 @@ public class GraphBoltTest
 			instance.getVertexCountList().add(vertexCount0);
 			instance.getEdgeCountList().add(edgeCount0);
 			
-			final String step0RankPath = new File( GraphBoltTest.class.getResource("/step_0_python_powermethod_pr.tsv").toURI()).getPath();
+			final String step0RankPath = new File( VeilGraphTest.class.getResource("/step_0_python_powermethod_pr.tsv").toURI()).getPath();
 			final DataSet<Tuple2<Long, Double>> ranks0 = getInstance().getContext()
 					.readCsvFile(step0RankPath)
 					.ignoreComments("#")
@@ -180,7 +180,7 @@ public class GraphBoltTest
 					.sortPartition(1, Order.DESCENDING);
 			instance.getOfflineResults().add(ranks0);
 			
-			final String step1GraphPath = new File( GraphBoltTest.class.getResource("/step_1_graph.tsv").toURI()).getPath();
+			final String step1GraphPath = new File( VeilGraphTest.class.getResource("/step_1_graph.tsv").toURI()).getPath();
 			final Graph<Long, NullValue, NullValue> g1 = Graph.fromCsvReader(step1GraphPath, context)
 					.ignoreCommentsEdges("#").fieldDelimiterEdges("\t").keyType(Long.class);		
 			final long vertexCount1 = g1.numberOfVertices();
@@ -189,7 +189,7 @@ public class GraphBoltTest
 			instance.getVertexCountList().add(vertexCount1);
 			instance.getEdgeCountList().add(edgeCount1);
 			
-			final String step1RankPath = new File( GraphBoltTest.class.getResource("/step_1_python_powermethod_pr.tsv").toURI()).getPath();
+			final String step1RankPath = new File( VeilGraphTest.class.getResource("/step_1_python_powermethod_pr.tsv").toURI()).getPath();
 			final DataSet<Tuple2<Long, Double>> ranks1 = getInstance().getContext()
 					.readCsvFile(step1RankPath)
 					.ignoreComments("#")
@@ -239,7 +239,7 @@ public class GraphBoltTest
 	@DisplayName("testGraphStepProgression")
 	void testGraphStepProgression(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			
 
 			for(int i = 1, lim = instance.getGraphList().size(); i < lim; i++) {
@@ -268,7 +268,7 @@ public class GraphBoltTest
 
 	
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=0 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=0 after the first set of updates is applied.
 	 * @param testInfo
 	 */
 
@@ -279,7 +279,7 @@ public class GraphBoltTest
 
 			/*
 
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final Double vertexDegreeMininumChangeRatio = new Double(0.05);
 			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
 			final DataSet<Tuple2<Long, Double>> previousRanks = instance.getOfflineResults().get(0);
@@ -360,7 +360,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIteration1")
 	void testDeltaIteration1(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -401,7 +401,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIteration2")
 	void testDeltaIteration2(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -444,7 +444,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIteration3")
 	void testDeltaIteration3(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -488,7 +488,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIteration4")
 	void testDeltaIteration4(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -531,7 +531,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIteration5")
 	void testDeltaIteration5(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -577,7 +577,7 @@ public class GraphBoltTest
 	@DisplayName("testDeltaIterationHundredIterations")
 	void testDeltaIterationHundredIterations(final TestInfo testInfo) {
 
-		final ExecutionEnvironment env = GraphBoltTest.getInstance().getContext();
+		final ExecutionEnvironment env = VeilGraphTest.getInstance().getContext();
 
 		// Define some edges.
 		final ArrayList<Tuple2<Long, Long>> edges = new ArrayList<Tuple2<Long, Long>>();
@@ -621,7 +621,7 @@ public class GraphBoltTest
 
 
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=1 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * THIS TEST WAS NOT NOT INCLUDING NEWLY-ADDED VERTICES IN THE EXPANSION SET
 	 * TODO: DELETE THIS LATER
 	 * @param testInfo
@@ -631,7 +631,7 @@ public class GraphBoltTest
 	@DisplayName("testStep1ParameterExpansionN1")
 	void testStep1ParameterExpansionN1(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final Double vertexDegreeMininumChangeRatio = new Double(0.05);
 			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
 			final DataSet<Tuple2<Long, Double>> previousRanks = instance.getOfflineResults().get(0);
@@ -726,14 +726,14 @@ public class GraphBoltTest
 	}
 */
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=1 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * @param testInfo
 	 */
 	@Test
 	@DisplayName("testStep1ParameterExpansionWithNewVerticesN1")
 	void testStep1ParameterExpansionWithNewVerticesN1(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final Double r = new Double(0.05);
 			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
 			final DataSet<Tuple2<Long, Double>> previousRanks = instance.getOfflineResults().get(0);
@@ -824,13 +824,13 @@ public class GraphBoltTest
 
 
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=1 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * @param testInfo
 	 */
 	@Test
 	@DisplayName("testStep1ParameterExpansionFullExpandCallN1")
 	void testStep1ParameterExpansionFullExpandCallN1(final TestInfo testInfo) {
-		final GraphBoltTest instance = getInstance();
+		final VeilGraphTest instance = getInstance();
 		final ExecutionEnvironment env = instance.getContext();
 
 		// Get vertices where the previous in-degree was 0 or it changed enough so that abs((curr-degree / prev-degree) - 1) > vertexDegreeMininumChangeRatio
@@ -870,7 +870,7 @@ public class GraphBoltTest
 	@Test
 	@DisplayName("checkDeltaIterationInfiniteLoop2")
 	void checkDeltaIterationInfiniteLoop2(final TestInfo testInfo) {
-		final GraphBoltTest instance = getInstance();
+		final VeilGraphTest instance = getInstance();
 		final ExecutionEnvironment env = instance.getContext();
 
 		env.getConfig().disableSysoutLogging();
@@ -879,8 +879,8 @@ public class GraphBoltTest
 		String graphPath = null;
 		String expandedIdsPath = null;
 		try {
-			graphPath = new File(GraphBoltTest.class.getResource("/Facebook-links-5000-start.tsv").toURI()).getPath();
-			expandedIdsPath = new File(GraphBoltTest.class.getResource("/expandedIds_1.csv").toURI()).getPath();
+			graphPath = new File(VeilGraphTest.class.getResource("/Facebook-links-5000-start.tsv").toURI()).getPath();
+			expandedIdsPath = new File(VeilGraphTest.class.getResource("/expandedIds_1.csv").toURI()).getPath();
 		}
 		catch (final Exception e) {
 			Assertions.fail(e.getMessage());
@@ -986,7 +986,7 @@ public class GraphBoltTest
 	@Test
 	@DisplayName("checkDeltaIterationInfiniteLoop")
 	void checkDeltaIterationInfiniteLoop(final TestInfo testInfo) {
-		final GraphBoltTest instance = getInstance();
+		final VeilGraphTest instance = getInstance();
 		final ExecutionEnvironment env = instance.getContext();
 
 		env.getConfig().disableSysoutLogging();
@@ -995,8 +995,8 @@ public class GraphBoltTest
 		String graphPath = null;
 		String expandedIdsPath = null;
 		try {
-			graphPath = new File(GraphBoltTest.class.getResource("/Facebook-links-5000-start.tsv").toURI()).getPath();
-			expandedIdsPath = new File(GraphBoltTest.class.getResource("/expandedIds_1.csv").toURI()).getPath();
+			graphPath = new File(VeilGraphTest.class.getResource("/Facebook-links-5000-start.tsv").toURI()).getPath();
+			expandedIdsPath = new File(VeilGraphTest.class.getResource("/expandedIds_1.csv").toURI()).getPath();
 		}
 		catch (final Exception e) {
 			Assertions.fail(e.getMessage());
@@ -1166,14 +1166,14 @@ public class GraphBoltTest
 	}
 */
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=1 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * @param testInfo
 	 */
 	@Test
 	@DisplayName("testStep1ParameterExpansionInfoDataSetN1")
 	void testStep1ParameterExpansionInfoDataSetN1(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final ExecutionEnvironment env = instance.getContext();
 
 			// Get vertices where the previous in-degree was 0 or it changed enough so that abs((curr-degree / prev-degree) - 1) > vertexDegreeMininumChangeRatio
@@ -1275,7 +1275,7 @@ public class GraphBoltTest
 	}
 
 	/**
-	 * Test the GraphBolt hot vertex set calculation with n=1 after the first set of updates is applied.
+	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * This is using a revised version of DeltaIteration because it was consuming huge amounts of memory on Cit-HepPh and Facebook-links, leading to all threads being stuck on waiting.
 	 * @param testInfo
 	 */
@@ -1283,7 +1283,7 @@ public class GraphBoltTest
 	@DisplayName("testStep1ParameterExpansionInfoDataSetNewDeltaIterationN1")
 	void testStep1ParameterExpansionInfoDataSetNewDeltaIterationN1(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final ExecutionEnvironment env = instance.getContext();
 
 			// Get vertices where the previous in-degree was 0 or it changed enough so that abs((curr-degree / prev-degree) - 1) > vertexDegreeMininumChangeRatio
@@ -1401,7 +1401,7 @@ public class GraphBoltTest
 	@DisplayName("testStep1EdgeCount")
 	void testStep1EdgeCount(final TestInfo testInfo) {
 		try {
-			final GraphBoltTest instance = getInstance();
+			final VeilGraphTest instance = getInstance();
 			final long numberOfEdges = instance.getGraphList().get(1).numberOfEdges();
 			Assertions.assertEquals(instance.getEdgeCountList().get(1).longValue(), numberOfEdges, () -> "Edge count mismatch.");
 		} catch (final Exception e) {
@@ -1425,7 +1425,7 @@ public class GraphBoltTest
 			final Graph<Long, Double, NullValue> doublesGraph = getInstance().getGraphList().get(0)
 					.mapVertices(new GraphDoubleInitializer<Long, NullValue>());
 			
-			// Compute GraphBolt's SimplePageRank.
+			// Compute VeilGraph's SimplePageRank.
 			final SimplePageRank<Long, Double, NullValue> simplePageRank = new SimplePageRank<>(0.85d, null, 300);
 			final DataSet<Tuple2<Long, Double>> simpleRanks = simplePageRank
 					.run(doublesGraph)
@@ -1445,11 +1445,11 @@ public class GraphBoltTest
 				simpleRanks.print();
 			}
 			
-			// The SimplePageRank of GraphBolt compared to networkx power-method yields an RBO of 0.99.
+			// The SimplePageRank of VeilGraph compared to networkx power-method yields an RBO of 0.99.
 			final double rbo = RBO(precomputedRanks, simpleRanks, +0.98d);
 			
 			if(getInstance().debugging()) {
-				System.out.println("GraphBolt SimplePageRank rbo: " + rbo);
+				System.out.println("VeilGraph SimplePageRank rbo: " + rbo);
 			}
 			
 			Assertions.assertEquals(0.99, rbo, 0.1d, () -> "RBO mismatch.");
@@ -1475,7 +1475,7 @@ public class GraphBoltTest
 			final Graph<Long, Double, NullValue> doublesGraph = getInstance().getGraphList().get(1)
 					.mapVertices(new GraphDoubleInitializer<Long, NullValue>());
 			
-			// Compute GraphBolt's SimplePageRank.
+			// Compute VeilGraph's SimplePageRank.
 			//final SimplePageRank<Long, Double, NullValue> simplePageRank = new SimplePageRank<>(0.85d, null, 100);
 			final SimplePageRank<Long, Double, NullValue> simplePageRank = new SimplePageRank<>(0.85d, 1.0d / doublesGraph.numberOfVertices(), 100);
 			final DataSet<Tuple2<Long, Double>> simpleRanks = simplePageRank
@@ -1500,11 +1500,11 @@ public class GraphBoltTest
 				simpleRanks.print();
 			}
 			
-			// The SimplePageRank of GraphBolt compared to networkx power-method yields an RBO of 0.99.
+			// The SimplePageRank of VeilGraph compared to networkx power-method yields an RBO of 0.99.
 			final double rbo = RBO(precomputedRanks, simpleRanks, +0.98d);
 			
 			if(getInstance().debugging()) {
-				System.out.println("GraphBolt SimplePageRank rbo: " + rbo);
+				System.out.println("VeilGraph SimplePageRank rbo: " + rbo);
 			}
 			
 			Assertions.assertEquals(0.99, rbo, 0.1d, () -> "RBO mismatch.");
@@ -1605,7 +1605,7 @@ public class GraphBoltTest
 			final Graph<Long, Double, NullValue> doublesGraph = getInstance().getGraphList().get(1)
 					.mapVertices(new GraphDoubleInitializer<Long, NullValue>());
 
-			// Compute GraphBolt's SimplePageRank.
+			// Compute VeilGraph's SimplePageRank.
 			//final SimplePageRank<Long, Double, NullValue> simplePageRank = new SimplePageRank<>(0.85d, null, 100);
 			/*final SimplePageRank<Long, Double, NullValue> simplePageRank = new SimplePageRank<>(0.85d, 1.0d / doublesGraph.numberOfVertices(), 100);
 			final DataSet<Tuple2<Long, Double>> simpleRanks = simplePageRank
@@ -1640,7 +1640,7 @@ public class GraphBoltTest
 				simpleRanks.print();
 			}
 
-			// The SimplePageRank of GraphBolt compared to networkx power-method yields an RBO of 0.99.
+			// The SimplePageRank of VeilGraph compared to networkx power-method yields an RBO of 0.99.
 
 			DataSet<Tuple2<Long, Double>> convertedRanks = simpleRanks
 					.map(new MapFunction<Vertex<Long, Double>, Tuple2<Long, Double>>() {
@@ -1653,7 +1653,7 @@ public class GraphBoltTest
 			final double rbo = RBO(precomputedRanks, convertedRanks, +0.98d);
 
 			if(getInstance().debugging()) {
-				System.out.println("GraphBolt SimplePageRank rbo: " + rbo);
+				System.out.println("VeilGraph SimplePageRank rbo: " + rbo);
 			}
 
 			Assertions.assertEquals(0.99, rbo, 0.1d, () -> "RBO mismatch.");

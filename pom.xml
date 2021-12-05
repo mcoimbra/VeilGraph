@@ -35,22 +35,22 @@ under the License.
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Configure Maven compiler versions. -->
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<!-- <maven.compiler.source>11</maven.compiler.source> -->
-		<!-- <maven.compiler.target>11</maven.compiler.target> -->
+		<!-- <maven.compiler.source>1.8</maven.compiler.source>-->
+		<!-- <maven.compiler.target>1.8</maven.compiler.target>-->
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 
 		<!-- Configure Maven plugin versions. -->
 		<maven.compiler.plugin>3.8.1</maven.compiler.plugin>
-		<maven.enforcer.plugin>3.0.0-M3</maven.enforcer.plugin>
+		<maven.enforcer.plugin>3.0.0</maven.enforcer.plugin>
 		<maven.required.version>3.6.0</maven.required.version>
 		<maven.shade.plugin>3.2.4</maven.shade.plugin>
 
 		<!-- Configure Surefire plugin version. -->
 		<!-- We are using 2.21.0 because after that, breaking changes were introduced
 		and VeilGraph becomes unable to compile. -->
-		<!-- <maven.surefire.plugin>3.0.0-M5</maven.surefire.plugin> -->
-		<maven.surefire.plugin>2.21.0</maven.surefire.plugin>
+		<maven.surefire.plugin>3.0.0-M5</maven.surefire.plugin>
+		<!-- <maven.surefire.plugin>2.21.0</maven.surefire.plugin>-->
 
 
 
@@ -69,26 +69,39 @@ under the License.
 		<!--<flink.version>1.6.2</flink.version>-->
 		<!--<flink.version>1.8-SNAPSHOT</flink.version>-->
 		<!--<flink.version>1.9.1</flink.version>-->
-		<flink.version>1.11.1</flink.version>
-		<hadoop.version>2.8.5</hadoop.version>
+		<!-- <flink.version>1.11.1</flink.version>-->
+		<flink.version>1.14.0</flink.version>
+		<!--<hadoop.version>2.8.5</hadoop.version>-->
+		<hadoop.version>3.3.1</hadoop.version>
 
 		<!-- Configure logging versions. -->
-		<slf4j.version>1.7.7</slf4j.version>
-		<log4j.version>1.2.17</log4j.version>
+		<!-- <slf4j.version>1.7.7</slf4j.version>-->
+		<slf4j.version>1.7.32</slf4j.version>
+		<!--<log4j.version>1.2.17</log4j.version>-->
+		<log4j.version>2.14.1</log4j.version>
 
 		<!-- Configure Scala version. -->
-		<scala.version>2.12</scala.version>
+		<!--<scala.version>2.12</scala.version>-->
+		<scala.version>3.1.0</scala.version>
+
 		<scala.binary.version>2.12</scala.binary.version>
-		<akka.version>2.4.20</akka.version>
+		<!--<akka.version>2.4.20</akka.version>-->
+		<akka.version>2.5.32</akka.version>
 
 		<!-- Configure JUnit versions. -->
-		<junit.version>4.12</junit.version>
-		<junit.jupiter.version>5.0.0</junit.jupiter.version>
-		<junit.vintage.version>${junit.version}.1</junit.vintage.version>
-		<junit.platform.version>1.0.1</junit.platform.version>
+		<!--<junit.version>4.12</junit.version>-->
+		<junit.version>4.13.2</junit.version>
+		<!--<junit.jupiter.version>5.0.0</junit.jupiter.version>-->
+		<junit.jupiter.version>5.8.2</junit.jupiter.version>
+		<!--<junit.vintage.version>${junit.version}.1</junit.vintage.version>-->
+		<!--<junit.vintage.version>${junit.version}</junit.vintage.version>-->
+		<junit.vintage.version>${junit.jupiter.version}</junit.vintage.version>
+		<!--<junit.platform.version>1.0.1</junit.platform.version>-->
+		<junit.platform.version>1.8.2</junit.platform.version>
 
 		<!-- Configure AspectJ versions. -->
-		<aspectj.version>1.9.6</aspectj.version>
+		<!--<aspectj.version>1.9.6</aspectj.version>-->
+		<aspectj.version>1.9.7</aspectj.version>
 	</properties>
 
 	<repositories>
@@ -152,7 +165,8 @@ under the License.
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+			<!--<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>-->
+			<artifactId>flink-queryable-state-runtime</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
 
@@ -166,7 +180,9 @@ under the License.
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-connector-filesystem_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
+			<!--<version>${flink.version}</version>-->
+			<version>1.11.4</version>
+
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>
@@ -209,8 +225,10 @@ under the License.
 			<version>${slf4j.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
+			<!--<groupId>log4j</groupId>-->
+			<!--<artifactId>log4j</artifactId>-->
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
 		</dependency>
 
@@ -358,6 +376,13 @@ under the License.
 			<version>20180813</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.maven.surefire</groupId>
+			<artifactId>surefire-logger-api</artifactId>
+			<version>3.0.0-M5</version>
+			<!--<scope>test</scope>-->
+		</dependency>
+
 
 	</dependencies>
 
@@ -406,7 +431,8 @@ under the License.
 				</dependency>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+					<!--<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>-->
+					<artifactId>flink-queryable-state-runtime</artifactId>
 					<version>${flink.version}</version>
 				</dependency>
 
@@ -419,7 +445,8 @@ under the License.
 				<dependency>
 					<groupId>org.apache.flink</groupId>
 					<artifactId>flink-connector-filesystem_${scala.binary.version}</artifactId>
-					<version>${flink.version}</version>
+					<!--<version>${flink.version}</version>-->
+					<version>1.11.4</version>
 				</dependency>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
@@ -461,8 +488,8 @@ under the License.
 					<version>${slf4j.version}</version>
 				</dependency>
 				<dependency>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-core</artifactId>
 					<version>${log4j.version}</version>
 				</dependency>
 
@@ -552,6 +579,13 @@ under the License.
 					<version>20180813</version>
 				</dependency>
 
+				<dependency>
+					<groupId>org.apache.maven.surefire</groupId>
+					<artifactId>surefire-logger-api</artifactId>
+					<version>3.0.0-M5</version>
+					<!--<scope>test</scope>-->
+				</dependency>
+
 			</dependencies>
 
 			<build>
@@ -616,11 +650,11 @@ under the License.
 							</properties>
 						</configuration>
 						<dependencies>
-							<dependency>
+							<!--<dependency>
 								<groupId>org.junit.platform</groupId>
 								<artifactId>junit-platform-surefire-provider</artifactId>
 								<version>1.0.1</version>
-							</dependency>
+							</dependency>-->
 							<dependency>
 								<groupId>org.junit.jupiter</groupId>
 								<artifactId>junit-jupiter-engine</artifactId>
@@ -636,7 +670,8 @@ under the License.
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>aspectj-maven-plugin</artifactId>
-						<version>1.11</version>
+						<!--<version>1.11</version>-->
+						<version>1.14.0</version>
 						<executions>
 							<execution>
 								<goals>
@@ -710,7 +745,8 @@ under the License.
 				</dependency>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>
+					<!--<artifactId>flink-queryable-state-runtime_${scala.binary.version}</artifactId>-->
+					<artifactId>flink-queryable-state-runtime</artifactId>
 					<version>${flink.version}</version>
 				</dependency>
 
@@ -723,7 +759,8 @@ under the License.
 				<dependency>
 					<groupId>org.apache.flink</groupId>
 					<artifactId>flink-connector-filesystem_${scala.binary.version}</artifactId>
-					<version>${flink.version}</version>
+					<!--<version>${flink.version}</version>-->
+					<version>1.11.4</version>
 				</dependency>
 				<dependency>
 					<groupId>org.apache.flink</groupId>
@@ -762,8 +799,8 @@ under the License.
 					<version>${slf4j.version}</version>
 				</dependency>
 				<dependency>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-core</artifactId>
 					<version>${log4j.version}</version>
 				</dependency>
 				<dependency>
@@ -847,6 +884,13 @@ under the License.
 					<version>20180813</version>
 				</dependency>
 
+				<dependency>
+					<groupId>org.apache.maven.surefire</groupId>
+					<artifactId>surefire-logger-api</artifactId>
+					<version>3.0.0-M5</version>
+					<!--<scope>test</scope>-->
+				</dependency>
+
 
 
 			</dependencies>
@@ -915,11 +959,11 @@ under the License.
 							</properties>
 						</configuration>
 						<dependencies>
-							<dependency>
+							<!--<dependency>
 								<groupId>org.junit.platform</groupId>
 								<artifactId>junit-platform-surefire-provider</artifactId>
 								<version>1.0.1</version>
-							</dependency>
+							</dependency>-->
 							<dependency>
 								<groupId>org.junit.jupiter</groupId>
 								<artifactId>junit-jupiter-engine</artifactId>
@@ -935,7 +979,8 @@ under the License.
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>aspectj-maven-plugin</artifactId>
-						<version>1.11</version>
+						<!--<version>1.11</version>-->
+						<version>1.14.0</version>
 						<executions>
 							<execution>
 								<goals>
@@ -1029,11 +1074,11 @@ under the License.
 					</properties>
 				</configuration>
 				<dependencies>
-					<dependency>
+					<!--<dependency>
 						<groupId>org.junit.platform</groupId>
 						<artifactId>junit-platform-surefire-provider</artifactId>
 						<version>1.0.1</version>
-					</dependency>
+					</dependency>-->
 					<dependency>
 						<groupId>org.junit.jupiter</groupId>
 						<artifactId>junit-jupiter-engine</artifactId>
@@ -1050,7 +1095,8 @@ under the License.
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>aspectj-maven-plugin</artifactId>
-				<version>1.11</version>
+				<!--<version>1.11</version>-->
+				<version>1.14.0</version>
 				<executions>
 					<execution>
 						<goals>

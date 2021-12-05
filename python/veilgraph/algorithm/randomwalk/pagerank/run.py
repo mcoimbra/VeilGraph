@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License. """
 __license__ = "Apache 2.0"
 
-# Used to launch combinations of parameters for different GraphBolt 
+# Used to launch combinations of parameters for different VeilGraph 
 # PageRank executions.
 
 ###########################################################################
@@ -50,10 +50,10 @@ from google.api_core.protobuf_helpers import get_messages
 from google.cloud import storage
 
 # 3. custom local imports
-#from graphbolt.evaluation.rbo import batch_rank_evaluator
-from graphbolt.evaluation.rbo import batch_rank_evaluator
-from graphbolt.stream import streamer
-from graphbolt import localutil
+#from VEILGRAPH.evaluation.rbo import batch_rank_evaluator
+from VEILGRAPH.evaluation.rbo import batch_rank_evaluator
+from VEILGRAPH.stream import streamer
+from VEILGRAPH import localutil
 
 ###########################################################################
 ######################### GOOGLE CLOUD FUNCTIONS ##########################
@@ -205,13 +205,13 @@ def start_process(command: str, stdout: TextIOWrapper = None, stderr: TextIOWrap
 
 
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-DESCRIPTION_TEXT = "GraphBolt approximate processing of graphs over streams"
+DESCRIPTION_TEXT = "VeilGraph approximate processing of graphs over streams"
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("-rbo-only", help="skip GraphBolt execution but try to generate RBO results.", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-rbo-only", help="skip VeilGraph execution but try to generate RBO results.", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-keep-logs", help="keep Apache Flink logs?", required=False, action="store_true") # if ommited, default value is false
-parser.add_argument("-keep-cache", help="keep GraphBolt cache directory?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-keep-cache", help="keep VeilGraph cache directory?", required=False, action="store_true") # if ommited, default value is false
 
-# GraphBolt/PageRank-specific parameters.
+# VeilGraph/PageRank-specific parameters.
 parser.add_argument("-i", "--input-file", help="dataset name.", required=True, type=str)
 parser.add_argument("-cache-dir", help="cache directory name.", required=False, type=str, default="")
 parser.add_argument("-temp-dir", help="temporary directory name.", required=False, type=str, default="")
@@ -220,15 +220,15 @@ parser.add_argument("-flink-port", help="Flink cluster's JobManager port.", requ
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")
 parser.add_argument("-out-dir", help="base output directory where directories for statistics, RBO results, logging, evaluation and figures will be created.", required=True, type=str, default="")
 parser.add_argument("-chunks", "--chunk-count", help="set desired number of chunks to be sent by the streamer.", required=True, type=int, default=50)
-parser.add_argument("-size", help="set desired GraphBolt RBO rank length.", required=False, type=int, default=-1000)
-parser.add_argument("-p", "--parallelism", help="set desired GraphBolt TaskManager parallelism.", required=False, type=int, default=1)
-parser.add_argument("-concurrent-jobs", help="set desired GraphBolt instances to run at the same time. The more, the faster a batch of tests will run.", required=False, type=int, default=1)
+parser.add_argument("-size", help="set desired VeilGraph RBO rank length.", required=False, type=int, default=-1000)
+parser.add_argument("-p", "--parallelism", help="set desired VeilGraph TaskManager parallelism.", required=False, type=int, default=1)
+parser.add_argument("-concurrent-jobs", help="set desired VeilGraph instances to run at the same time. The more, the faster a batch of tests will run.", required=False, type=int, default=1)
 parser.add_argument("-damp", "--dampening", help="set desired PageRank dampening factor.", required=False, type=float, default=0.85)
 parser.add_argument("-iterations", help="set desired PageRank power-method iteration count.", required=False, type=int, default=30)
 parser.add_argument("-max-mem", help="ammount of memory made available to Maven.", required=False, type=int, default=2048)
 parser.add_argument("-dump-summary", help="should intermediate summary graphs be saved to disk?", required=False, action="store_true") # if ommited, default value is false
 parser.add_argument("-delete-edges", help="should edge deletions be sent in the stream?", required=False, action="store_true") # if ommited, default value is false
-parser.add_argument("-periodic-full-dump", help="should GraphBolt save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
+parser.add_argument("-periodic-full-dump", help="should VeilGraph save all vertex results periodically?", required=False, action="store_true") # if ommited, default value is false
 
 parser.add_argument("-summarized-only", help="running only the approximate version.", required=False, action="store_true")
 
@@ -290,8 +290,8 @@ if len(args.out_dir) == 0:
 
 print("> Arguments: {}".format(args))
 
-# Each summarized execution has two process steps: 1 - execute GraphBolt; 2 - execute python RBO evaluation.
-# If the sequence "Step 1 -> Step 2" for summarized GraphBolt execution 'i' is self-contained in a single process 'Si', then we are free to start as many 'Si' concurrently as the hardware allows...
+# Each summarized execution has two process steps: 1 - execute VeilGraph; 2 - execute python RBO evaluation.
+# If the sequence "Step 1 -> Step 2" for summarized VeilGraph execution 'i' is self-contained in a single process 'Si', then we are free to start as many 'Si' concurrently as the hardware allows...
 
 ###########################################################################
 ########################### CONSTANTS AND SETUP ###########################
@@ -348,14 +348,14 @@ if len(args.temp_dir) > 0:
     TEMP_DIR = args.temp_dir
 
 
-print("> Will tell GraphBolt to use cache directory:\t\t{}".format(CACHE_BASE))
+print("> Will tell VeilGraph to use cache directory:\t\t{}".format(CACHE_BASE))
 
 EVAL_DIR, STATISTICS_DIR, _, RESULTS_DIR, OUT_DIR, STREAMER_LOG_DIR = localutil.get_pagerank_data_paths(args.out_dir)
-GRAPHBOLT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+VEILGRAPH_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 ZIP_DIR = RESULTS_DIR.replace("Results", "Zips")
 
-# Make necessary GraphBolt directories if they don't exist.
-print("> Checking GraphBolt directories...\n")
+# Make necessary VeilGraph directories if they don't exist.
+print("> Checking VeilGraph directories...\n")
 
 if not os.path.exists(EVAL_DIR):
     print("Creating evaluation directory:\t\t'{}'".format(EVAL_DIR))
@@ -418,7 +418,7 @@ if args.delete_edges:
     deletion_file_path = "{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-deletions.tsv".format(KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file)
     optional_deletion_file_path = "-d {KW_DELETION_OPTIONAL_ARG}".format(KW_DELETION_OPTIONAL_ARG = deletion_file_path)
 
-streamer_run_command = '{KW_PYTHON_PATH} -m "graphbolt.stream.streamer" -i "{KW_FILE_STREAM_PATH}" "{KW_DELETIONS_OPTIONAL_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_DELETIONS_OPTIONAL_PATH = optional_deletion_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
+streamer_run_command = '{KW_PYTHON_PATH} -m "VEILGRAPH.stream.streamer" -i "{KW_FILE_STREAM_PATH}" "{KW_DELETIONS_OPTIONAL_PATH}" -q {KW_CHUNK_COUNT} -p {KW_STREAM_PORT}'.format(KW_PYTHON_PATH = PYTHON_PATH, KW_VEILGRAPH_DIR = VEILGRAPH_DIR, KW_FILE_STREAM_PATH = stream_file_path, KW_DELETIONS_OPTIONAL_PATH = optional_deletion_file_path, KW_CHUNK_COUNT = args.chunk_count, KW_STREAM_PORT = STREAM_PORT)
 
 if not args.rbo_only:
     # Format current moment as a UTC timestamp.
@@ -538,22 +538,22 @@ if args.periodic_full_dump:
 
 
 #TODO: when checking if it's necessary to run PageRank for a given parameter combination (or for complete version), need to check if we are running with periodic full outputs and if the existing Results files are without periodic (or vice-versa). In this case, need to execute.
-#TODO: "mvn -f ../pom.xml " requires a graphbolt.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
+#TODO: "mvn -f ../pom.xml " requires a VEILGRAPH.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
 
 
 # Build complete PageRank command.
 ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
 ### Article - on running exec:exec - https://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
-graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} -temp '{KW_TEMP_DIR}' {KW_DELETE_FLAG} {KW_PERIODIC_DUMP_STR}"'''.format(KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = SIZE_STR, KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_DELETE_FLAG = DELETE_FLAG).replace('\\', '/')
+VEILGRAPH_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} -temp '{KW_TEMP_DIR}' {KW_DELETE_FLAG} {KW_PERIODIC_DUMP_STR}"'''.format(KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = SIZE_STR, KW_DATA_DIR = args.data_dir, KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_DELETE_FLAG = DELETE_FLAG).replace('\\', '/')
 
-print("{}\n".format(graphbolt_run_command))
+print("{}\n".format(VEILGRAPH_run_command))
 
 
 
 # Build path to output directory file.
-graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_DELETE_TOKEN}_complete.txt'.format(
+VEILGRAPH_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_DELETE_TOKEN}_complete.txt'.format(
     KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_DELETE_TOKEN = DELETE_TOKEN)
-print("{}\n".format(graphbolt_output_file))
+print("{}\n".format(VEILGRAPH_output_file))
 
 # Save current iteration commands to shell file.
 with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file:
@@ -566,13 +566,13 @@ with open(SHELL_DIR + "/" + args.input_file + SHELL_FILETYPE, "a") as shell_file
     shell_file.write("{} {}  complete execution\n\n".format(SHELL_COMMENT * 5, timestamp))
     
     # Write the command itself.
-    shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
+    shell_file.write('{} > "{}" 2>&1\n\n'.format(VEILGRAPH_run_command, VEILGRAPH_output_file))
 
 # If we are not skipping results and they were invalid/missing, execute.
 if (not args.summarized_only) and need_to_run_complete_pagerank and not args.rbo_only:
     print("> Executing complete version...")
-    with open(graphbolt_output_file, 'w') as out_file:
-        process = start_process(graphbolt_run_command, out_file)
+    with open(VEILGRAPH_output_file, 'w') as out_file:
+        process = start_process(VEILGRAPH_run_command, out_file)
         process_list.append(process.pid)
 
         print("> Registering children of process {}...".format(process.pid))
@@ -581,8 +581,8 @@ if (not args.summarized_only) and need_to_run_complete_pagerank and not args.rbo
         process.wait()
     print("> Complete PageRank finished.\n")
 
-    upload_zip_files(complete_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
-    upload_zip_files(complete_pagerank_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
+    upload_zip_files(complete_pagerank_result_path, "VEILGRAPH-storage", "Results", args.skip_upload)
+    upload_zip_files(complete_pagerank_stats_path, "VEILGRAPH-storage", "Statistics", args.skip_upload)
 
 
 else:
@@ -606,9 +606,9 @@ if args.list != None:
 
         i = i + 3
 
-        print("{}\tGraphBolt parameters - r={}\tn={}\tdelta={}\n".format(SHELL_COMMENT * 5, r, n, delta))
+        print("{}\tVeilGraph parameters - r={}\tn={}\tdelta={}\n".format(SHELL_COMMENT * 5, r, n, delta))
 
-        # This is used as a flag to tell GraphBolt to flush intermediate summary graphs to disk.
+        # This is used as a flag to tell VeilGraph to flush intermediate summary graphs to disk.
         if args.dump_summary:
             SUMMARY_TEXT = "-dump"
         else:
@@ -616,20 +616,20 @@ if args.list != None:
 
         # Build command to execute. pt.ulisboa.tecnico.graph.Main
         ### NOTE: the active code below generates a mvn call which launches a separate process for Java (with its own JVM).
-        graphbolt_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_DELETE_FLAG}"'''.format(
+        VEILGRAPH_run_command = '''mvn -f ../pom.xml exec:exec -Dexec.executable=java -Dexec.args="-Xmx{KW_MAVEN_HEAP_MEMORY}m -classpath %classpath pt.ulisboa.tecnico.graph.algorithm.pagerank.PageRankMain {KW_FLINK_REMOTE_ADDRESS} {KW_FLINK_REMOTE_PORT} {KW_JOB_MANAGER_WEB_PARAM} {KW_FLINK_JOB_STATS_FLAG} -o '{KW_OUT_BASE}' -cache '{KW_CACHE_BASE}' -damp {KW_DAMPENING_FACTOR:.2f} -iterations {KW_NUM_ITERATIONS} {KW_RBO_RANK_LENGTH} -r {KW_r:.2f} -n {KW_n} -delta {KW_delta:.2f} -web -i '{KW_DATA_DIR}/{KW_DATASET_DIR_NAME}/{KW_DATASET_DIR_NAME}-start.tsv' {KW_KEEP_CACHE} {KW_KEEP_LOGS} -sp {KW_STREAM_PORT} -parallelism {KW_PARALLELISM} {KW_DUMP_SUMMARY_GRAPHS} -temp '{KW_TEMP_DIR}' {KW_PERIODIC_DUMP_STR} {KW_DELETE_FLAG}"'''.format(
             KW_MAVEN_HEAP_MEMORY = args.max_mem, KW_FLINK_REMOTE_ADDRESS = FLINK_REMOTE_ADDRESS, KW_FLINK_REMOTE_PORT = FLINK_REMOTE_PORT, KW_JOB_MANAGER_WEB_PARAM = JOB_MANAGER_WEB_PARAM, KW_FLINK_JOB_STATS_FLAG = FLINK_JOB_STATS_FLAG, KW_OUT_BASE = args.out_dir, KW_CACHE_BASE = CACHE_BASE, 
             KW_DAMPENING_FACTOR = args.dampening, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = SIZE_STR,
             KW_r = r, KW_n = n, KW_delta = delta, KW_DATA_DIR = args.data_dir, 
             KW_DATASET_DIR_NAME = args.input_file, KW_KEEP_CACHE = KEEP_CACHE_TEXT, KW_KEEP_LOGS = KEEP_LOGS_TEXT, KW_STREAM_PORT = STREAM_PORT, KW_PARALLELISM = args.parallelism,
             KW_DUMP_SUMMARY_GRAPHS = SUMMARY_TEXT, KW_TEMP_DIR = TEMP_DIR, KW_PERIODIC_DUMP_STR = PERIODIC_DUMP_STR, KW_DELETE_FLAG = DELETE_FLAG).replace('\\', '/')
         
-        print("{}\n".format(graphbolt_run_command))
+        print("{}\n".format(VEILGRAPH_run_command))
 
         # Build path to output directory file.
-        graphbolt_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}.txt'.format(
+        VEILGRAPH_output_file = '{KW_OUT_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}.txt'.format(
             KW_OUT_DIR = OUT_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening,
             KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
-        print("{}\n".format(graphbolt_output_file))
+        print("{}\n".format(VEILGRAPH_output_file))
 
         summarized_pagerank_result_path = "{KW_RESULTS_DIR}/{KW_DATASET_DIR_NAME}-start_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_model_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}".format(
     KW_RESULTS_DIR = RESULTS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_PARALLELISM = args.parallelism, KW_RBO_RANK_LENGTH = args.size, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
@@ -638,11 +638,11 @@ if args.list != None:
             KW_STATISTICS_DIR = STATISTICS_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_RBO_RANK_LENGTH = args.size,  KW_PARALLELISM = args.parallelism, KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
         # Build summarized PageRank evaluation command (RBO evaluation code).
-        graphbolt_eval_command = '{KW_PYTHON_PATH} -m evaluation.rbo.batch_rank_evaluator "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
-            KW_PYTHON_PATH = PYTHON_PATH, KW_GRAPHBOLT_DIR = GRAPHBOLT_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
+        VEILGRAPH_eval_command = '{KW_PYTHON_PATH} -m evaluation.rbo.batch_rank_evaluator "{KW_SUMMARIZED_PAGERANK_RESULT_PATH}" "{KW_COMPLETE_PAGERANK_RESULT_PATH}" 0.99'.format(
+            KW_PYTHON_PATH = PYTHON_PATH, KW_VEILGRAPH_DIR = VEILGRAPH_DIR, KW_SUMMARIZED_PAGERANK_RESULT_PATH = summarized_pagerank_result_path, KW_COMPLETE_PAGERANK_RESULT_PATH = complete_pagerank_result_path)
 
         # Build path to RBO evaluation file.
-        graphbolt_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}.csv'.format(
+        VEILGRAPH_output_eval_path = '{KW_EVAL_DIR}/{KW_DATASET_DIR_NAME}_{KW_NUM_ITERATIONS}_{KW_RBO_RANK_LENGTH}_P{KW_PARALLELISM}_{KW_DAMPENING_FACTOR:.2f}_{KW_r:.2f}_{KW_n}_{KW_delta:.2f}_{KW_DELETE_TOKEN}.csv'.format(
             KW_EVAL_DIR = EVAL_DIR, KW_DATASET_DIR_NAME = args.input_file, KW_NUM_ITERATIONS = args.iterations, KW_PARALLELISM = args.parallelism, KW_RBO_RANK_LENGTH = args.size,  KW_DAMPENING_FACTOR = args.dampening, KW_r = r, KW_n = n, KW_delta = delta, KW_DELETE_TOKEN = DELETE_TOKEN)
 
         # Save current iteration commands to shell file.
@@ -653,8 +653,8 @@ if args.list != None:
             timestamp = str(utc_dt) + " (UTC)"
 
             shell_file.write("{} {} r = {}\tn = {}\tdelta = {}\n\n".format(SHELL_COMMENT * 5, timestamp, r, n, delta))
-            shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_run_command, graphbolt_output_file))
-            shell_file.write('{} > "{}" 2>&1\n\n'.format(graphbolt_eval_command, graphbolt_output_eval_path))
+            shell_file.write('{} > "{}" 2>&1\n\n'.format(VEILGRAPH_run_command, VEILGRAPH_output_file))
+            shell_file.write('{} > "{}" 2>&1\n\n'.format(VEILGRAPH_eval_command, VEILGRAPH_output_eval_path))
 
         
         # Skip summarized PageRank version if the directory for a given parameter combination is found.
@@ -698,9 +698,9 @@ if args.list != None:
                     need_to_run_this_approx = True
 
 
-        # If we're invalid/missing and we are not doing RBO only, execute summarized GraphBolt.
+        # If we're invalid/missing and we are not doing RBO only, execute summarized VeilGraph.
         if need_to_run_this_approx and (not args.rbo_only):
-            with open(graphbolt_output_file, 'w') as out_file:
+            with open(VEILGRAPH_output_file, 'w') as out_file:
                 print("> Executing summarized version...")
 
                 print("> Results directory:\t{}".format(summarized_pagerank_result_path))
@@ -710,9 +710,9 @@ if args.list != None:
 
 
                 print("> Statistics directory:\t{}".format(approx_stats_path))
-                print("> Eval file:\t{}".format(graphbolt_output_eval_path))
+                print("> Eval file:\t{}".format(VEILGRAPH_output_eval_path))
 
-                process = start_process(graphbolt_run_command, out_file)
+                process = start_process(VEILGRAPH_run_command, out_file)
                 process_list.append(process.pid)
 
                 print("\n> Registering children of process {}...".format(process.pid))
@@ -721,25 +721,25 @@ if args.list != None:
                 process.wait()
                 print("> Approximate version r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f} finished.\n".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-                upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
-                upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
+                upload_zip_files(summarized_pagerank_result_path, "VEILGRAPH-storage", "Results", args.skip_upload)
+                upload_zip_files(approx_stats_path, "VEILGRAPH-storage", "Statistics", args.skip_upload)
         elif args.rbo_only:
             print("> Skipping summarized execution, attempting to generate RBO directly.")
         else:
             print("> Approximate results already found for r:{KW_r:.2f} n:{KW_n} delta:{KW_delta:.2f}.".format(KW_r = r, KW_n = n, KW_delta = delta))
 
-            upload_zip_files(summarized_pagerank_result_path, "graphbolt-storage", "Results", args.skip_upload)
-            upload_zip_files(approx_stats_path, "graphbolt-storage", "Statistics", args.skip_upload)
+            upload_zip_files(summarized_pagerank_result_path, "VEILGRAPH-storage", "Results", args.skip_upload)
+            upload_zip_files(approx_stats_path, "VEILGRAPH-storage", "Statistics", args.skip_upload)
 
         if not args.summarized_only:
 
             # Execute RBO evaluation code.
-            print("{}".format(graphbolt_eval_command))
-            print("{}".format(graphbolt_output_eval_path))
+            print("{}".format(VEILGRAPH_eval_command))
+            print("{}".format(VEILGRAPH_output_eval_path))
 
             # If the current paramter combination has an associated summarized (summarized) results directory, calculate RBO.
             if os.path.isdir(summarized_pagerank_result_path):
-                with open(graphbolt_output_eval_path, 'w') as rbo_out_file:
+                with open(VEILGRAPH_output_eval_path, 'w') as rbo_out_file:
                     print("> Calculating RBO of summarized version...\n")
 
 

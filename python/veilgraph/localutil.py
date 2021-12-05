@@ -25,7 +25,7 @@ from typing import Tuple, List
 # Delete STREAM_DELETION_RATIO * stream chunk size edges on each query application.
 STREAM_DELETION_RATIO = 0.2
 
-# Utility functions used in GraphBolt's code.
+# Utility functions used in VeilGraph's code.
 
 
 # Get the number of lines in a file.

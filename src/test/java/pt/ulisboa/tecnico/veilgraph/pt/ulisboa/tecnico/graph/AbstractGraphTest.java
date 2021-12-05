@@ -8,7 +8,7 @@ import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.types.NullValue;
 
-import pt.ulisboa.tecnico.veilgraph.GraphBoltTest;
+import pt.ulisboa.tecnico.veilgraph.VeilGraphTest;
 
 import pt.ulisboa.tecnico.veilgraph.stream.GraphUpdateTracker;
 
@@ -32,7 +32,7 @@ public abstract class AbstractGraphTest {
     protected final boolean debugging = true;
 
     /**
-     * Getter for the global GraphBolt update tracking module instance.
+     * Getter for the global VeilGraph update tracking module instance.
      * This is used throughout the tests of this class to verify the behavior of graph update stream consumption.
      *
      * @see pt.ulisboa.tecnico.veilgraph.stream.GraphUpdateTracker
@@ -110,7 +110,7 @@ public abstract class AbstractGraphTest {
         context.getConfig().disableSysoutLogging();
 
         try {
-            final String step0GraphPath = new File( GraphBoltTest.class.getResource("/step_0_graph.tsv").toURI()).getPath();
+            final String step0GraphPath = new File( VeilGraphTest.class.getResource("/step_0_graph.tsv").toURI()).getPath();
             final Graph<Long, NullValue, NullValue> g0 = Graph.fromCsvReader(step0GraphPath, context)
                     .ignoreCommentsEdges("#").fieldDelimiterEdges("\t").keyType(Long.class);
             final long vertexCount0 = g0.numberOfVertices();
@@ -121,7 +121,7 @@ public abstract class AbstractGraphTest {
 
 
 
-            final String step1GraphPath = new File( GraphBoltTest.class.getResource("/step_1_graph.tsv").toURI()).getPath();
+            final String step1GraphPath = new File( VeilGraphTest.class.getResource("/step_1_graph.tsv").toURI()).getPath();
             final Graph<Long, NullValue, NullValue> g1 = Graph.fromCsvReader(step1GraphPath, context)
                     .ignoreCommentsEdges("#").fieldDelimiterEdges("\t").keyType(Long.class);
             final long vertexCount1 = g1.numberOfVertices();

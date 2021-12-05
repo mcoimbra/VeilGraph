@@ -33,13 +33,13 @@ from typing import Tuple, List
 
 # 2. related third party imports
 # 3. custom local imports
-from graphbolt import localutil
+from VEILGRAPH import localutil
 
 ###########################################################################
 ############################## SERVER CLASS ###############################
 ###########################################################################
 
-#TODO: catch exception "BrokenPipeError: [Errno 32] Broken pipe" and print appropriate message about the GraphBolt client having crashed or closed with Ctrl+C.
+#TODO: catch exception "BrokenPipeError: [Errno 32] Broken pipe" and print appropriate message about the VeilGraph client having crashed or closed with Ctrl+C.
 
 class DatasetStreamHandler(socketserver.BaseRequestHandler):
     queries = 0
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     ###########################################################################
 
     # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-    DESCRIPTION_TEXT = "GraphBolt streamer script."
+    DESCRIPTION_TEXT = "VeilGraph streamer script."
     parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-i", "--input-file", help="dataset stream path.", required=True, type=str)
     parser.add_argument("-d", "--deletions-file", help="dataset deletions profile.", required=False, type=str, default='')

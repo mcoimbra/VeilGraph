@@ -63,15 +63,15 @@ public aspect ExecutionEnvironmentAspect {
     private final JSONArray jobJSONs = new JSONArray();
 
     /**
-     * Detect the GraphBolt call to {@link pt.ulisboa.tecnico.veilgraph.stream.GraphStreamHandler}.
+     * Detect the VeilGraph call to {@link pt.ulisboa.tecnico.veilgraph.stream.GraphStreamHandler}.
      */
-    pointcut graphBoltCleanup(GraphStreamHandler gsh):
+    pointcut veilgraphCleanup(GraphStreamHandler gsh):
            target(gsh) && call(void GraphStreamHandler.cleanup());
 
     /**
      * Write the Flink job operator statistics to a JSON file.
      */
-    after(GraphStreamHandler gsh) returning: graphBoltCleanup(gsh) {
+    after(GraphStreamHandler gsh) returning: veilgraphCleanup(gsh) {
         final boolean savingFlinkJobOperatorJSON = GraphStreamHandler.getInstance().savingFlinkJobOperatorJSON();
 
         if(savingFlinkJobOperatorJSON) {

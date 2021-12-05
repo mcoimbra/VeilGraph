@@ -16,9 +16,9 @@ public class PageRankMain
 
         	// Configure the stream of updates.
             final Function<String, Long> vertexIdParser = (s -> Long.valueOf(s));
-        	final PageRankStreamHandler graphBoltPageRank = new PageRankStreamHandler(argValues, vertexIdParser);
+        	final PageRankStreamHandler veilgraphPageRank = new PageRankStreamHandler(argValues, vertexIdParser);
 
-			graphBoltPageRank.start();
+			veilgraphPageRank.start();
 
         } catch (Exception e) {
             e.printStackTrace();
