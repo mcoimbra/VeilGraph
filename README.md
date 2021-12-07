@@ -20,12 +20,18 @@ GraphBolt was developed and tested using:
 - Java 8 (64-bit)
 - Python 3.6 (64-bit)
 - Python packages (installed using 'pip install PACKAGE_NAME'):
-	- 'networkx'
-	- 'pathlib'
-	- 'psutil'
-	- 'pytz'
-	- 'matplotlib'
-	- 'numpy'
+    - 'networkx'
+    - 'pathlib'
+    - 'psutil'
+    - 'pytz'
+    - 'matplotlib'
+    - 'numpy'
+    - google-cloud-storage
+
+The pip package for Google used to be "google-cloud", but now the components must be installed separately:
+"pip install install google-cloud-{x}"
+
+See: https://stackoverflow.com/questions/44397506/importerror-no-module-named-google-cloud/46589787
 
 It should work on Windows 10, albeit untested.
 
