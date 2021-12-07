@@ -31,7 +31,9 @@ GraphBolt was developed and tested using:
 The pip package for Google used to be "google-cloud", but now the components must be installed separately:
 "pip install install google-cloud-{x}"
 
-See: https://stackoverflow.com/questions/44397506/importerror-no-module-named-google-cloud/46589787
+See: 
+- https://stackoverflow.com/questions/44397506/importerror-no-module-named-google-cloud/46589787
+- https://github.com/googleapis/google-cloud-python/issues/2366#issuecomment-418724574
 
 It should work on Windows 10, albeit untested.
 
