@@ -103,8 +103,7 @@ def upload_local_directory_to_gcs(local_path, bucket, gcs_path, skip_upload: boo
             gcs_path))
 
 def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str, skip_upload: bool = False):
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
+
 
     archive_root = target_path[:target_path.find("testing")+len("testing")]
     results_zip_base_name = target_path[target_path.rfind(os.path.sep) + 1:]
@@ -121,6 +120,8 @@ def upload_zip_files(target_path: str, bucket_name: str, archive_keyword: str, s
     print("archive_base: " + "testing/" + remote_file_name)
     
     if not skip_upload:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
         upload_local_directory_to_gcs(results_zip_path + ".zip", bucket, "testing/" + remote_file_name)
 
 ###########################################################################
