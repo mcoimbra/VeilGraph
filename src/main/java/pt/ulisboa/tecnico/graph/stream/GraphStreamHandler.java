@@ -520,6 +520,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             //conf.setString(RestOptions.PORT.key(), "8501-8750");
             conf.setString(RestOptions.PORT.key(), "0");
             conf.setString(RestOptions.ADDRESS.key(), this.flinkJobManagerAddress);
+            conf.setString(AkkaOptions.WATCH_HEARTBEAT_INTERVAL.key(), "600 s");
+            conf.setString(AkkaOptions.WATCH_HEARTBEAT_PAUSE.key(), "3600 s");
 
 
 
