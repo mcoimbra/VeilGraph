@@ -499,7 +499,12 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             conf.setString(JobManagerOptions.ADDRESS.key(), this.flinkJobManagerAddress);
             //conf.setString(JobManagerOptions.PORT.key(), "40001-45000");
             //this.flinkJobManagerPort = "6123";//"8081";
-            this.flinkJobManagerPort = "6123-7000";
+            //this.flinkJobManagerPort = "6123-7000";
+
+            Random rand = new Random();
+            int rand_int1 = rand.nextInt(1000) + 6100;
+            this.flinkJobManagerPort = new Integer(rand_int1).toString();
+
             conf.setString(JobManagerOptions.PORT.key(), this.flinkJobManagerPort);
             //TODO: contribute this to Flink source (implement JOB_MANAGER_WEB_PORT_KEY in JobManagerOptions.
             conf.setString(ConfigConstants.JOB_MANAGER_WEB_PORT_KEY, "8081-9000");
