@@ -504,7 +504,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
             Random rand = new Random();
             int rand_int1 = rand.nextInt(1000) + 6100;
-            this.flinkJobManagerPort = new Integer(rand_int1).toString();
+            this.flinkJobManagerPort = Integer.toString(rand_int1);
 
             conf.setString(JobManagerOptions.PORT.key(), this.flinkJobManagerPort);
             conf.setString(ResourceManagerOptions.IPC_PORT.key(), this.flinkJobManagerPort);
@@ -513,10 +513,12 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             conf.setString(QueryableStateOptions.SERVER_PORT_RANGE.key(), "30000-35000");
             conf.setString(QueryableStateOptions.PROXY_PORT_RANGE.key(), "35001-40000");
             conf.setString(TaskManagerOptions.RPC_PORT.key(), "45001-50000");
-            conf.setString(TaskManagerOptions.DATA_PORT.key(), "50001-55000");
+            //conf.setString(TaskManagerOptions.DATA_PORT.key(), "50001-55000");
+            //conf.setString(TaskManagerOptions.DATA_PORT.key(), "0");
             conf.setString(BlobServerOptions.PORT.key(), "55001-60000");
             conf.setString(HistoryServerOptions.HISTORY_SERVER_WEB_PORT.key(), "60001-62000");
-            conf.setString(RestOptions.PORT.key(), "8501-8750");
+            //conf.setString(RestOptions.PORT.key(), "8501-8750");
+            conf.setString(RestOptions.PORT.key(), "0");
             conf.setString(RestOptions.ADDRESS.key(), this.flinkJobManagerAddress);
 
 
