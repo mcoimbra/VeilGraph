@@ -514,6 +514,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
             conf.setString(TaskManagerOptions.DATA_PORT.key(), "50001-55000");
             conf.setString(BlobServerOptions.PORT.key(), "55001-60000");
             conf.setString(HistoryServerOptions.HISTORY_SERVER_WEB_PORT.key(), "60001-62000");
+            conf.setString(RestOptions.PORT.key(), "8001-9000");
 
 
             if(this.tempDirectory != null) {
