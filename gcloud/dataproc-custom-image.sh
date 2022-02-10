@@ -14,73 +14,73 @@ apt-get -y install git
 apt-get -y install htop
 
 ################################################
-################################################ Setup GraphBolt user and directories.
+################################################ Setup VeilGraph user and directories.
 ################################################
 
-readonly GRAPHBOLT_USER="graphbolt"
-readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
+readonly VEILGRAPH_USER="veilgraph"
+readonly VEILGRAPH_ROOT="/home/$VEILGRAPH_USER"
 
 # Create Debian user only allowing .ssh public key access.
 # See: https://askubuntu.com/questions/94060/run-adduser-non-interactively
-adduser --disabled-password --gecos "First Last,RoomNumber,WorkPhone,HomePhone" $GRAPHBOLT_USER
+adduser --disabled-password --gecos "First Last,RoomNumber,WorkPhone,HomePhone" $VEILGRAPH_USER
 
 # Add to sudo group.
-usermod -aG sudo $GRAPHBOLT_USER
+usermod -aG sudo $VEILGRAPH_USER
 
 # Generate SSH private/public keys.
 # Info: https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1604
-# ssh-keygen is run as user $GRAPHBOLT_USER
+# ssh-keygen is run as user $VEILGRAPH_USER
 
-# readonly GS_BUCKET="graphbolt-bucket"
-readonly GS_BUCKET="graphbolt-storage"
+# readonly GS_BUCKET="veilgraph-bucket"
+readonly GS_BUCKET="veilgraph-storage"
 readonly GS_BUCKET_CODE_DIR="$GS_BUCKET/github"
 
 readonly CLUSTER_SSH_PKEY="cluster"
 readonly GITHUB_SSH_PKEY="github"
-sudo -i -u graphbolt bash << EOF
+sudo -i -u veilgraph bash << EOF
   ssh-keygen -t rsa -f ~/.ssh/$CLUSTER_SSH_PKEY -N "" -C "Flink Dataproc Access"
   touch ~/.ssh/authorized_keys
   cat ~/.ssh/$CLUSTER_SSH_PKEY.pub > ~/.ssh/authorized_keys
   chmod -R go= ~/.ssh
   chmod 600 ~/.ssh/$CLUSTER_SSH_PKEY
   
-  ssh-keygen -t rsa -f ~/.ssh/$GITHUB_SSH_PKEY -N "" -C "GraphBolt GitHub Access"
+  ssh-keygen -t rsa -f ~/.ssh/$GITHUB_SSH_PKEY -N "" -C "VeilGraph GitHub Access"
   gsutil cp ~/.ssh/$GITHUB_SSH_PKEY.pub gs://$GS_BUCKET_CODE_DIR/$GITHUB_SSH_PKEY.pub
   chmod 600 ~/.ssh/$GITHUB_SSH_PKEY
 EOF
 
-# Create the GraphBolt dataset directories.
+# Create the VeilGraph dataset directories.
 
-mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/
-mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/
+mkdir -p $VEILGRAPH_ROOT/Documents/datasets/web/
+mkdir -p $VEILGRAPH_ROOT/Documents/datasets/social/
 
 # Personal
 
 readonly GS_BUCKET_DATASETS_DIR="$GS_BUCKET/datasets"
 
-mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random
-gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/
+mkdir -p $VEILGRAPH_ROOT/Documents/datasets/web/eu-2005-40000-random
+gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/web/eu-2005-40000-random/* $VEILGRAPH_ROOT/Documents/datasets/web/eu-2005-40000-random/
 
-mkdir -p $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random
-gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/
+mkdir -p $VEILGRAPH_ROOT/Documents/datasets/social/amazon-2008-40000-random
+gsutil cp -r gs://$GS_BUCKET_DATASETS_DIR/social/amazon-2008-40000-random/* $VEILGRAPH_ROOT/Documents/datasets/social/amazon-2008-40000-random/
 
-# Create and copy the GraphBolt code directories.
-readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
-mkdir -p $GRAPHBOLT_CODE_DIR
-mkdir -p $GRAPHBOLT_CODE_DIR/testing/Temp
-mkdir -p $GRAPHBOLT_CODE_DIR/cache
+# Create and copy the VeilGraph code directories.
+readonly VEILGRAPH_CODE_DIR=$VEILGRAPH_ROOT/Documents/Projects/VeilGraph.git
+mkdir -p $VEILGRAPH_CODE_DIR
+mkdir -p $VEILGRAPH_CODE_DIR/testing/Temp
+mkdir -p $VEILGRAPH_CODE_DIR/cache
 
 
-readonly GS_GRAPHBOLT_ZIP_NAME="GraphBolt.git.zip"
-gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_GRAPHBOLT_ZIP_NAME $GRAPHBOLT_CODE_DIR/
-cd $GRAPHBOLT_CODE_DIR
-unzip $GS_GRAPHBOLT_ZIP_NAME
+readonly GS_VEILGRAPH_ZIP_NAME="VeilGraph.git.zip"
+gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_VEILGRAPH_ZIP_NAME $VEILGRAPH_CODE_DIR/
+cd $VEILGRAPH_CODE_DIR
+unzip $GS_VEILGRAPH_ZIP_NAME
 
 readonly GS_KEY_NAME="datastorm-1083-f24ebf51869d.json"
 
 # Prepare .bash_profile and misc utilities.
-sudo touch ${GRAPHBOLT_ROOT}/.bash_profile
-sudo cat <<EOF >>${GRAPHBOLT_ROOT}/.bash_profile
+sudo touch ${VEILGRAPH_ROOT}/.bash_profile
+sudo cat <<EOF >>${VEILGRAPH_ROOT}/.bash_profile
 if [ -n "\$BASH_VERSION" ]; then
     if [ -f \$HOME/.bashrc ]; then
         . \$HOME/.bashrc
@@ -120,26 +120,26 @@ EOF
 
 # Copy misc UNIX program configurations (.bashrc, .vim/, .viminfo, .screenrc).
 readonly GS_UNIX_DIR="$GS_BUCKET/home_utils"
-gsutil cp -r gs://$GS_UNIX_DIR/* $GRAPHBOLT_ROOT/
+gsutil cp -r gs://$GS_UNIX_DIR/* $VEILGRAPH_ROOT/
 
 # Copy the appropriate service key.
 
 readonly GS_DS_KEY="$GS_BUCKET/iam/$GS_KEY_NAME"
-sudo mkdir $GRAPHBOLT_ROOT/.gcloud
-gsutil cp gs://$GS_DS_KEY $GRAPHBOLT_ROOT/.gcloud/
-sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT/.gcloud
-sudo chmod -R 640 $GRAPHBOLT_ROOT/.gcloud/*
+sudo mkdir $VEILGRAPH_ROOT/.gcloud
+gsutil cp gs://$GS_DS_KEY $VEILGRAPH_ROOT/.gcloud/
+sudo chown -R veilgraph:veilgraph $VEILGRAPH_ROOT/.gcloud
+sudo chmod -R 640 $VEILGRAPH_ROOT/.gcloud/*
 
 # Set appropriate .ssh permissions
-sudo chown -R graphbolt:graphbolt $GRAPHBOLT_ROOT
-sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/web/eu-2005-40000-random/*
-sudo chmod -R 640 $GRAPHBOLT_ROOT/Documents/datasets/social/amazon-2008-40000-random/*
-readonly GRAPHBOLT_SSH_DIR=$GRAPHBOLT_ROOT/.ssh
-sudo chmod 700 $GRAPHBOLT_SSH_DIR
-sudo chmod 644 $GRAPHBOLT_SSH_DIR/*.pub
-sudo chmod 600 $GRAPHBOLT_SSH_DIR/$CLUSTER_SSH_PKEY
-sudo chmod 600 $GRAPHBOLT_SSH_DIR/$GITHUB_SSH_PKEY
-sudo chmod 600 $GRAPHBOLT_SSH_DIR/authorized_keys
+sudo chown -R veilgraph:veilgraph $VEILGRAPH_ROOT
+sudo chmod -R 640 $VEILGRAPH_ROOT/Documents/datasets/web/eu-2005-40000-random/*
+sudo chmod -R 640 $VEILGRAPH_ROOT/Documents/datasets/social/amazon-2008-40000-random/*
+readonly VEILGRAPH_SSH_DIR=$VEILGRAPH_ROOT/.ssh
+sudo chmod 700 $VEILGRAPH_SSH_DIR
+sudo chmod 644 $VEILGRAPH_SSH_DIR/*.pub
+sudo chmod 600 $VEILGRAPH_SSH_DIR/$CLUSTER_SSH_PKEY
+sudo chmod 600 $VEILGRAPH_SSH_DIR/$GITHUB_SSH_PKEY
+sudo chmod 600 $VEILGRAPH_SSH_DIR/authorized_keys
 
 ################################################
 ################################################ Download and compile Python 3.6.9
@@ -159,7 +159,7 @@ apt-get install -y libssl-dev
 
 
 # Download Python 3.6.9.
-readonly PYTHON_BIN_DIR="$GRAPHBOLT_ROOT/Downloads"
+readonly PYTHON_BIN_DIR="$VEILGRAPH_ROOT/Downloads"
 mkdir -p "$PYTHON_BIN_DIR"
 cd $PYTHON_BIN_DIR
 wget https://www.python.org/ftp/python/3.6.9/Python-3.6.9.tgz
@@ -189,7 +189,7 @@ pip3 install google-cloud-core
 pip3 install google-cloud-storage
 
 
-sudo chown -R graphbolt:graphbolt $PYTHON_BIN_DIR
+sudo chown -R veilgraph:veilgraph $PYTHON_BIN_DIR
 
 ################################################
 ################################################ Configure Flink 1.6.2.
@@ -218,7 +218,7 @@ popd # work_dir
 sudo mkdir -p "${FLINK_LOG_DIR}"
 
 # Set permissions and ownership for Flink files.
-sudo chown -R graphbolt ${FLINK_INSTALL_DIR}
+sudo chown -R veilgraph ${FLINK_INSTALL_DIR}
 
 sudo chmod -x ${FLINK_INSTALL_DIR}/LICENSE
 sudo chmod -x ${FLINK_INSTALL_DIR}/NOTICE

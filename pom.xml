@@ -21,11 +21,11 @@ under the License.
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>pt.ulisboa.tecnico.graph</groupId>
-	<artifactId>GraphBolt</artifactId>
+	<artifactId>VeilGraph</artifactId>
 	<version>0.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>GraphBolt</name>
+	<name>VeilGraph</name>
 	<url>http://maven.apache.org</url>
 
 	<description>pt.ulisboa.tecnico.graph - An approximate graph computing approach.</description>

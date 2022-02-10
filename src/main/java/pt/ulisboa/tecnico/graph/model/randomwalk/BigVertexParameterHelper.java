@@ -81,8 +81,8 @@ public class BigVertexParameterHelper extends ParameterHelper {
             argValues.put(BigVertexParameterHelper.BigVertexArgumentName.DELTA_PARAM.toString(), delta);
 
             // Check if intermediate summary graphs are to be used.
-            final Boolean dumpingSummaries = cmd.hasOption(GraphBoltArgumentName.DUMP_MODEL.toString());
-            argValues.put(GraphBoltArgumentName.DUMP_MODEL.toString(), dumpingSummaries);
+            final Boolean dumpingSummaries = cmd.hasOption(VeilGraphArgumentName.DUMP_MODEL.toString());
+            argValues.put(VeilGraphArgumentName.DUMP_MODEL.toString(), dumpingSummaries);
         }
     }
 

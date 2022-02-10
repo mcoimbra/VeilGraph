@@ -9,9 +9,9 @@ import java.util.Map;
 
 public class ParameterHelper {
 
-    public enum GraphBoltArgumentName {
+    public enum VeilGraphArgumentName {
         /**
-         * Should GraphBolt's license be printed when running?
+         * Should VeilGraph's license be printed when running?
          */
         LICENSE("license"),
 
@@ -21,7 +21,7 @@ public class ParameterHelper {
         DEBUG_SHORT("dbg"), DEBUG("debug"),
 
         /**
-         * Number of algorithm executions performed by GraphBolt.
+         * Number of algorithm executions performed by VeilGraph.
          * Should match the number of chunks sent by the graph update stream.
          */
         EXECUTION_LIMIT("execution_limit"),
@@ -32,17 +32,17 @@ public class ParameterHelper {
         DUMP_MODEL("dump"),
 
         /**
-         * Base input graph over which a complete execution is initially executed (does not count towards @link{pt.ulisboa.tecnico.graph.core.ParameterHelper.GraphBoltArgumentName.EXECUTION_LIMIT}).
+         * Base input graph over which a complete execution is initially executed (does not count towards @link{pt.ulisboa.tecnico.graph.core.ParameterHelper.VeilGraphArgumentName.EXECUTION_LIMIT}).
          */
         INPUT_FILE_SHORT("i"), INPUT_FILE("input-graph"),
 
         /**
-         * Directory where GraphBolt sub-directories will be created ("Statistics", "Results").
+         * Directory where VeilGraph sub-directories will be created ("Statistics", "Results").
          */
         OUTPUT_DIR_SHORT("o"), OUTPUT_DIR("output-directory"),
 
         /**
-         * Level of parallelism passed on from GraphBolt to the Flink JobManager.
+         * Level of parallelism passed on from VeilGraph to the Flink JobManager.
          */
         PARALLELISM_SHORT("para"), PARALLELISM("parallelism"),
 
@@ -130,7 +130,7 @@ public class ParameterHelper {
         PERIODIC_FULL_ACCURACY_SET("periodic_full_accuracy");
 
         private final String text;
-        GraphBoltArgumentName(final String text) {
+        VeilGraphArgumentName(final String text) {
             this.text = text;
         }
 
@@ -176,7 +176,7 @@ public class ParameterHelper {
         }
 
         // Check if the user asked to print the license.
-        if (cmd.hasOption(GraphBoltArgumentName.LICENSE.toString())) {
+        if (cmd.hasOption(VeilGraphArgumentName.LICENSE.toString())) {
             final String relativeToLicense = File.separator + ".." + File.separator + ".." + File.separator;
             final String licensePath = PageRankParameterHelper.class.getProtectionDomain().getCodeSource().getLocation().getPath() + relativeToLicense + "LICENSE-2.0.txt";
             try (BufferedReader br = new BufferedReader(new FileReader(licensePath))) {
@@ -200,8 +200,8 @@ public class ParameterHelper {
 
         // If no output directory was given, set it to the system's temporary Java directory.
         String outDirPath = System.getProperty("java.io.tmpdir");
-        if(cmd.hasOption(GraphBoltArgumentName.OUTPUT_DIR.toString())) {
-            outDirPath = cmd.getOptionValue(GraphBoltArgumentName.OUTPUT_DIR.toString()).replace("'", "");
+        if(cmd.hasOption(VeilGraphArgumentName.OUTPUT_DIR.toString())) {
+            outDirPath = cmd.getOptionValue(VeilGraphArgumentName.OUTPUT_DIR.toString()).replace("'", "");
             File outDirHandle = new File(outDirPath).getAbsoluteFile();
             if(!outDirHandle.exists()) {
                 boolean result = false;
@@ -233,142 +233,142 @@ public class ParameterHelper {
         }
 
 
-        if(	 cmd.hasOption(GraphBoltArgumentName.EXECUTION_LIMIT.toString()))  {
-            final int executionLimit = Integer.parseInt(cmd.getOptionValue(GraphBoltArgumentName.EXECUTION_LIMIT.toString()));
+        if(	 cmd.hasOption(VeilGraphArgumentName.EXECUTION_LIMIT.toString()))  {
+            final int executionLimit = Integer.parseInt(cmd.getOptionValue(VeilGraphArgumentName.EXECUTION_LIMIT.toString()));
 
             if(executionLimit <= 0)
-                throw new IllegalArgumentException(GraphBoltArgumentName.EXECUTION_LIMIT.toString() + " must be a positive integer.");
+                throw new IllegalArgumentException(VeilGraphArgumentName.EXECUTION_LIMIT.toString() + " must be a positive integer.");
 
-            argValues.put(GraphBoltArgumentName.EXECUTION_LIMIT.toString(), executionLimit);
+            argValues.put(VeilGraphArgumentName.EXECUTION_LIMIT.toString(), executionLimit);
         }
         else {
-            argValues.put(GraphBoltArgumentName.EXECUTION_LIMIT.toString(), -1);
+            argValues.put(VeilGraphArgumentName.EXECUTION_LIMIT.toString(), -1);
         }
 
-        if(	 cmd.hasOption(GraphBoltArgumentName.TEMP_DIR.toString()))  {
-            final String tempDir = cmd.getOptionValue(GraphBoltArgumentName.TEMP_DIR.toString()).replace("'", "");
+        if(	 cmd.hasOption(VeilGraphArgumentName.TEMP_DIR.toString()))  {
+            final String tempDir = cmd.getOptionValue(VeilGraphArgumentName.TEMP_DIR.toString()).replace("'", "");
 
             final File file = new File(tempDir);
             if (! file.exists() || ! file.isDirectory())
-                throw new IllegalArgumentException(GraphBoltArgumentName.TEMP_DIR.toString() + " must be a valid file path.");
+                throw new IllegalArgumentException(VeilGraphArgumentName.TEMP_DIR.toString() + " must be a valid file path.");
 
 
-            argValues.put(GraphBoltArgumentName.TEMP_DIR.toString(), tempDir);
+            argValues.put(VeilGraphArgumentName.TEMP_DIR.toString(), tempDir);
         }
 
 
-        argValues.put(GraphBoltArgumentName.OUTPUT_DIR.toString(), outDirPath);
+        argValues.put(VeilGraphArgumentName.OUTPUT_DIR.toString(), outDirPath);
 
 
-        if(cmd.hasOption(GraphBoltArgumentName.PARALLELISM.toString())) {
-            final Integer parallelism = Integer.parseInt(cmd.getOptionValue(GraphBoltArgumentName.PARALLELISM.toString()));
+        if(cmd.hasOption(VeilGraphArgumentName.PARALLELISM.toString())) {
+            final Integer parallelism = Integer.parseInt(cmd.getOptionValue(VeilGraphArgumentName.PARALLELISM.toString()));
 
             if(parallelism <= 0)
-                throw new IllegalArgumentException(GraphBoltArgumentName.PARALLELISM.toString() + " must be a positive integer.");
+                throw new IllegalArgumentException(VeilGraphArgumentName.PARALLELISM.toString() + " must be a positive integer.");
 
-            argValues.put(GraphBoltArgumentName.PARALLELISM.toString(), parallelism);
+            argValues.put(VeilGraphArgumentName.PARALLELISM.toString(), parallelism);
         }
         else {
-            argValues.put(GraphBoltArgumentName.PARALLELISM.toString(), 1);
+            argValues.put(VeilGraphArgumentName.PARALLELISM.toString(), 1);
         }
 
 
-        if(cmd.hasOption(GraphBoltArgumentName.STREAM_PORT.toString())) {
-            final Integer streamPort = Integer.parseInt(cmd.getOptionValue(GraphBoltArgumentName.STREAM_PORT.toString()));
+        if(cmd.hasOption(VeilGraphArgumentName.STREAM_PORT.toString())) {
+            final Integer streamPort = Integer.parseInt(cmd.getOptionValue(VeilGraphArgumentName.STREAM_PORT.toString()));
 
             if(streamPort <= 0)
-                throw new IllegalArgumentException(GraphBoltArgumentName.STREAM_PORT.toString() + " must be a positive integer.");
+                throw new IllegalArgumentException(VeilGraphArgumentName.STREAM_PORT.toString() + " must be a positive integer.");
 
-            argValues.put(GraphBoltArgumentName.STREAM_PORT.toString(), streamPort);
+            argValues.put(VeilGraphArgumentName.STREAM_PORT.toString(), streamPort);
         }
 
 
-        if(cmd.hasOption(GraphBoltArgumentName.SERVER_PORT.toString())) {
-            final Integer flinkServerPort = Integer.parseInt(cmd.getOptionValue(GraphBoltArgumentName.SERVER_PORT.toString()));
+        if(cmd.hasOption(VeilGraphArgumentName.SERVER_PORT.toString())) {
+            final Integer flinkServerPort = Integer.parseInt(cmd.getOptionValue(VeilGraphArgumentName.SERVER_PORT.toString()));
 
             if(flinkServerPort <= 0)
-                throw new IllegalArgumentException(GraphBoltArgumentName.SERVER_PORT.toString() + " must be a positive integer.");
+                throw new IllegalArgumentException(VeilGraphArgumentName.SERVER_PORT.toString() + " must be a positive integer.");
 
-            argValues.put(GraphBoltArgumentName.SERVER_PORT.toString(), flinkServerPort);
+            argValues.put(VeilGraphArgumentName.SERVER_PORT.toString(), flinkServerPort);
         }
 
-        if(cmd.hasOption(GraphBoltArgumentName.SERVER_ADDRESS.toString())) {
-            final String flinkServerAddress = cmd.getOptionValue(GraphBoltArgumentName.SERVER_ADDRESS.toString());
-            argValues.put(GraphBoltArgumentName.SERVER_ADDRESS.toString(), flinkServerAddress);
+        if(cmd.hasOption(VeilGraphArgumentName.SERVER_ADDRESS.toString())) {
+            final String flinkServerAddress = cmd.getOptionValue(VeilGraphArgumentName.SERVER_ADDRESS.toString());
+            argValues.put(VeilGraphArgumentName.SERVER_ADDRESS.toString(), flinkServerAddress);
         }
 
-        final String inputPath = cmd.getOptionValue(GraphBoltArgumentName.INPUT_FILE.toString()).replace("'", "");
+        final String inputPath = cmd.getOptionValue(VeilGraphArgumentName.INPUT_FILE.toString()).replace("'", "");
 
         final File file = new File(inputPath);
         if (! file.exists() || file.isDirectory())
-            throw new IllegalArgumentException(GraphBoltArgumentName.INPUT_FILE.toString() + " must be a valid file path.");
+            throw new IllegalArgumentException(VeilGraphArgumentName.INPUT_FILE.toString() + " must be a valid file path.");
 
-        argValues.put(GraphBoltArgumentName.INPUT_FILE.toString(), inputPath);
+        argValues.put(VeilGraphArgumentName.INPUT_FILE.toString(), inputPath);
 
         // Check argument flags.
-        argValues.put(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString()));
+        argValues.put(VeilGraphArgumentName.FLINK_PRINT_SYSOUT.toString(), cmd.hasOption(VeilGraphArgumentName.FLINK_PRINT_SYSOUT.toString()));
 
-        argValues.put(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString()));
+        argValues.put(VeilGraphArgumentName.FLINK_SAVE_PLANS.toString(), cmd.hasOption(VeilGraphArgumentName.FLINK_SAVE_PLANS.toString()));
 
 
-        String asd = cmd.getOptionValue(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
-        Boolean lol = cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        String asd = cmd.getOptionValue(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        Boolean lol = cmd.hasOption(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
 
         System.out.println(asd);
         System.out.println("has option: " + lol);
-        argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString()));
+        argValues.put(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(), cmd.hasOption(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString()));
 
 
 
-        argValues.put(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(), cmd.hasOption(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString()));
+        argValues.put(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(), cmd.hasOption(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_JSON.toString()));
 
-        argValues.put(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString(), cmd.hasOption(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString()));
+        argValues.put(VeilGraphArgumentName.LOADING_WEB_MANAGER.toString(), cmd.hasOption(VeilGraphArgumentName.LOADING_WEB_MANAGER.toString()));
 
-        argValues.put(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(), cmd.hasOption(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString()));
+        argValues.put(VeilGraphArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(), cmd.hasOption(VeilGraphArgumentName.PERIODIC_FULL_ACCURACY_SET.toString()));
 
-        argValues.put(GraphBoltArgumentName.DELETING_EDGES.toString(), cmd.hasOption(GraphBoltArgumentName.DELETING_EDGES.toString()));
+        argValues.put(VeilGraphArgumentName.DELETING_EDGES.toString(), cmd.hasOption(VeilGraphArgumentName.DELETING_EDGES.toString()));
 
-        argValues.put(GraphBoltArgumentName.KEEP_LOGS.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_LOGS.toString()));
+        argValues.put(VeilGraphArgumentName.KEEP_LOGS.toString(), cmd.hasOption(VeilGraphArgumentName.KEEP_LOGS.toString()));
 
-        argValues.put(GraphBoltArgumentName.KEEP_CACHE.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_CACHE.toString()));
+        argValues.put(VeilGraphArgumentName.KEEP_CACHE.toString(), cmd.hasOption(VeilGraphArgumentName.KEEP_CACHE.toString()));
 
-        argValues.put(GraphBoltArgumentName.KEEP_TEMP_DIR.toString(), cmd.hasOption(GraphBoltArgumentName.KEEP_TEMP_DIR.toString()));
+        argValues.put(VeilGraphArgumentName.KEEP_TEMP_DIR.toString(), cmd.hasOption(VeilGraphArgumentName.KEEP_TEMP_DIR.toString()));
 
-        argValues.put(GraphBoltArgumentName.DUMP_MODEL.toString(), cmd.hasOption(GraphBoltArgumentName.DUMP_MODEL.toString()));
+        argValues.put(VeilGraphArgumentName.DUMP_MODEL.toString(), cmd.hasOption(VeilGraphArgumentName.DUMP_MODEL.toString()));
 
-        argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
+        argValues.put(VeilGraphArgumentName.DEBUG.toString(), cmd.hasOption(VeilGraphArgumentName.DEBUG.toString()));
 
-        if(cmd.hasOption(GraphBoltArgumentName.CACHE.toString())) {
-            final String cachePath = cmd.getOptionValue(GraphBoltArgumentName.CACHE.toString()).replace("'", "");
+        if(cmd.hasOption(VeilGraphArgumentName.CACHE.toString())) {
+            final String cachePath = cmd.getOptionValue(VeilGraphArgumentName.CACHE.toString()).replace("'", "");
 
             if( ! cachePath.startsWith("gs://")) {
                 final File cacheFile = new File(cachePath);
                 if (! cacheFile.exists() || ! cacheFile.isDirectory())
-                    throw new IllegalArgumentException(GraphBoltArgumentName.CACHE.toString() + " must be a valid file path. Provided: " + cachePath);
+                    throw new IllegalArgumentException(VeilGraphArgumentName.CACHE.toString() + " must be a valid file path. Provided: " + cachePath);
             }
 
 
 
-            argValues.put(GraphBoltArgumentName.CACHE.toString(), cachePath);
+            argValues.put(VeilGraphArgumentName.CACHE.toString(), cachePath);
         }
 
-        if(cmd.hasOption(GraphBoltArgumentName.MODEL_DIRECTORY.toString())) {
-            final String modelPath = cmd.getOptionValue(GraphBoltArgumentName.MODEL_DIRECTORY.toString()).replace("'", "");
+        if(cmd.hasOption(VeilGraphArgumentName.MODEL_DIRECTORY.toString())) {
+            final String modelPath = cmd.getOptionValue(VeilGraphArgumentName.MODEL_DIRECTORY.toString()).replace("'", "");
 
             if( ! modelPath.startsWith("gs://")) {
                 final File modelFile = new File(modelPath);
                 if (! modelFile.exists() || ! modelFile.isDirectory())
-                    throw new IllegalArgumentException(GraphBoltArgumentName.MODEL_DIRECTORY.toString() + " must be a valid file path. Provided: " + modelPath);
+                    throw new IllegalArgumentException(VeilGraphArgumentName.MODEL_DIRECTORY.toString() + " must be a valid file path. Provided: " + modelPath);
             }
 
-            argValues.put(GraphBoltArgumentName.MODEL_DIRECTORY.toString(), modelPath);
+            argValues.put(VeilGraphArgumentName.MODEL_DIRECTORY.toString(), modelPath);
         }
 
 
 
 
-        argValues.put(GraphBoltArgumentName.DEBUG.toString(), cmd.hasOption(GraphBoltArgumentName.DEBUG.toString()));
-        if(cmd.hasOption(GraphBoltArgumentName.DEBUG.toString())) {
+        argValues.put(VeilGraphArgumentName.DEBUG.toString(), cmd.hasOption(VeilGraphArgumentName.DEBUG.toString()));
+        if(cmd.hasOption(VeilGraphArgumentName.DEBUG.toString())) {
             for(Map.Entry<String, Object> param : argValues.entrySet()) {
                 System.out.println(param.getKey() + "\t" + param.getValue().toString());
             }
@@ -378,125 +378,125 @@ public class ParameterHelper {
 
     protected void setupCLIOptions() {
         // Program options.
-        final Option licenseOption = new Option(GraphBoltArgumentName.LICENSE.toString(), false, "output this program's license.");
+        final Option licenseOption = new Option(VeilGraphArgumentName.LICENSE.toString(), false, "output this program's license.");
         licenseOption.setRequired(false);
         options.addOption(licenseOption);
 
-        // GraphBolt parameters.
-        final Option cacheOption = new Option(GraphBoltArgumentName.CACHE.toString(), true, "path to GraphBolt cache directory.");
+        // VeilGraph parameters.
+        final Option cacheOption = new Option(VeilGraphArgumentName.CACHE.toString(), true, "path to VeilGraph cache directory.");
         cacheOption.setRequired(false);
         options.addOption(cacheOption);
 
-        // GraphBolt parameters.
-        final Option modelOption = new Option(GraphBoltArgumentName.MODEL_DIRECTORY.toString(), true, "path to GraphBolt model directory.");
+        // VeilGraph parameters.
+        final Option modelOption = new Option(VeilGraphArgumentName.MODEL_DIRECTORY.toString(), true, "path to VeilGraph model directory.");
         modelOption.setRequired(false);
         options.addOption(modelOption);
 
-        final Option tempOption = new Option(GraphBoltArgumentName.TEMP_DIR.toString(), true, "path to directory to use for temporary files.");
+        final Option tempOption = new Option(VeilGraphArgumentName.TEMP_DIR.toString(), true, "path to directory to use for temporary files.");
         tempOption.setRequired(false);
         options.addOption(tempOption);
 
-        final Option outputDirOption = new Option(GraphBoltArgumentName.OUTPUT_DIR_SHORT.toString(), GraphBoltArgumentName.OUTPUT_DIR.toString(),
+        final Option outputDirOption = new Option(VeilGraphArgumentName.OUTPUT_DIR_SHORT.toString(), VeilGraphArgumentName.OUTPUT_DIR.toString(),
                 true, "output directory for statistics, results and additional things.");
         outputDirOption.setRequired(false);
         options.addOption(outputDirOption);
 
         // Apache Flink network job submission configuration.
-        final Option serverPortOption = new Option(GraphBoltArgumentName.SERVER_PORT_SHORT.toString(), GraphBoltArgumentName.SERVER_PORT.toString(),
+        final Option serverPortOption = new Option(VeilGraphArgumentName.SERVER_PORT_SHORT.toString(), VeilGraphArgumentName.SERVER_PORT.toString(),
                 true, "port of the Apache Flink JobManager.");
         serverPortOption.setRequired(false);
         options.addOption(serverPortOption);
 
-        final Option serverAddressOption = new Option(GraphBoltArgumentName.SERVER_ADDRESS_SHORT.toString(), GraphBoltArgumentName.SERVER_ADDRESS.toString(),
+        final Option serverAddressOption = new Option(VeilGraphArgumentName.SERVER_ADDRESS_SHORT.toString(), VeilGraphArgumentName.SERVER_ADDRESS.toString(),
                 true, "address of the Apache Flink JobManager.");
         serverAddressOption.setRequired(false);
         options.addOption(serverAddressOption);
 
-        final Option executionLimitOption = new Option(GraphBoltArgumentName.EXECUTION_LIMIT.toString(),
+        final Option executionLimitOption = new Option(VeilGraphArgumentName.EXECUTION_LIMIT.toString(),
                 true, "maximum number of updates to employ.");
         executionLimitOption.setRequired(false);
         options.addOption(executionLimitOption);
 
-        final Option parallelismOption = new Option(GraphBoltArgumentName.PARALLELISM_SHORT.toString(), GraphBoltArgumentName.PARALLELISM.toString(),
+        final Option parallelismOption = new Option(VeilGraphArgumentName.PARALLELISM_SHORT.toString(), VeilGraphArgumentName.PARALLELISM.toString(),
                 true, "parallelism level for Apache Flink dataflow operators.");
         parallelismOption.setRequired(false);
         options.addOption(parallelismOption);
 
 
-        final Option streamPortOption = new Option(GraphBoltArgumentName.STREAM_PORT_SHORT.toString(), GraphBoltArgumentName.STREAM_PORT.toString(),
+        final Option streamPortOption = new Option(VeilGraphArgumentName.STREAM_PORT_SHORT.toString(), VeilGraphArgumentName.STREAM_PORT.toString(),
                 true, "port for Apache Flink to listen to graph updates in a stream.");
         streamPortOption.setRequired(false);
         options.addOption(streamPortOption);
 
-        final Option inputFileOption = new Option(GraphBoltArgumentName.INPUT_FILE_SHORT.toString(), GraphBoltArgumentName.INPUT_FILE.toString(),
+        final Option inputFileOption = new Option(VeilGraphArgumentName.INPUT_FILE_SHORT.toString(), VeilGraphArgumentName.INPUT_FILE.toString(),
                 true, "path to the input graph.");
         inputFileOption.setRequired(true);
         options.addOption(inputFileOption);
 
 
-        final Option flinkSysOutOption = new Option(GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString(),
+        final Option flinkSysOutOption = new Option(VeilGraphArgumentName.FLINK_PRINT_SYSOUT.toString(),
                 false, "should Flink standard output be active?");
         flinkSysOutOption.setRequired(false);
         options.addOption(flinkSysOutOption);
 
-        final Option flinkSavePlansOption = new Option(GraphBoltArgumentName.FLINK_SAVE_PLANS.toString(),
+        final Option flinkSavePlansOption = new Option(VeilGraphArgumentName.FLINK_SAVE_PLANS.toString(),
                 false, "should Flink plans be saved before execute() calls?");
         flinkSavePlansOption.setRequired(false);
         options.addOption(flinkSavePlansOption);
 
-        final Option flinkSaveOperatorStatisticsOption = new Option(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(),
+        final Option flinkSaveOperatorStatisticsOption = new Option(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString(),
                 false, "should Flink job operator statistics be saved after execute() calls?");
         flinkSaveOperatorStatisticsOption.setRequired(false);
         options.addOption(flinkSaveOperatorStatisticsOption);
 
-        final Option flinkSaveOperatorJSONOption = new Option(GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(),
+        final Option flinkSaveOperatorJSONOption = new Option(VeilGraphArgumentName.FLINK_SAVE_OPERATOR_JSON.toString(),
                 false, "should Flink job operator JSON be saved after execute() calls?");
         flinkSaveOperatorJSONOption.setRequired(false);
         options.addOption(flinkSaveOperatorJSONOption);
 
 
-        final Option edgeDeletionOption = new Option(GraphBoltArgumentName.DELETING_EDGES.toString(),
+        final Option edgeDeletionOption = new Option(VeilGraphArgumentName.DELETING_EDGES.toString(),
                 false, "are we deleting edges?");
         edgeDeletionOption.setRequired(false);
         options.addOption(edgeDeletionOption);
 
 
 
-        final Option debugOption = new Option(GraphBoltArgumentName.DEBUG_SHORT.toString(), GraphBoltArgumentName.DEBUG.toString(),
+        final Option debugOption = new Option(VeilGraphArgumentName.DEBUG_SHORT.toString(), VeilGraphArgumentName.DEBUG.toString(),
                 false, "output debug information.");
         debugOption.setRequired(false);
         options.addOption(debugOption);
 
-        final Option usingWebManagerOption = new Option(GraphBoltArgumentName.LOADING_WEB_MANAGER.toString(),
+        final Option usingWebManagerOption = new Option(VeilGraphArgumentName.LOADING_WEB_MANAGER.toString(),
                 false, "should the Flink web manager be started?");
         usingWebManagerOption.setRequired(false);
         options.addOption(usingWebManagerOption);
 
 
-        final Option checkingPeriodically = new Option(GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(),
+        final Option checkingPeriodically = new Option(VeilGraphArgumentName.PERIODIC_FULL_ACCURACY_SET.toString(),
                 false, "should all the results be checked periodically?");
         checkingPeriodically.setRequired(false);
         options.addOption(checkingPeriodically);
         
 
-        final Option keepLogDirectoryOption = new Option(GraphBoltArgumentName.KEEP_LOGS.toString(),
+        final Option keepLogDirectoryOption = new Option(VeilGraphArgumentName.KEEP_LOGS.toString(),
                 false, "should Apache Flink logs be deleted?");
         keepLogDirectoryOption.setRequired(false);
         options.addOption(keepLogDirectoryOption);
 
-        final Option keepCacheDirectoryOption = new Option(GraphBoltArgumentName.KEEP_CACHE.toString(),
-                false, "should the GraphBolt cache directory be deleted?");
+        final Option keepCacheDirectoryOption = new Option(VeilGraphArgumentName.KEEP_CACHE.toString(),
+                false, "should the VeilGraph cache directory be deleted?");
         keepCacheDirectoryOption.setRequired(false);
         options.addOption(keepCacheDirectoryOption);
 
-        final Option keepTempDirOption = new Option(GraphBoltArgumentName.KEEP_TEMP_DIR.toString(),
+        final Option keepTempDirOption = new Option(VeilGraphArgumentName.KEEP_TEMP_DIR.toString(),
                 false, "should the Apache Flink temporary directory be deleted?");
         keepTempDirOption.setRequired(false);
         options.addOption(keepTempDirOption);
 
 
-        final Option dumpingSummaryOption = new Option(GraphBoltArgumentName.DUMP_MODEL.toString(),
-                false, "should the GraphBolt summary structures be saved to disk?");
+        final Option dumpingSummaryOption = new Option(VeilGraphArgumentName.DUMP_MODEL.toString(),
+                false, "should the VeilGraph summary structures be saved to disk?");
         dumpingSummaryOption.setRequired(false);
         options.addOption(dumpingSummaryOption);
 

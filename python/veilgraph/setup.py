@@ -11,14 +11,14 @@ with open("README.txt", 'r') as f:
 
 
 setup(
-   name='graphbolt',
+   name='veilgraph',
    version='1.0',
-   description='GraphBolt python utilities',
+   description='VeilGraph python utilities',
    long_description=long_description,
    author='Miguel Coimbra',
    license='Apache License, Version 2.0',
    author_email='miguel.e.coimbra@tecnico.ulisboa.pt',
-   packages=['graphbolt'],  #same as name
+   packages=['veilgraph'],  #same as name
    install_requires=['networkx', 'pathlib', 'psutil', 'pytz', 'matplotlib', 'numpy'], #external packages as dependencies
    scripts=[
             'algorithm/randomwalk/pagerank/run',

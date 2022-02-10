@@ -262,7 +262,7 @@ function start_flink_standalone() {
   local master_hostname
   master_hostname="$(/usr/share/google/get_metadata_value attributes/dataproc-master)"
   
-  sudo -i -u graphbolt bash << EOF
+  sudo -i -u veilgraph bash << EOF
 cd ${FLINK_INSTALL_DIR}/bin
 ./start-cluster.sh
 EOF
@@ -282,17 +282,17 @@ function main() {
   # Configure Flink (TaskManager/JobManager memory, akka timeouts, etc.)
   configure_flink || err "Flink configuration failed"
   
-  # Prepare GraphBolt code.
-  readonly GRAPHBOLT_USER="graphbolt"
-  readonly GRAPHBOLT_ROOT="/home/$GRAPHBOLT_USER"
-  readonly GRAPHBOLT_CODE_DIR=$GRAPHBOLT_ROOT/Documents/Projects/GraphBolt.git
+  # Prepare VeilGraph code.
+  readonly VEILGRAPH_USER="veilgraph"
+  readonly VEILGRAPH_ROOT="/home/$VEILGRAPH_USER"
+  readonly VEILGRAPH_CODE_DIR=$VEILGRAPH_ROOT/Documents/Projects/VeilGraph.git
   
   # Fetch from GitHub and compile it.
-  sudo -i -u graphbolt bash << EOF
+  sudo -i -u veilgraph bash << EOF
 ssh-keyscan -t rsa github.com | tee /tmp/github-key-temp | ssh-keygen -lf -
 cat /tmp/github-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/github-key-temp
-cd $GRAPHBOLT_CODE_DIR
+cd $VEILGRAPH_CODE_DIR
 git pull github master
 mvn clean install
 EOF
@@ -306,12 +306,12 @@ EOF
   if [[ "${role}" == 'Master' ]]; then
 
   
-    # Add all the cluster workers' host fingerprint to /home/graphbolt/.ssh/known_hosts.
+    # Add all the cluster workers' host fingerprint to /home/veilgraph/.ssh/known_hosts.
 	local num_workers
 	num_workers=$(/usr/share/google/get_metadata_value attributes/dataproc-worker-count)
     for (( i = 0; i < num_workers; ++i )); do
-      echo "[master] Adding: $cluster_name-w-$i to /home/graphbolt/.ssh/known_hosts"
-	  sudo -i -u graphbolt bash << EOF
+      echo "[master] Adding: $cluster_name-w-$i to /home/veilgraph/.ssh/known_hosts"
+	  sudo -i -u veilgraph bash << EOF
 ssh-keyscan -t rsa $cluster_name-w-$i | tee /tmp/$cluster_name-w-$i-key-temp | ssh-keygen -lf -
 cat /tmp/$cluster_name-w-$i-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/$cluster_name-w-$i-key-temp
@@ -321,8 +321,8 @@ EOF
     # Start the Flink standalone cluster.
     start_flink_standalone  || err "Unable to start Flink master in standalone mode"
   else
-    # Add the cluster master host finperprint to /home/graphbolt/.ssh/known_hosts.
-	sudo -i -u graphbolt bash << EOF
+    # Add the cluster master host finperprint to /home/veilgraph/.ssh/known_hosts.
+	sudo -i -u veilgraph bash << EOF
 ssh-keyscan -t rsa $cluster_name-m | tee /tmp/$cluster_name-m-key-temp | ssh-keygen -lf -
 cat /tmp/$cluster_name-m-key-temp >> \$HOME/.ssh/known_hosts
 rm /tmp/$cluster_name-m-key-temp

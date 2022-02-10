@@ -16,13 +16,13 @@ function run_complete() {
   pagerank_iterations=30
   damp="0.85"
 
-  gcloud dataproc clusters create graphbolt-cluster --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
+  gcloud dataproc clusters create veilgraph-cluster --image veilgraph-debian --zone us-east1-b --initialization-actions gs://veilgraph-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
-  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'cd /home/graphbolt/Documents/Projects/GraphBolt.git/python && python3 -m graphbolt.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/graphbolt/Documents/Projects/GraphBolt.git/testing" -data-dir '$dataset_dir' -cache "gs://graphbolt-storage/cache" -p '$flink_parallelism' -size '$rbo_length' -iterations '$pagerank_iterations' -damp '$damp' -periodic-full-dump -temp "/home/graphbolt/Documents/Projects/GraphBolt.git/testing/Temp" -flink-address graphbolt-cluster-m -flink-port 8081'
+  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "veilgraph@veilgraph-cluster-m" --command 'cd /home/veilgraph/Documents/Projects/VeilGraph.git/python && python3 -m veilgraph.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/veilgraph/Documents/Projects/VeilGraph.git/testing" -data-dir '$dataset_dir' -cache "gs://veilgraph-storage/cache" -p '$flink_parallelism' -size '$rbo_length' -iterations '$pagerank_iterations' -damp '$damp' -periodic-full-dump -temp "/home/veilgraph/Documents/Projects/VeilGraph.git/testing/Temp" -flink-address veilgraph-cluster-m -flink-port 8081'
   
-  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'source /home/graphbolt/.bash_profile && ssh-add /home/graphbolt/.ssh/cluster && cd /home/graphbolt/Documents/Projects/GraphBolt.git/gcloud && ./backup-logs.sh '$dataset_name'_'$pagerank_iterations'_'$rbo_length'_P'$flink_parallelism'_'$damp'_complete'
+  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "veilgraph@veilgraph-cluster-m" --command 'source /home/veilgraph/.bash_profile && ssh-add /home/veilgraph/.ssh/cluster && cd /home/veilgraph/Documents/Projects/VeilGraph.git/gcloud && ./backup-logs.sh '$dataset_name'_'$pagerank_iterations'_'$rbo_length'_P'$flink_parallelism'_'$damp'_complete'
 
-  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete veilgraph-cluster
 }
 
 function run_summarized() {
@@ -39,15 +39,15 @@ function run_summarized() {
   pagerank_iterations=30
   damp="0.85"
 
-  gcloud dataproc clusters create graphbolt-cluster --image graphbolt-debian --zone us-east1-b --initialization-actions gs://graphbolt-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
+  gcloud dataproc clusters create veilgraph-cluster --image veilgraph-debian --zone us-east1-b --initialization-actions gs://veilgraph-storage/dataproc-initialization-actions/flink/flink.sh --num-workers $cluster_parallelism --master-machine-type custom-4-16384 --worker-machine-type custom-4-16384
   
-  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'cd /home/graphbolt/Documents/Projects/GraphBolt.git/python && python3 -m graphbolt.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/graphbolt/Documents/Projects/GraphBolt.git/testing" -data-dir '$dataset_dir' -cache "gs://graphbolt-storage/cache" -p '$flink_parallelism' -size '$rbo_length' -iterations '$pagerank_iterations' -damp '$damp' -periodic-full-dump -temp "/home/graphbolt/Documents/Projects/GraphBolt.git/testing/Temp" -flink-address graphbolt-cluster-m -flink-port 8081 -summarized-only -l '$r_param' '$n_param' '$delta_param''
+  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "veilgraph@veilgraph-cluster-m" --command 'cd /home/veilgraph/Documents/Projects/VeilGraph.git/python && python3 -m veilgraph.algorithm.randomwalk.pagerank.run -delete-edges -i '$dataset_name' -chunks 50 -out-dir "/home/veilgraph/Documents/Projects/VeilGraph.git/testing" -data-dir '$dataset_dir' -cache "gs://veilgraph-storage/cache" -p '$flink_parallelism' -size '$rbo_length' -iterations '$pagerank_iterations' -damp '$damp' -periodic-full-dump -temp "/home/veilgraph/Documents/Projects/VeilGraph.git/testing/Temp" -flink-address veilgraph-cluster-m -flink-port 8081 -summarized-only -l '$r_param' '$n_param' '$delta_param''
   
-  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "graphbolt@graphbolt-cluster-m" --command 'source /home/graphbolt/.bash_profile && ssh-add /home/graphbolt/.ssh/cluster && cd /home/graphbolt/Documents/Projects/GraphBolt.git/gcloud && ./backup-logs.sh '$dataset_name'_'$pagerank_iterations'_'$rbo_length'_P'$flink_parallelism'_'$damp'_model_'$r_param'_'$n_param'_'$delta_param''
+  gcloud beta compute --project "datastorm-1083" ssh --zone "us-east1-b" "veilgraph@veilgraph-cluster-m" --command 'source /home/veilgraph/.bash_profile && ssh-add /home/veilgraph/.ssh/cluster && cd /home/veilgraph/Documents/Projects/VeilGraph.git/gcloud && ./backup-logs.sh '$dataset_name'_'$pagerank_iterations'_'$rbo_length'_P'$flink_parallelism'_'$damp'_model_'$r_param'_'$n_param'_'$delta_param''
   
 
 
-  echo "Y" | gcloud dataproc clusters delete graphbolt-cluster
+  echo "Y" | gcloud dataproc clusters delete veilgraph-cluster
 
 }
 
@@ -55,7 +55,7 @@ function run_summarized() {
 main() {
 	set -x
 
-  # ./test-commands "/home/graphbolt/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
+  # ./test-commands "/home/veilgraph/Documents/datasets/social" "amazon-2008-40000-random" 0.05 2 0.50
 
   DATA_DIR=$1
   DATASET_PREFIX=$2

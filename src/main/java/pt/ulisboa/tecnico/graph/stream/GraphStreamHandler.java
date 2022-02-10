@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * Abstract class to handle updates to a graph coming as a stream.
- * This class articulates the GraphBolt engine logic.
+ * This class articulates the VeilGraph engine logic.
  *
  * @param <R>
  * @author Miguel E. Coimbra
@@ -116,11 +116,11 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     protected final boolean deletingEdges;
 
     /**
-     * Directory name to reflect the algorithm running on GraphBolt. (e.g. "pagerank").
+     * Directory name to reflect the algorithm running on VeilGraph. (e.g. "pagerank").
      */
     protected String algorithmName;
     /**
-     * Is GraphBolt running in debug mode?
+     * Is VeilGraph running in debug mode?
      */
     protected final Boolean debugging;
     /**
@@ -133,7 +133,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     protected final Map<String, Object> argValues;
 
     /**
-     * Names and values of GraphBolt and algorithm statistics.
+     * Names and values of VeilGraph and algorithm statistics.
      */
     protected final HashMap<String, ArrayList<Long>> statisticsMap = new HashMap<>();
 
@@ -142,12 +142,12 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      */
     protected final ArrayList<String> statOrder = new ArrayList<String>();
     /**
-     * Should GraphBolt delete the directories and files created in the temporary directory?
+     * Should VeilGraph delete the directories and files created in the temporary directory?
      * {@link GraphStreamHandler#tempDirectory}
      */
     private final boolean keepingTemporaryDirectory;
     /**
-     * Directory where GraphBolt will create all subdirectories ("Results", "Statistics", etc.).
+     * Directory where VeilGraph will create all subdirectories ("Results", "Statistics", etc.).
      */
     private final String rootDirectory;
     /**
@@ -159,12 +159,12 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      */
     private final boolean dumpingModel;
     /**
-     * Should GraphBolt keep intermediate graph files and algorithm results?
+     * Should VeilGraph keep intermediate graph files and algorithm results?
      * See: {@link GraphStreamHandler#cacheDirectory}
      */
     private final boolean keepingCacheDirectory;
     /**
-     * Should GraphBolt keep Apache Flink's logs intermediate logs?
+     * Should VeilGraph keep Apache Flink's logs intermediate logs?
      * See: {@link GraphStreamHandler#loggingDirectory}
      */
     private final boolean keepingLogDirectory;
@@ -240,7 +240,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     protected String customName;
     /**
      * We start counting executions from 0.
-     * Each execution is a point in time (since GraphBolt started running) where the user executed a query over the graph (doesn't matter if it is an exact, approximate, automatic or any other type of execution strategy).
+     * Each execution is a point in time (since VeilGraph started running) where the user executed a query over the graph (doesn't matter if it is an exact, approximate, automatic or any other type of execution strategy).
      */
     protected Long iteration = 0L;
     /**
@@ -270,7 +270,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     // Current execution strategy - starting default is exact computation.
     protected Action executionStrategy;
     /**
-     * Write GraphBolt's graph model to disk every snapshotFrequency executions?
+     * Write VeilGraph's graph model to disk every snapshotFrequency executions?
      * Defaults to 1.
      */
     private Integer snapshotFrequency = 1;
@@ -321,11 +321,11 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     /**
      * Prepare Flink cluster configuration and create one in either local or remote mode.
-     * Configure GraphBolt output directories and files.
+     * Configure VeilGraph output directories and files.
      *
      * @param argValues The user-provided program arguments.
      * @param f A vertex-parsing function.
-     * @param graphAlgorithmName The name to identify the graph algorithm being processed by GraphBolt. Used to create directory names.
+     * @param graphAlgorithmName The name to identify the graph algorithm being processed by VeilGraph. Used to create directory names.
      */
     public GraphStreamHandler(final Map<String, Object> argValues, final Function<String, Long> f, String graphAlgorithmName) {
 
@@ -340,61 +340,61 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.executionStrategy = Action.COMPUTE_EXACT;
 
 
-        //TODO: quando se faz get a este campo com os enums (ex: PageRankParameterHelper), é preciso chamar ".toString" sobre os enums. Era bom encapsular este argValues numa estrutura com um .get() que recebesse um objeto (seriam valores dos enum PageRankParameterHelper e GraphBoltParameterHelper) e que internamente chamasse o .toString() desse objeto ()
+        //TODO: quando se faz get a este campo com os enums (ex: PageRankParameterHelper), é preciso chamar ".toString" sobre os enums. Era bom encapsular este argValues numa estrutura com um .get() que recebesse um objeto (seriam valores dos enum PageRankParameterHelper e VeilGraphParameterHelper) e que internamente chamasse o .toString() desse objeto ()
 
         //TODO: talvez esse mapa pudesse herdar de Map e os seus elementos pudessem receber parametrizações de tipos. Assim evitava-se o cast (Double),(Integer) e afins cada vez que se quer aceder a um parâmetro do argValues
 
         // Em vez de: argValues.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR.toString())
         // Seria: gbMaparg.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR)
 
-        // Directory where GraphBolt will create directories for statistics, results, etc.
-        this.rootDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.OUTPUT_DIR.toString());
-        this.debugging = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DEBUG.toString());
+        // Directory where VeilGraph will create directories for statistics, results, etc.
+        this.rootDirectory = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.OUTPUT_DIR.toString());
+        this.debugging = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.DEBUG.toString());
 
         // Initial graph file path.
-        this.inputPath = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.INPUT_FILE.toString());
+        this.inputPath = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.INPUT_FILE.toString());
 
         // Retrieve input file name without the file extension.
         this.datasetName = this.inputPath.substring(this.inputPath.lastIndexOf("/") + 1, this.inputPath.lastIndexOf("."));
 
         // Did the user provide a temporary directory location?
-        if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.TEMP_DIR.toString())) {
-            this.tempDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.TEMP_DIR.toString());
+        if(argValues.containsKey(ParameterHelper.VeilGraphArgumentName.TEMP_DIR.toString())) {
+            this.tempDirectory = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.TEMP_DIR.toString());
         }
 
         // Did the user provide a cache directory location?
-        if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.CACHE.toString())) {
-            this.cacheDirectory = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.CACHE.toString());
+        if(argValues.containsKey(ParameterHelper.VeilGraphArgumentName.CACHE.toString())) {
+            this.cacheDirectory = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.CACHE.toString());
         }
 
         // Are we deleting edges?
-        this.deletingEdges = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DELETING_EDGES.toString());
+        this.deletingEdges = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.DELETING_EDGES.toString());
 
         GraphStreamHandler.singleton = this;
 
 
-        // Variables to tell GraphBolt whether to keep the cache, logging and temporary directories when program is terminating.
-        this.keepingCacheDirectory = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.KEEP_CACHE.toString());
-        this.keepingLogDirectory = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.KEEP_LOGS.toString());
-        this.keepingTemporaryDirectory = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.KEEP_TEMP_DIR.toString());
-        this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_PLANS.toString());
-        this.dumpingModel = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.DUMP_MODEL.toString());
-        this.saveFlinkJobOperatorStatistics = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
-        this.saveFlinkJobOperatorJSON = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
+        // Variables to tell VeilGraph whether to keep the cache, logging and temporary directories when program is terminating.
+        this.keepingCacheDirectory = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.KEEP_CACHE.toString());
+        this.keepingLogDirectory = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.KEEP_LOGS.toString());
+        this.keepingTemporaryDirectory = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.KEEP_TEMP_DIR.toString());
+        this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.FLINK_SAVE_PLANS.toString());
+        this.dumpingModel = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.DUMP_MODEL.toString());
+        this.saveFlinkJobOperatorStatistics = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.FLINK_SAVE_OPERATOR_STATS.toString());
+        this.saveFlinkJobOperatorJSON = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.FLINK_SAVE_OPERATOR_JSON.toString());
 
-        this.checkingPeriodicFullAccuracy = (boolean)argValues.get(ParameterHelper.GraphBoltArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
+        this.checkingPeriodicFullAccuracy = (boolean)argValues.get(ParameterHelper.VeilGraphArgumentName.PERIODIC_FULL_ACCURACY_SET.toString());
 
-        final Integer parallelism = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.PARALLELISM.toString());
+        final Integer parallelism = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.PARALLELISM.toString());
         this.parallelism = parallelism;
     }
 
     /**
-     * Call the normal constructor and set the GraphBolt execution strategy.
+     * Call the normal constructor and set the VeilGraph execution strategy.
      *
-     * @param executionStrategy The GraphBolt execution strategy.
+     * @param executionStrategy The VeilGraph execution strategy.
      * @param argValues The user-provided program arguments.
      * @param f A vertex-parsing function.
-     * @param graphAlgorithmName The name to identify the graph algorithm being processed by GraphBolt. Used to create directory names.
+     * @param graphAlgorithmName The name to identify the graph algorithm being processed by VeilGraph. Used to create directory names.
      */
     public GraphStreamHandler(Action executionStrategy, final Map<String, Object> argValues, final Function<String, Long> f, String graphAlgorithmName) {
         this(argValues, f, graphAlgorithmName);
@@ -403,7 +403,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     /**
      * See attribute: {@link GraphStreamHandler#debugging}
-     * @return A custom name to distinguish this GraphBolt session's output files from other sessions.
+     * @return A custom name to distinguish this VeilGraph session's output files from other sessions.
      */
     protected String getCustomName() {
         return this.customName;
@@ -424,16 +424,16 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      */
     private void configureFlink(final Map<String, Object> argValues) {
         this.isRunningRemote =
-                argValues.containsKey(ParameterHelper.GraphBoltArgumentName.SERVER_ADDRESS.toString()) &&
-                        argValues.containsKey(ParameterHelper.GraphBoltArgumentName.SERVER_PORT.toString());
+                argValues.containsKey(ParameterHelper.VeilGraphArgumentName.SERVER_ADDRESS.toString()) &&
+                        argValues.containsKey(ParameterHelper.VeilGraphArgumentName.SERVER_PORT.toString());
 
         if(isRunningRemote) {
 
             // We are going to execute in a Flink cluster in remote mode (not launching a local cluster).
-            final String remoteAddress = (String) argValues.get(ParameterHelper.GraphBoltArgumentName.SERVER_ADDRESS.toString());
-            final Integer remotePort = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.SERVER_PORT.toString());
+            final String remoteAddress = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.SERVER_ADDRESS.toString());
+            final Integer remotePort = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.SERVER_PORT.toString());
 
-            // The .jar file which will be sent to the remote Flink. It the GraphBolt code.
+            // The .jar file which will be sent to the remote Flink. It the VeilGraph code.
             String jarFile = "";
 
             try {
@@ -491,7 +491,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         else {
             System.out.println(String.format("Flink ExecutionEnvironment connecting locally."));
             final Configuration conf = new Configuration();
-            final boolean loadWebManager = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.LOADING_WEB_MANAGER.toString());
+            final boolean loadWebManager = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.LOADING_WEB_MANAGER.toString());
             this.runningLocalFlinkWebUI = loadWebManager;
 
             this.flinkJobManagerAddress = "127.0.0.1";
@@ -558,7 +558,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
                 .enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
 
         // See: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
-        if(argValues.containsKey(ParameterHelper.GraphBoltArgumentName.FLINK_PRINT_SYSOUT.toString())) {
+        if(argValues.containsKey(ParameterHelper.VeilGraphArgumentName.FLINK_PRINT_SYSOUT.toString())) {
             this.env.getConfig().enableSysoutLogging();
         }
         else {
@@ -567,11 +567,11 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     }
 
     /**
-     * Configure GraphBolt's properties from the provided arguments.
-     * Create GraphBolt output directories, output argument information.
+     * Configure VeilGraph's properties from the provided arguments.
+     * Create VeilGraph output directories, output argument information.
      * @param argValues The user-provided program arguments.
      */
-    private void configureGraphBolt(final Map<String, Object> argValues) {
+    private void configureVeilGraph(final Map<String, Object> argValues) {
 
         if(this.rootDirectory == null) {
             throw new IllegalStateException("Root directory must be set.");
@@ -679,7 +679,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
 
 
-        //this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.GraphBoltArgumentName.FLINK_SAVE_PLANS.toString());
+        //this.saveFlinkPlans = (boolean) argValues.get(ParameterHelper.VeilGraphArgumentName.FLINK_SAVE_PLANS.toString());
 
         System.out.println("Saving plans:\t" + this.saveFlinkPlans);
 
@@ -790,7 +790,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
 
         // Configure streamer.
-        this.streamPort = (Integer) argValues.get(ParameterHelper.GraphBoltArgumentName.STREAM_PORT.toString());
+        this.streamPort = (Integer) argValues.get(ParameterHelper.VeilGraphArgumentName.STREAM_PORT.toString());
         this.updateStream = new SocketStreamProvider("localhost", this.streamPort);
         this.pendingUpdates = this.updateStream.getQueue();
     }
@@ -799,17 +799,17 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
 
         // Define values such as the root output directory, statistics directory, logging, etc.
-        this.configureGraphBolt(this.argValues);
+        this.configureVeilGraph(this.argValues);
 
         // Create an ExecutionEnvironment which might be local or remote.
         this.configureFlink(this.argValues);
 
-        // Add generic GraphBolt statistics to the map.
+        // Add generic VeilGraph statistics to the map.
         for(StatisticKeys statName: StatisticKeys.values()) {
             this.statisticsMap.put(statName.toString(), new ArrayList<>());
         }
 
-        // Prepare GraphBolt-specific statistics.
+        // Prepare VeilGraph-specific statistics.
         this.statOrder.add(StatisticKeys.EXECUTION_COUNTER.toString());
         this.statOrder.add(StatisticKeys.USED_STRATEGY.toString());
         this.statOrder.add(StatisticKeys.TIME_ACCUMULATED_BEFORE_UPDATE.toString());
@@ -865,8 +865,8 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
 
 
-        new Thread(this.updateStream, "GraphBolt Stream Consumer").start();
-        new Thread(this, "GraphBolt Main Loop").start();
+        new Thread(this.updateStream, "VeilGraph Stream Consumer").start();
+        new Thread(this, "VeilGraph Main Loop").start();
     }
 
     private DataSet<Tuple2<Long, GraphUpdateTracker.UpdateInfo>> getEdgeAdditionUpdates(final DataSet<Edge<Long, NullValue>> edgesToBeAdded) {
@@ -1228,7 +1228,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         return new Edge<>(source, target, NullValue.getInstance());
     }
 
-    // GraphBolt resource cleanup.
+    // VeilGraph resource cleanup.
     protected void cleanup() throws IOException {
 
         // Close the statistics stream.
@@ -1252,7 +1252,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         }
     }
 
-    // GraphBolt main loop.
+    // VeilGraph main loop.
     @Override
     public void run() {
 
@@ -1396,7 +1396,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     }
 
     /**
-     * Get current GraphBolt execution iteration.
+     * Get current VeilGraph execution iteration.
      * @return
      */
     public Long getIteration() {
@@ -1463,7 +1463,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
     /**
      * Perform an automatic execution of the graph algorithm.
-     * GraphBolt will analyze the statistics to decide the appropriate course of action automatically.
+     * VeilGraph will analyze the statistics to decide the appropriate course of action automatically.
      * @return Time taken to perform the computation.
      * @throws Exception
      */
@@ -1498,7 +1498,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
     public enum StatisticKeys {
         // Number of executions since the stream started.
         EXECUTION_COUNTER("execution_count"),
-        // GraphBolt execution strategy (exact, approximate, automatic, etc.)
+        // VeilGraph execution strategy (exact, approximate, automatic, etc.)
         USED_STRATEGY("used_strategy"),
         // Accumulated time before inserting the updates into the graph.
         TIME_ACCUMULATED_BEFORE_UPDATE("accumulated_time_before_applying_update"),

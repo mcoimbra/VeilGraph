@@ -178,7 +178,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
 
         super.graph.getEdgeIds().output(super.edgeOutputFormat);
 
-        final String spillJobName = "GraphBolt initial edge disk spill";
+        final String spillJobName = "VeilGraph initial edge disk spill";
         final JobExecutionResult diskSpillJob = super.env.execute(spillJobName);
         System.out.println(String.format("Flink Job: %s, %d.%d",
                 spillJobName,
@@ -290,7 +290,7 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
             final GraphStreamHandler.Action action,
             final Graph<Long, NullValue, NullValue> graph) {}
 
-    //TODO: executeExact and executeApproximate should be moved to GraphModel interface. Need to see what that change would imply wrt GraphBolt's UDF time measurements inside run()
+    //TODO: executeExact and executeApproximate should be moved to GraphModel interface. Need to see what that change would imply wrt VeilGraph's UDF time measurements inside run()
     @Override
     protected Long executeExact() throws Exception {
 

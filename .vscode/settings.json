@@ -1,7 +1,7 @@
 {
-    //"python.autoComplete.extraPaths": ["${workspaceFolder}/python/graphbolt"]
+    //"python.autoComplete.extraPaths": ["${workspaceFolder}/python/veilgraph"]
     "python.autoComplete.extraPaths": [
-        "python/graphbolt"
+        "python/veilgraph"
     ],
     "python.linting.pylintEnabled": true
 }

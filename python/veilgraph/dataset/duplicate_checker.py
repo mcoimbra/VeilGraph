@@ -29,7 +29,7 @@ import sys
 ###########################################################################
 
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-DESCRIPTION_TEXT = "GraphBolt deletion stream duplicate check."
+DESCRIPTION_TEXT = "VeilGraph deletion stream duplicate check."
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
 
 parser.add_argument("-data-dir", help="dataset directory name.", required=True, type=str, default="")

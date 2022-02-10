@@ -30,14 +30,14 @@ import sys
 
 # 2. related third party imports
 # 3. custom local imports
-from graphbolt import localutil
+from veilgraph import localutil
 
 ###########################################################################
 ############################# READ ARGUMENTS ##############################
 ###########################################################################
 
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-DESCRIPTION_TEXT = "GraphBolt edge shuffler. Take a stream of edge updates, shuffle them and save to disk."
+DESCRIPTION_TEXT = "VeilGraph edge shuffler. Take a stream of edge updates, shuffle them and save to disk."
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-i', '--input-file', help="dataset name.", required=True, type=str)
 parser.add_argument('-o', '--out-dir', help="output directory.", required=False, type=str)

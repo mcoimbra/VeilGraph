@@ -12,7 +12,7 @@ import sys
 #TODO: change arguments to be equal to sample_edges.py
 
 # The class argparse.RawTextHelpFormatter is used to keep new lines in help text.
-DESCRIPTION_TEXT = "GraphBolt TODO"
+DESCRIPTION_TEXT = "VeilGraph TODO"
 parser = argparse.ArgumentParser(description=DESCRIPTION_TEXT, formatter_class=argparse.RawTextHelpFormatter)
 #parser.add_argument("-plot-single-figures", help="skip parameter-specific figure generation. Only plot groups of combinations of parameters", required=False, action="store_true") # if ommited default value is false
 #parser.add_argument("-png", help="output .png files too", required=False, action="store_true") # if ommited default value is false

@@ -15,7 +15,7 @@ limitations under the License. """
 __license__ = "Apache 2.0"
 
 # Used to compute the accuracy between complete and summarized 
-# executions of GraphBolt's PageRank.
+# executions of VeilGraph's PageRank.
 
 ###########################################################################
 ################################# IMPORTS #################################

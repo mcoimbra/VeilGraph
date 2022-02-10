@@ -10,7 +10,7 @@ DATE_TIME_STAMP=$(echo $date | tr ' ' _ )
 
 # Prepare the Google Cloud Storage object names.
 GCLOUD_DIR_NAME='logs_'$DATE_TIME_STAMP'_'$DIR_SUFFIX''
-GCLOUD_PATH="gs://graphbolt-storage/testing/flink_logs/$GCLOUD_DIR_NAME"
+GCLOUD_PATH="gs://veilgraph-storage/testing/flink_logs/$GCLOUD_DIR_NAME"
 
 # Helpful information.
 printf "> Timestamp:\t$DATE_TIME_STAMP\n"
@@ -21,5 +21,5 @@ gsutil cp -p /usr/lib/flink/log/* "$GCLOUD_PATH"
 
 # Order each worker to copy its Flink logs.
 for (( i = 0; i < PARALLELISM; ++i )); do
-    ssh "graphbolt@graphbolt-cluster-w-$i" "gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH"
+    ssh "veilgraph@veilgraph-cluster-w-$i" "gsutil cp -p /usr/lib/flink/log/* $GCLOUD_PATH"
 done
