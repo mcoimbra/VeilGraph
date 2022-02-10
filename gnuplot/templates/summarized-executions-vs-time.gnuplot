@@ -1,7 +1,7 @@
 #!/usr/bin/gnuplot
 
 set terminal pdfcairo mono font "sans, 16"
-set output 'XXXXX_5000_0.85_model_0.05_2_0.50_D-summarized-executions-vs-time.pdf'
+set output 'XXXXX_RBO_0.85_model_0.05_2_0.50_D-summarized-executions-vs-time.pdf'
 
 set key top left
 set grid
@@ -25,7 +25,7 @@ plot \
 
 
 set terminal png crop
-set output 'XXXXX_5000_0.85_model_0.05_2_0.50_D-summarized-executions-vs-time.png'
+set output 'XXXXX_RBO_0.85_model_0.05_2_0.50_D-summarized-executions-vs-time.png'
 replot
 
 quit
