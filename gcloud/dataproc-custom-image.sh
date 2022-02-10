@@ -76,7 +76,7 @@ gsutil cp -r gs://$GS_BUCKET_CODE_DIR/$GS_VEILGRAPH_ZIP_NAME $VEILGRAPH_CODE_DIR
 cd $VEILGRAPH_CODE_DIR
 unzip $GS_VEILGRAPH_ZIP_NAME
 
-readonly GS_KEY_NAME="datastorm-1083-f24ebf51869d.json"
+readonly GS_KEY_NAME="target-gcloud-project-f24ebf51869d.json"
 
 # Prepare .bash_profile and misc utilities.
 sudo touch ${VEILGRAPH_ROOT}/.bash_profile
