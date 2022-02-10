@@ -215,7 +215,6 @@ public class GraphUtils {
 	}
 	
     /*
-     * TODO: there is room for optimization here.
      * When we move from one level (parameter n) to another, neighbours already used in the previous level will be used again.
      */
     public static <K, VV, EV> DataSet<K> expandedVertexIds(final Graph<K, VV, EV> originalGraph, final DataSet<K> originalVertexIds, int level) throws Exception {
@@ -263,7 +262,6 @@ public class GraphUtils {
 				return Tuple2.of(value.f0.f0, level);
 			}
 			else {
-				//TODO LV: o que interessa e o valor absoluto da diferenca.
 				// commented on 2017-Oct-19
 				//double logArg = level + avgDegree * (value.f1.f1 / infos.get(value.f0.f0).currInDegree) / delta;
 				// Long node_level = Math.round(Math.log(logArg) / Math.log(avgDegree));

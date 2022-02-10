@@ -258,7 +258,6 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
 
     @Override
     protected boolean checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics) {
-        //TODO: logic - checkUpdateState(final GraphUpdates<Long, NullValue> updates, final GraphUpdateStatistics statistics)
 	    return true;
     }
 
@@ -371,7 +370,6 @@ public class PageRankStreamHandler extends GraphStreamHandler<Tuple2<Long, Doubl
 
     @Override
     protected Long executeAutomatic() {
-        //TODO: logic - executeAutomatic()
         return 0L;
     }
 }

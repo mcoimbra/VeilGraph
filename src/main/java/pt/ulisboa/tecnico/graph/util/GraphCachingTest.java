@@ -178,8 +178,7 @@ public class GraphCachingTest {
 
 		// Some details on the ExecutionEnvironment configuration options: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
 		env.getConfig().enableSysoutLogging().setParallelism(1);
-		// TODO: experiment with this later: .enableObjectReuse(); //https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#object-reuse-enabled
-		
+
 		// Read the initial graph.
 		inputPath = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.INPUT_FILE.toString());
     	Graph<Long, NullValue, NullValue> graph = Graph.fromCsvReader(inputPath, env)
@@ -251,14 +250,6 @@ public class GraphCachingTest {
 					}
 
 					// Add to internal Gelly Graph DataSets.
-					// TODO: test this by reassigning the graph variable: graph = graph.addVertices(verticesToAdd).addEdges(edgesToAdd);
-					
-					/*
-					final Graph<Long, NullValue, NullValue> newGraph = graph
-							.addVertices(verticesToAdd);
-							.addEdges(edgesToAdd);
-						*/
-					
 							
 					final DataSet<Vertex<Long, NullValue>> newVertices = graph.getVertices().coGroup(env.fromCollection(verticesToAdd))
 							.where(0).equalTo(0).with(new VerticesUnionCoGroup<>()).name("Add vertices");
@@ -586,17 +577,7 @@ public class GraphCachingTest {
 			.union(graph.getEdges())
 			.name("Add edges");
 				
-		
-		/*
-		Graph<Long, NullValue, NullValue> newGraph = Graph.fromDataSet(vertexUpdateDataSet, edgeUpdateDataSet, env);
-		
-		try {
-			//System.out.println(newGraph.numberOfEdges());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
+
 		
 		// Get the edges which will be delayed to the next Flink iteration.
 		FilterOperator<Edge<Long, Long>> delayFilter = initial

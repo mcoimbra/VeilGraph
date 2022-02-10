@@ -340,9 +340,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
         this.executionStrategy = Action.COMPUTE_EXACT;
 
 
-        //TODO: quando se faz get a este campo com os enums (ex: PageRankParameterHelper), é preciso chamar ".toString" sobre os enums. Era bom encapsular este argValues numa estrutura com um .get() que recebesse um objeto (seriam valores dos enum PageRankParameterHelper e VeilGraphParameterHelper) e que internamente chamasse o .toString() desse objeto ()
-
-        //TODO: talvez esse mapa pudesse herdar de Map e os seus elementos pudessem receber parametrizações de tipos. Assim evitava-se o cast (Double),(Integer) e afins cada vez que se quer aceder a um parâmetro do argValues
 
         // Em vez de: argValues.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR.toString())
         // Seria: gbMaparg.get(PageRankParameterHelper.PageRankArgumentName.DAMPENING_FACTOR)
@@ -508,7 +505,7 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
             conf.setString(JobManagerOptions.PORT.key(), this.flinkJobManagerPort);
             conf.setString(ResourceManagerOptions.IPC_PORT.key(), this.flinkJobManagerPort);
-            //TODO: contribute this to Flink source (implement JOB_MANAGER_WEB_PORT_KEY in JobManagerOptions.
+
             conf.setString(ConfigConstants.JOB_MANAGER_WEB_PORT_KEY, "8081-8500");
             conf.setString(QueryableStateOptions.SERVER_PORT_RANGE.key(), "30000-35000");
             conf.setString(QueryableStateOptions.PROXY_PORT_RANGE.key(), "35001-40000");
@@ -1162,8 +1159,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
         }
 
-        // TODO: need to join edgesToBeRemoved with inDegree and outDegrees, collect those and store appropriately in GraphUpdateTracker's infoMap.
-
 
         this.edgeOutputFormat.setOutputFilePath(new Path(this.cacheDirectory + "/edges" + (this.iteration % this.storedIterations)));
         this.graph
@@ -1296,7 +1291,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
 
                         final long querySetupStart = System.nanoTime();
 
-                        // Normalmente o infoMap do graphUpdateTracker teria o in e out degree de todos os vértices
                         final GraphUpdates<Long, NullValue> graphUpdates = this.graphUpdateTracker.getGraphUpdates();
                         final GraphUpdateStatistics statistics = this.graphUpdateTracker.getUpdateStatistics();
 
@@ -1446,7 +1440,6 @@ public abstract class GraphStreamHandler<R> implements Runnable {
      */
     public abstract void init() throws Exception;
 
-    //TODO: LV sugeriu incorporar estas UDFs numa interface GraphModel
     /**
      * Perform a complete (without graph summary models) execution of the graph algorithm.
      * @return Time taken to perform the computation.

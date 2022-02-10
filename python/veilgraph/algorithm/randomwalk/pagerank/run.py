@@ -537,8 +537,8 @@ if args.periodic_full_dump:
     PERIODIC_DUMP_STR = '-periodic_full_accuracy'
 
 
-#TODO: when checking if it's necessary to run PageRank for a given parameter combination (or for complete version), need to check if we are running with periodic full outputs and if the existing Results files are without periodic (or vice-versa). In this case, need to execute.
-#TODO: "mvn -f ../pom.xml " requires a veilgraph.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
+#NOTE: when checking if it's necessary to run PageRank for a given parameter combination (or for complete version), need to check if we are running with periodic full outputs and if the existing Results files are without periodic (or vice-versa). In this case, need to execute.
+#NOTE: "mvn -f ../pom.xml " requires a veilgraph.localutil function which navigates to the directory of the current file until the python directory is reached. Then, set CWD to that directory
 
 
 # Build complete PageRank command.

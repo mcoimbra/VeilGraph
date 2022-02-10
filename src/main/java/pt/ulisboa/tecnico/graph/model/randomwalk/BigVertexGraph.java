@@ -64,7 +64,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
     private Double updateRatioThreshold;
     private Integer neighborhoodSize;
     private Double delta;
-    private Double initialRank = 1.0d; // TODO: perhaps this should move to PageRankStreamHandler.
+    private Double initialRank = 1.0d;
 
     // Big vertex graph statistics.
     private Long deltaExpansionLimit = -1L;
@@ -228,8 +228,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
 
         final int keyPosition = 0;
 
-        //TODO: test iterateDelta but set the initialDeltaSet to be equal to an initial expansion. THis means that we would do the same operations in the DeltaIteration body to initialize the initialDeltaSet, which would be fed to the DeltaIteration.
-
         // https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#iteration-operators
         final DeltaIteration<Tuple2<Long, Long>, Tuple2<Long, Long>> deltaIteration =
                 expandedIds.iterateDelta(expandedIds, maxDeltaIterations, keyPosition);
@@ -314,7 +312,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                         }
                     }
                 })
-           //     .withForwardedFieldsFirst("f0.*->f0.*")
                 .map(new ExpansionMapper(n, delta, avgPrevDegree));
     }
 
@@ -950,9 +947,7 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
                 return Tuple2.of(first.f0, n.longValue());
             }
             else if(second == null) {
-               // System.out.println("java - ExpansionMapper - second tuple was null, first is: " + first.toString());
-                // TODO: Under what circumstances do we have ! first.f1 .isInfinite() && second == null? Find out and change code accordingly
-                // if it was already
+                // Under what circumstances do we have ! first.f1 .isInfinite() && second == null?
                 return Tuple2.of(first.f0, n.longValue());
             }
             else {
@@ -966,7 +961,6 @@ public class BigVertexGraph<VV, EV> extends AbstractGraphModel<Long, VV, EV, Tup
         }
     }
 
-    //@FunctionAnnotation.NonForwardedFields("f0")
     private static class MapUpdateTupleToDouble implements MapFunction<Tuple2<Long, GraphUpdateTracker.UpdateInfo>, Long> {
         private EdgeDirection direction;
 

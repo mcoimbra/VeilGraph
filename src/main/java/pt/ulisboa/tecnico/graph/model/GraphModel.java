@@ -17,12 +17,6 @@ import pt.ulisboa.tecnico.graph.stream.GraphUpdateTracker;
  */
 public interface GraphModel<K, VV, EV, R> {
 
-    /**TODO:
-     *
-     * Implement PageRank again to understand how much could be harnessed.
-     * See effort to implement additional model.
-     *
-     */
 
 
     @Override

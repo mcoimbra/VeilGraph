@@ -19,17 +19,7 @@ import sys
 import pandas as pd
 import numpy as np
 
-# TODO
-# 0- this script should be called from decompress.sh
-# 1- get path to *_data.tsv file in an execution_number dir.
-# 2- ingest columns
-#### (order is 4x complete and then 4x summarized), every 8 columns the parallelism level changes.
-#### P=1,2,4,8,16
-# 3- for each parallelism level P > 1:
-# 3.1- calculate mean and std speedup (each summarized P level versus summarized P=1 level) and store in .tsv file
-# 3.2- calculate mean and std speedup (each summarized P level versus summarized P=1 level) and store in .tsv file
 
-# make a dummy .tsv file, save it to disk
 
 data_path = sys.argv[1]
 

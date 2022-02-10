@@ -599,132 +599,12 @@ public class VeilGraphTest
 		l.add(Tuple2.of(1111L, (long) iterationLimit));
 		final DataSet<Tuple2<Long, Long>> expandedIds = env.fromCollection(l);
 
-		/*
-		final DataSet<Long> results = BigVertexGraph.deltaExpansion(expandedIds, g, iterationLimit);
-
-		try {
-			final List<Long> resultsList = results.collect();
-			if(getInstance().debugging()) {
-				for (Long t : resultsList) {
-					System.out.println(t);
-				}
-			}
-
-			Assertions.assertEquals(6, resultsList.size(), () -> "The expanded vertex set is supposed to have six (6) vertices.");
-		}  catch (final Exception e) {
-			Assertions.fail(e.getMessage());
-		}
-
-		*/
 	}
 
 
 
-	/**
-	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
-	 * THIS TEST WAS NOT NOT INCLUDING NEWLY-ADDED VERTICES IN THE EXPANSION SET
-	 * TODO: DELETE THIS LATER
-	 * @param testInfo
-	 */
 	/*
 	@Test
-	@DisplayName("testStep1ParameterExpansionN1")
-	void testStep1ParameterExpansionN1(final TestInfo testInfo) {
-		try {
-			final VeilGraphTest instance = getInstance();
-			final Double vertexDegreeMininumChangeRatio = new Double(0.05);
-			final Map<Long, UpdateInfo> infos = instance.getUpdateTracker().getUpdateInfos();
-			final DataSet<Tuple2<Long, Double>> previousRanks = instance.getOfflineResults().get(0);
-
-			// Get vertices where the previous in-degree was 0 or it changed enough so that abs((curr-degree / prev-degree) - 1) > vertexDegreeMininumChangeRatio
-			final List<Tuple2<Long, Double>> changedVertices = BigVertexGraph.getKHotVertices(infos, vertexDegreeMininumChangeRatio, EdgeDirection.IN);
-
-			if(getInstance().debugging()) {
-				// Ranks from the previous PageRank Python power-method execution.
-				System.out.println("Previous ranks: ");
-				previousRanks.print();
-
-				// Print the UpdateInfo items corresponding to the initial graph.
-				System.out.println("Update infos: ");
-				for(Long u : infos.keySet()) {
-					System.out.println(u + "\t " + instance.getUpdateTracker().getUpdateInfos().get(u));
-				}
-				System.out.println("Changed vertices: ");
-				for(Tuple2<Long, Double> t : changedVertices) {
-					System.out.println(t);
-				}
-			}
-
-
-			// Set of vertices whose degree change is equal or more than vertexDegreeMininumChangeRatio: 6, 7, 10
-			// Included in those sets are the vertices which are new: 12, 13, 14
-
-			Assertions.assertEquals(6, changedVertices.size(), () -> "Expected six (6) changed vertices from step 0 to step 1.");
-
-			// Vertices which did not previously have indegrees.
-			final DataSet<Tuple2<Long, Double>> kHotVertices = instance.getContext().fromCollection(changedVertices);
-
-			final long n = 1;
-			final Double delta = new Double(0.0400d);
-*/
-			/*
-			NOTE: on Renato's version, new edges are added to the update tracker's infoMap.
-			Later on in his computeApproximate, the update ids are fetched from infoMap, so they contain the newly-added vertices, just like this version.
-			After that, Renato's BigVertexGraph keeps vertices which previously didn't exist and assigns them an initial value of 1.0d.
-			Code below is what happens during summary graph building.
-
-			.leftOuterJoin(previousRanks)
-					.where(keySelector).equalTo(0)
-					.with(new KernelVertexJoinFunction(initialRank))
-
-			BOTTOMLINE: Renato's version vertex expansion is performed over the new vertices as well.
-			DIFFERENCE: our expansion makes use of the rank, which is a problem for nodes new nodes, as they did not have a rank.
-					*/
-
-
-/*
-
-			// Previous test without including new vertices in the expandedVertices (they had no previous rank so they would be left out on join(previousRanks)
-			final DataSet<Tuple2<Long, Long>> expandedIds = kHotVertices
-					.join(previousRanks)
-					.where(0).equalTo(0)
-					.map(new ExpandVerticesMapper(n, delta, infos, EdgeDirection.IN));
-
-
-			final List<Tuple2<Long, Long>> expandedVertexList = expandedIds.collect();
-
-			if(getInstance().debugging()) {
-				System.out.println("expandedVertices: (id, neighborhood size)");
-				for (Tuple2<Long, Long> t : expandedVertexList) {
-					System.out.println(t);
-				}
-			}
-
-			// (7, 2), (6, 2), (10, 1)
-
-			Assertions.assertEquals(3, expandedVertexList.size(), () -> "The hot vertex set is supposed to finish with three (3) vertices.");
-
-			Integer iterationLimit = expandedIds.max(1).collect().get(0).f1.intValue();
-
-			System.out.println("Delta iteration limit: " + iterationLimit.toString());
-
-			DataSet<Long> results = BigVertexGraph.deltaExpansion(expandedIds, getInstance().getGraphList().get(1), iterationLimit);
-			//DataSet<Long> results = deltaExpansion(expandedIds, getInstance().getGraphList().get(1), (int)n);
-
-			List<Long> resultsList = results.collect();
-
-			for(Long t : resultsList) {
-				System.out.println(t);
-			}
-			// (0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12)
-
-			Assertions.assertEquals(11, resultsList.size(), () -> "The expanded vertex set is supposed to have eleven (11) vertices.");
-
-		} catch (final Exception e) {
-			Assertions.fail(e.getMessage());
-		}
-	}
-*/
 	/**
 	 * Test the VeilGraph hot vertex set calculation with n=1 after the first set of updates is applied.
 	 * @param testInfo
@@ -907,7 +787,6 @@ public class VeilGraphTest
 
 			final int keyPosition = 0;
 
-			//TODO: test iterateDelta but set the initialDeltaSet to be equal to an initial expansion. THis means that we would do the same operations in the DeltaIteration body to initialize the initialDeltaSet, which would be fed to the DeltaIteration.
 
 			// initialSolutionSet.iterateDelta(initialDeltaSet, maxDeltaIterations, keyPosition);
 			// https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#iteration-operators
@@ -1075,7 +954,6 @@ public class VeilGraphTest
 			delta.print();
 
 
-			// ITERATION 2 TODO TODO
 
 			System.out.println("################");
 			System.out.println("################");
@@ -1204,7 +1082,6 @@ public class VeilGraphTest
 				kHotVertices.print();
 			}
 
-			//TODO: mudar o nome de cada variável de DataSet para ser mais percetível o que se está a passar.
 
 			// Set of vertices whose degree change is equal or more than vertexDegreeMininumChangeRatio: 6, 7, 10
 			// Included in those sets are the vertices which are new: 12, 13, 14
@@ -1314,7 +1191,6 @@ public class VeilGraphTest
 				kHotVertices.print();
 			}
 */
-			//TODO: mudar o nome de cada variável de DataSet para ser mais percetível o que se está a passar.
 
 			// Set of vertices whose degree change is equal or more than vertexDegreeMininumChangeRatio: 6, 7, 10
 			// Included in those sets are the vertices which are new: 12, 13, 14
