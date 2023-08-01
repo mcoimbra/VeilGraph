@@ -16,7 +16,8 @@ public class LocalSimplePageRankApp {
     	final String dataDir = args[0];
     	
     	final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		env.getConfig().disableSysoutLogging().setParallelism(1);
+		//env.getConfig().disableSysoutLogging().setParallelism(1);
+		env.getConfig().setParallelism(1);
 
         try {
         	final Graph<Long, NullValue, NullValue> graph = Graph.fromCsvReader(dataDir, env)

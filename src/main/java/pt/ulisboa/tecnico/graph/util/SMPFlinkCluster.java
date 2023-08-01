@@ -21,7 +21,8 @@ public class SMPFlinkCluster {
     	
     	
 		final ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 6123, "target/GraphApprox-0.0.1-SNAPSHOT.jar");
-		env.getConfig().disableSysoutLogging().setParallelism(parallelism);
+		//env.getConfig().disableSysoutLogging().setParallelism(parallelism);
+		env.getConfig().setParallelism(parallelism);
 
         try {
         	final Graph<Long, NullValue, NullValue> graph = Graph.fromCsvReader(dataDir, env)// "/Datasets/Facebook/facebook-links-init.txt", env)

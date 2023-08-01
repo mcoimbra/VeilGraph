@@ -184,7 +184,8 @@ public class GraphSequenceTest {
 		}
 
 		// Some details on the ExecutionEnvironment configuration options: https://ci.apache.org/projects/flink/flink-docs-master/dev/batch/index.html#debugging
-		env.getConfig().enableSysoutLogging().setParallelism(1);
+		//env.getConfig().enableSysoutLogging().setParallelism(1);
+		env.getConfig().setParallelism(1);
 
 		// Read the initial graph.
 		inputPath = (String) argValues.get(ParameterHelper.VeilGraphArgumentName.INPUT_FILE.toString());

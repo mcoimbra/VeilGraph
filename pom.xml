@@ -35,20 +35,29 @@ under the License.
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<flink.version>1.6.2</flink.version>
-		<hadoop.version>2.8.3</hadoop.version>
+		<!-- <flink.version>1.6.2</flink.version> -->
+		<flink.version>1.9.3</flink.version>
+		<gson.version>[2.8.9,)</gson.version>
+		<hadoop.version>[3.2.3,)</hadoop.version>
+
+		<httpcomponents.version>[4.5.13,)</httpcomponents.version>
 		<!--<flink.version>1.8-SNAPSHOT</flink.version>-->
 
 		<!--<flink.version>1.4.2</flink.version>-->
 
 		<slf4j.version>1.7.7</slf4j.version>
-		<log4j.version>1.2.17</log4j.version>
+		<!-- <log4j.version>1.2.17</log4j.version> -->
+		<log4j.version>[2.20.0,)</log4j.version>
 		<scala.version>2.11.12</scala.version>
 		<scala.binary.version>2.11</scala.binary.version>
 		<akka.version>2.4.20</akka.version>
-		<junit.version>4.12</junit.version>
+
+		
+		<!-- <junit.version>4.12</junit.version> -->
+		<junit.version>[4.13.1,)</junit.version>
 		<junit.jupiter.version>5.0.0</junit.jupiter.version>
-		<junit.vintage.version>${junit.version}.1</junit.vintage.version>
+		<!-- <junit.vintage.version>${junit.version}.1</junit.vintage.version> -->
+		<junit.vintage.version>5.10.0</junit.vintage.version>
 		<junit.platform.version>1.0.1</junit.platform.version>
 		<aspectj.version>1.9.1</aspectj.version>
 	</properties>
@@ -155,12 +164,12 @@ under the License.
 			<artifactId>google-cloud-storage</artifactId>
 			<version>1.96.0</version>
 		</dependency>
-
+		
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
-			<version>4.5.3</version>
+			<version>${httpcomponents.version}</version>
 		</dependency>
 
 
@@ -170,9 +179,15 @@ under the License.
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
+			<version>${log4j.version}</version>
+		</dependency> -->
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
 		</dependency>
 
@@ -246,7 +261,7 @@ under the License.
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.8.2</version>
+			<version>${gson.version}</version>
 		</dependency>
 
 
@@ -411,7 +426,7 @@ under the License.
 				<dependency>
 					<groupId>org.apache.httpcomponents</groupId>
 					<artifactId>httpclient</artifactId>
-					<version>4.5.3</version>
+					<version>${httpcomponents.version}</version>
 				</dependency>
 
 
@@ -422,11 +437,17 @@ under the License.
 					<artifactId>slf4j-log4j12</artifactId>
 					<version>${slf4j.version}</version>
 				</dependency>
-				<dependency>
+				<!-- <dependency>
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
 					<version>${log4j.version}</version>
+				</dependency> -->
+				<dependency>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-core</artifactId>
+					<version>${log4j.version}</version>
 				</dependency>
+				
 
 
 				<dependency>
@@ -708,7 +729,7 @@ under the License.
 				<dependency>
 					<groupId>org.apache.httpcomponents</groupId>
 					<artifactId>httpclient</artifactId>
-					<version>4.5.3</version>
+					<version>${httpcomponents.version}</version>
 				</dependency>
 				<!-- explicitly add a standard logging framework, as Flink does not have a hard dependency on one specific framework by default -->
 				<dependency>
@@ -716,9 +737,14 @@ under the License.
 					<artifactId>slf4j-log4j12</artifactId>
 					<version>${slf4j.version}</version>
 				</dependency>
-				<dependency>
+				<!-- <dependency>
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
+					<version>${log4j.version}</version>
+				</dependency> -->
+				<dependency>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-core</artifactId>
 					<version>${log4j.version}</version>
 				</dependency>
 				<dependency>
@@ -1057,7 +1083,7 @@ under the License.
 
 									-->
 
-									<exclude>log4j:log4j</exclude>
+									<exclude>org.apache.logging.log4j:log4j</exclude>
 									<exclude>org.scala-lang:scala-library</exclude>
 									<exclude>org.scala-lang:scala-compiler</exclude>
 									<exclude>org.scala-lang:scala-reflect</exclude>
@@ -1085,7 +1111,7 @@ under the License.
 									<exclude>org.apache.commons:commons-lang3</exclude>
 									<exclude>org.slf4j:slf4j-api</exclude>
 									<exclude>org.slf4j:slf4j-log4j12</exclude>
-									<exclude>log4j:log4j</exclude>
+									<exclude>org.apache.logging.log4j:log4j</exclude>
 									<exclude>org.apache.commons:commons-math</exclude>
 									<exclude>org.apache.sling:org.apache.sling.commons.json</exclude>
 									<exclude>commons-logging:commons-logging</exclude>
